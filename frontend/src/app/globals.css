@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --manna-cream: #fafae6;
+  --manna-pink: #f44070;
+  --manna-pink-light: #fff0f3;
+  --manna-yellow: #f5c800;
+  --manna-yellow-light: #fff9e0;
+  --manna-gray: #f5f5f5;
+  --manna-gray-text: #888888;
+  --manna-border: #eeeeee;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-manna-cream: var(--manna-cream);
+  --color-manna-pink: var(--manna-pink);
+  --color-manna-pink-light: var(--manna-pink-light);
+  --color-manna-yellow: var(--manna-yellow);
+  --color-manna-yellow-light: var(--manna-yellow-light);
+  --color-manna-gray: var(--manna-gray);
+  --color-manna-gray-text: var(--manna-gray-text);
+  --color-manna-border: var(--manna-border);
+  --font-sans: var(--font-noto-sans-kr), "Apple SD Gothic Neo", sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
