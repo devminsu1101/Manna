@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+
+# 로컬 시크릿 — 절대 커밋 금지 (Google client-id/secret 등)
+application-local.properties
+application-secret.properties
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
