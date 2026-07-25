@@ -1,0 +1,133 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* 다크 변형을 .dark 클래스 기반으로 고정한다. .dark를 붙이는 곳이 없으므로
+   dark: 유틸리티는 활성화되지 않는다. 이 선언을 지우면 Tailwind 기본값인
+   prefers-color-scheme으로 되돌아가 OS 다크모드에서 정의되지 않은 값이 샌다. */
+@custom-variant dark (&:is(.dark *));
+
+/* ─────────────────────────────────────────────────────────────
+   1) PRIMITIVES — Figma Variables 이름 그대로.
+      컴포넌트에서 직접 참조하지 말 것. 항상 아래 시맨틱 토큰을 쓴다.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --manna-font: #333333;
+  --manna-brand: #ffcc00;
+  --manna-brand-light: #fdfcf0;
+  --manna-second: #00c4cc;
+  --manna-second-light: #f0fffe;
+  --manna-third: #ff2d55;
+  --manna-third-light: #ffeff2;
+  --manna-white: #ffffff;
+
+  /* 경계선은 본문 색의 25%. --manna-font에서 파생시켜 본문 색이 바뀌면 함께 따라간다. */
+  --manna-border: color-mix(in srgb, var(--manna-font) 25%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2) SEMANTIC BRIDGE — shadcn 계약을 Manna primitive에 별칭.
+      Figma 변수를 shadcn 이름으로 개명하지도, 그 반대도 하지 않는다.
+      이 블록이 두 이름 체계 사이의 유일한 번역 테이블이다.
+      디자이너가 Figma 변수를 재값하면 위 블록의 한 줄만 고치면 된다.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --background: var(--manna-white);
+  --foreground: var(--manna-font);
+
+  --card: var(--manna-white);
+  --card-foreground: var(--manna-font);
+  --popover: var(--manna-white);
+  --popover-foreground: var(--manna-font);
+
+  --primary: var(--manna-brand);
+  --primary-foreground: var(--manna-font);
+  --secondary: var(--manna-second);
+  --secondary-foreground: var(--manna-white);
+  --accent: var(--manna-third);
+  --accent-foreground: var(--manna-white);
+
+  --muted: var(--manna-brand-light);
+  /* 절 번호도 본문과 같은 #333 — 디자인상 연한 회색이 아니다. */
+  --muted-foreground: var(--manna-font);
+
+  --destructive: var(--manna-third);
+  --border: var(--manna-border);
+  --input: var(--manna-border);
+  --ring: var(--manna-second);
+
+  /* Manna 고유 토큰 — shadcn 계약에 대응 이름이 없다. */
+  --header: var(--manna-second-light);
+  /* 선택/hover된 절의 배경. 오늘은 --header와 값이 같지만 의미가 다르므로 이름을 나눠 둔다.
+     둘을 갈라야 할 때 이 한 줄만 바꾸면 된다. */
+  --highlight: var(--manna-second-light);
+
+  /* 카드 섹션의 파스텔 배경. 메인·공동체·기도 화면이 도메인별로 색을 나눠 쓴다.
+     love=기도/사랑(핑크), warm=공동체·나눔(크림), cool=말씀(민트). primitive를 직접
+     참조하지 않도록 여기서 시맨틱 이름을 붙인다. */
+  --surface-love: var(--manna-third-light);
+  --surface-warm: var(--manna-brand-light);
+  --surface-cool: var(--manna-second-light);
+
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* @theme를 거치므로 bg-header / bg-highlight 유틸리티가 생성된다. */
+  --color-header: var(--header);
+  --color-highlight: var(--highlight);
+
+  /* bg-surface-love / bg-surface-warm / bg-surface-cool 유틸리티. */
+  --color-surface-love: var(--surface-love);
+  --color-surface-warm: var(--surface-warm);
+  --color-surface-cool: var(--surface-cool);
+
+  --font-sans: var(--manna-font-sans);
+  --font-heading: var(--manna-font-sans);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* 한국어는 어절 단위로 끊어야 한다. 없으면 성경 본문이 단어 중간에서 잘린다. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  html {
+    @apply font-sans;
+  }
+}

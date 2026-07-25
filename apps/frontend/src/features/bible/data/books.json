@@ -1,0 +1,398 @@
+[
+  {
+    "abbrev": "gn",
+    "name": "창세기",
+    "order": 1,
+    "totalChapters": 50
+  },
+  {
+    "abbrev": "ex",
+    "name": "출애굽기",
+    "order": 2,
+    "totalChapters": 40
+  },
+  {
+    "abbrev": "lv",
+    "name": "레위기",
+    "order": 3,
+    "totalChapters": 27
+  },
+  {
+    "abbrev": "nm",
+    "name": "민수기",
+    "order": 4,
+    "totalChapters": 36
+  },
+  {
+    "abbrev": "dt",
+    "name": "신명기",
+    "order": 5,
+    "totalChapters": 34
+  },
+  {
+    "abbrev": "js",
+    "name": "여호수아",
+    "order": 6,
+    "totalChapters": 24
+  },
+  {
+    "abbrev": "jud",
+    "name": "사사기",
+    "order": 7,
+    "totalChapters": 21
+  },
+  {
+    "abbrev": "rt",
+    "name": "룻기",
+    "order": 8,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "1sm",
+    "name": "사무엘상",
+    "order": 9,
+    "totalChapters": 31
+  },
+  {
+    "abbrev": "2sm",
+    "name": "사무엘하",
+    "order": 10,
+    "totalChapters": 24
+  },
+  {
+    "abbrev": "1kgs",
+    "name": "열왕기상",
+    "order": 11,
+    "totalChapters": 22
+  },
+  {
+    "abbrev": "2kgs",
+    "name": "열왕기하",
+    "order": 12,
+    "totalChapters": 25
+  },
+  {
+    "abbrev": "1ch",
+    "name": "역대상",
+    "order": 13,
+    "totalChapters": 29
+  },
+  {
+    "abbrev": "2ch",
+    "name": "역대하",
+    "order": 14,
+    "totalChapters": 36
+  },
+  {
+    "abbrev": "ezr",
+    "name": "에스라",
+    "order": 15,
+    "totalChapters": 10
+  },
+  {
+    "abbrev": "ne",
+    "name": "느헤미야",
+    "order": 16,
+    "totalChapters": 13
+  },
+  {
+    "abbrev": "et",
+    "name": "에스더",
+    "order": 17,
+    "totalChapters": 10
+  },
+  {
+    "abbrev": "job",
+    "name": "욥기",
+    "order": 18,
+    "totalChapters": 42
+  },
+  {
+    "abbrev": "ps",
+    "name": "시편",
+    "order": 19,
+    "totalChapters": 150
+  },
+  {
+    "abbrev": "prv",
+    "name": "잠언",
+    "order": 20,
+    "totalChapters": 31
+  },
+  {
+    "abbrev": "ec",
+    "name": "전도서",
+    "order": 21,
+    "totalChapters": 12
+  },
+  {
+    "abbrev": "so",
+    "name": "아가",
+    "order": 22,
+    "totalChapters": 8
+  },
+  {
+    "abbrev": "is",
+    "name": "이사야",
+    "order": 23,
+    "totalChapters": 66
+  },
+  {
+    "abbrev": "jr",
+    "name": "예레미야",
+    "order": 24,
+    "totalChapters": 52
+  },
+  {
+    "abbrev": "lm",
+    "name": "예레미야애가",
+    "order": 25,
+    "totalChapters": 5
+  },
+  {
+    "abbrev": "ez",
+    "name": "에스겔",
+    "order": 26,
+    "totalChapters": 48
+  },
+  {
+    "abbrev": "dn",
+    "name": "다니엘",
+    "order": 27,
+    "totalChapters": 12
+  },
+  {
+    "abbrev": "ho",
+    "name": "호세아",
+    "order": 28,
+    "totalChapters": 14
+  },
+  {
+    "abbrev": "jl",
+    "name": "요엘",
+    "order": 29,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "am",
+    "name": "아모스",
+    "order": 30,
+    "totalChapters": 9
+  },
+  {
+    "abbrev": "ob",
+    "name": "오바댜",
+    "order": 31,
+    "totalChapters": 1
+  },
+  {
+    "abbrev": "jn",
+    "name": "요나",
+    "order": 32,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "mi",
+    "name": "미가",
+    "order": 33,
+    "totalChapters": 7
+  },
+  {
+    "abbrev": "na",
+    "name": "나훔",
+    "order": 34,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "hk",
+    "name": "하박국",
+    "order": 35,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "zp",
+    "name": "스바냐",
+    "order": 36,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "hg",
+    "name": "학개",
+    "order": 37,
+    "totalChapters": 2
+  },
+  {
+    "abbrev": "zc",
+    "name": "스가랴",
+    "order": 38,
+    "totalChapters": 14
+  },
+  {
+    "abbrev": "ml",
+    "name": "말라기",
+    "order": 39,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "mt",
+    "name": "마태복음",
+    "order": 40,
+    "totalChapters": 28
+  },
+  {
+    "abbrev": "mk",
+    "name": "마가복음",
+    "order": 41,
+    "totalChapters": 16
+  },
+  {
+    "abbrev": "lk",
+    "name": "누가복음",
+    "order": 42,
+    "totalChapters": 24
+  },
+  {
+    "abbrev": "jo",
+    "name": "요한복음",
+    "order": 43,
+    "totalChapters": 21
+  },
+  {
+    "abbrev": "act",
+    "name": "사도행전",
+    "order": 44,
+    "totalChapters": 28
+  },
+  {
+    "abbrev": "rm",
+    "name": "로마서",
+    "order": 45,
+    "totalChapters": 16
+  },
+  {
+    "abbrev": "1co",
+    "name": "고린도전서",
+    "order": 46,
+    "totalChapters": 16
+  },
+  {
+    "abbrev": "2co",
+    "name": "고린도후서",
+    "order": 47,
+    "totalChapters": 13
+  },
+  {
+    "abbrev": "gl",
+    "name": "갈라디아서",
+    "order": 48,
+    "totalChapters": 6
+  },
+  {
+    "abbrev": "eph",
+    "name": "에베소서",
+    "order": 49,
+    "totalChapters": 6
+  },
+  {
+    "abbrev": "ph",
+    "name": "빌립보서",
+    "order": 50,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "cl",
+    "name": "골로새서",
+    "order": 51,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "1ts",
+    "name": "데살로니가전서",
+    "order": 52,
+    "totalChapters": 5
+  },
+  {
+    "abbrev": "2ts",
+    "name": "데살로니가후서",
+    "order": 53,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "1tm",
+    "name": "디모데전서",
+    "order": 54,
+    "totalChapters": 6
+  },
+  {
+    "abbrev": "2tm",
+    "name": "디모데후서",
+    "order": 55,
+    "totalChapters": 4
+  },
+  {
+    "abbrev": "tt",
+    "name": "디도서",
+    "order": 56,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "phm",
+    "name": "빌레몬서",
+    "order": 57,
+    "totalChapters": 1
+  },
+  {
+    "abbrev": "hb",
+    "name": "히브리서",
+    "order": 58,
+    "totalChapters": 13
+  },
+  {
+    "abbrev": "jm",
+    "name": "야고보서",
+    "order": 59,
+    "totalChapters": 5
+  },
+  {
+    "abbrev": "1pe",
+    "name": "베드로전서",
+    "order": 60,
+    "totalChapters": 5
+  },
+  {
+    "abbrev": "2pe",
+    "name": "베드로후서",
+    "order": 61,
+    "totalChapters": 3
+  },
+  {
+    "abbrev": "1jo",
+    "name": "요한일서",
+    "order": 62,
+    "totalChapters": 5
+  },
+  {
+    "abbrev": "2jo",
+    "name": "요한이서",
+    "order": 63,
+    "totalChapters": 1
+  },
+  {
+    "abbrev": "3jo",
+    "name": "요한삼서",
+    "order": 64,
+    "totalChapters": 1
+  },
+  {
+    "abbrev": "jd",
+    "name": "유다서",
+    "order": 65,
+    "totalChapters": 1
+  },
+  {
+    "abbrev": "re",
+    "name": "요한계시록",
+    "order": 66,
+    "totalChapters": 22
+  }
+]
