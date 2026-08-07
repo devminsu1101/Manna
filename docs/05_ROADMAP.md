@@ -16,12 +16,16 @@
 - [x] GET /api/v1/bible/{book}/{chapter} 구현 (프론트 라우트 핸들러, 백엔드 전환은 대기)
 - [x] Next.js 레이아웃 + 라우팅
 - [x] 성경 읽기 UI 구현 (무한 스크롤·선택 시트·이어읽기)
+- [x] 구절 선택 → 복사 (연속 절 묶음, 07_HISTORY 영역7)
 - [x] 랜딩·로그인·메인 셸 페이지 (골격 MVP)
 - [~] OAuth 로그인 (Google) — 백엔드 코드·로컬 검증 완료(`users`,`user_identities`, find-or-create).
       **프로덕션 미동작**: Spring 백엔드 미배포 + `BACKEND_ORIGIN` 미설정. Kakao/Naver는 후속.
 - [ ] CSRF 재활성 (v1.1 쓰기 API 전 필수 — SecurityConfig TODO)
 
 ## Phase 2: 공동체 + 나눔
+
+> 리더의 "해당 구절 나눔하기" 자리 표시자는 제거됐다(D-701). 나눔 작성 진입점은 여기서 새로 만든다.
+
 - [ ] Community CRUD API — `communities`, `community_members`
 - [ ] Sharing 작성/조회 API — `sharings`, `sharing_communities` (타입 3종, 다대다 공유)
 - [ ] WebSocket 실시간 하이라이트
