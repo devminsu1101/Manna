@@ -21,6 +21,7 @@ export function VerseList({
           // 묶인 절은 "18-19"로 보여준다. 그냥 18만 찍으면 다음이 20이라 절이 빠진 것처럼 읽힌다.
           label={verse.endVerseNum ? `${verse.verseNum}-${verse.endVerseNum}` : `${verse.verseNum}`}
           text={verse.text}
+          endVerseNum={verse.endVerseNum}
         />
       ))}
     </ul>

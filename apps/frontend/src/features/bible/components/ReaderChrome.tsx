@@ -2,7 +2,7 @@
 
 import { useHideOnScroll } from "@/hooks/useHideOnScroll";
 import { cn } from "@/lib/utils";
-import { ShareVerseButton } from "./ShareVerseButton";
+import { CopyVerseButton } from "./CopyVerseButton";
 
 /**
  * 읽는 동안 화면을 꽉 쓰도록 하단 크롬을 관리한다.
@@ -18,7 +18,7 @@ export function ReaderChrome({ nav }: { nav: React.ReactNode }) {
 
   return (
     <>
-      <ShareVerseButton navHidden={hidden} />
+      <CopyVerseButton navHidden={hidden} />
       <div
         className={cn(
           "fixed inset-x-0 bottom-0 z-30 transition-transform duration-200",

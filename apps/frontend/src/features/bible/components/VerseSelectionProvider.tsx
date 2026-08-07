@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 
+import type { SelectedVerse } from "../copy-text";
 import { compareVerseIds, type VerseId } from "../verse-id";
 
 /**
@@ -18,21 +19,28 @@ export type SelectionStore = {
   has: (id: VerseId) => boolean;
   size: () => number;
   /** 읽기 순서로 정렬된 선택 목록. */
-  ids: () => readonly VerseId[];
-  toggle: (id: VerseId) => void;
+  verses: () => readonly SelectedVerse[];
+  /**
+   * 본문까지 함께 받는 이유: 복사 버튼은 id만으로는 아무것도 못 만든다. 본문은 절이 이미
+   * 들고 있으니 고를 때 같이 넘겨 두면, 버튼이 나중에 장 데이터를 다시 뒤질 필요가 없다.
+   * 피드는 위아래로 이어 붙으므로 "선택한 절이 아직 마운트돼 있다"는 보장도 없다.
+   */
+  toggle: (id: VerseId, verse: Omit<SelectedVerse, "id">) => void;
   clear: () => void;
 };
 
 function createSelectionStore(): SelectionStore {
-  const selected = new Set<VerseId>();
+  const selected = new Map<VerseId, Omit<SelectedVerse, "id">>();
   const listeners = new Set<() => void>();
 
   // getSnapshot이 매번 새 배열을 만들면 useSyncExternalStore가 무한 루프에 빠진다.
   // 변경 시점에만 다시 만들어 캐시한다.
-  let snapshot: readonly VerseId[] = [];
+  let snapshot: readonly SelectedVerse[] = [];
 
   const emit = () => {
-    snapshot = [...selected].sort(compareVerseIds);
+    snapshot = [...selected]
+      .sort(([a], [b]) => compareVerseIds(a, b))
+      .map(([id, verse]) => ({ id, ...verse }));
     for (const listener of listeners) listener();
   };
 
@@ -43,9 +51,9 @@ function createSelectionStore(): SelectionStore {
     },
     has: (id) => selected.has(id),
     size: () => selected.size,
-    ids: () => snapshot,
-    toggle(id) {
-      if (!selected.delete(id)) selected.add(id);
+    verses: () => snapshot,
+    toggle(id, verse) {
+      if (!selected.delete(id)) selected.set(id, verse);
       emit();
     },
     clear() {

@@ -7,7 +7,18 @@ import type { VerseId } from "../verse-id";
 import { useVerseSelectionStore } from "./VerseSelectionProvider";
 
 /** 절 한 줄. 탭하면 선택/해제된다. 선택된 절은 배경이 깔리고 번호가 굵어진다. */
-export function VerseRow({ verseId, label, text }: { verseId: VerseId; label: string; text: string }) {
+export function VerseRow({
+  verseId,
+  label,
+  text,
+  endVerseNum,
+}: {
+  verseId: VerseId;
+  label: string;
+  text: string;
+  /** 묶인 절의 끝 번호. 복사할 때 다음 절이 이어지는지 판단하는 데 쓴다. */
+  endVerseNum?: number;
+}) {
   const store = useVerseSelectionStore();
   const isSelected = useSyncExternalStore(
     store.subscribe,
@@ -19,7 +30,7 @@ export function VerseRow({ verseId, label, text }: { verseId: VerseId; label: st
     <li>
       <button
         type="button"
-        onClick={() => store.toggle(verseId)}
+        onClick={() => store.toggle(verseId, { text, endVerseNum })}
         aria-pressed={isSelected}
         className={cn(
           // 하이라이트가 화면 좌우 끝까지 닿아야 해서 여백을 main이 아니라 여기서 준다.
