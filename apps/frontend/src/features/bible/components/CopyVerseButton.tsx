@@ -108,8 +108,9 @@ export function CopyVerseButton({ navHidden }: { navHidden: boolean }) {
           primary(브랜드 노랑 #ffcc00)를 쓰지 않는 이유: 흰 배경 위에서 대비가 약하고,
           옆의 청록과 남남인 색이 하나 더 늘어난다.
 
-          border-2와 size-12는 BottomNav 가운데 FAB과 같은 처리다. 앱에 이미 있는
-          "흰 원 + 청록 테두리" 모양을 그대로 쓴다.
+          "흰 원 + 청록 테두리"는 BottomNav 가운데 FAB에 이미 있는 모양이다. 다만 그쪽은
+          border-2고 여기는 border-1이다 — 저건 화면의 주 동작이라 굵고, 이건 복사 옆에서
+          물러나 있어야 한다.
 
           hover를 덮는 이유: outline 기본값이 bg-muted(크림색) + text-foreground라
           청록 옆에서 튀고 아이콘 색도 잃는다. */}

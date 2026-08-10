@@ -1,6 +1,7 @@
 "use client";
 
 import { useHideOnScroll } from "@/hooks/useHideOnScroll";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { cn } from "@/lib/utils";
 import { CopyVerseButton } from "./CopyVerseButton";
 
@@ -15,6 +16,11 @@ import { CopyVerseButton } from "./CopyVerseButton";
  */
 export function ReaderChrome({ nav }: { nav: React.ReactNode }) {
   const hidden = useHideOnScroll();
+
+  // 크롬과 상관없는 관심사지만 여기가 맞는 자리다. 화면 꺼짐 방지는 "리더에 있는 동안"만
+  // 유효해야 하는데, 리더와 생명주기가 정확히 같은 클라이언트 컴포넌트가 이것뿐이다.
+  // 이것만을 위해 빈 컴포넌트를 하나 더 만들어 페이지에 꽂는 건 과하다.
+  useWakeLock();
 
   return (
     <>
