@@ -122,7 +122,7 @@ export function CopyVerseButton({ navHidden }: { navHidden: boolean }) {
         className={cn(
           "pointer-events-auto size-12 rounded-full shadow-lg",
           "border-1 border-secondary text-secondary",
-          "hover:bg-secondary/10 hover:text-secondary",
+          "hover:bg-secondary hover:text-white",
         )}
       >
         <X className="size-5" />

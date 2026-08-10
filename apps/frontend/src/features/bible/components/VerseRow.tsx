@@ -48,12 +48,14 @@ export function VerseRow({
         <span
           className={cn(
             "min-w-6 shrink-0 pt-1 text-xs tabular-nums text-foreground",
-            isSelected && "font-bold",
+            isSelected && "font-semibold",
           )}
         >
           {label}
         </span>
-        <span className="flex-1 text-foreground">{text}</span>
+        {/* 굵기도 번호와 같은 조건(isSelected)으로 건다. focus는 여기 못 쓴다 — 탭으로 고르면
+            포커스가 남지 않고, 절을 여러 개 골라도 포커스는 하나뿐이라 조건 자체가 안 맞는다. */}
+        <span className={cn("flex-1 text-foreground", isSelected && "font-semibold")}>{text}</span>
       </button>
     </li>
   );

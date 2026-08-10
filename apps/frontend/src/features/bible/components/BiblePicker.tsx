@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { books, LAST_OLD_TESTAMENT_ORDER } from "../books";
+import { pushJump } from "../jump-history";
 import type { Book } from "../types";
 import { useCurrentChapterStore } from "./CurrentChapterProvider";
 
@@ -91,6 +92,18 @@ export function BiblePicker({ bookName, bookAbbrev }: { bookName: string; bookAb
     if (!next) setPicking(null);
   };
 
+  /**
+   * 장을 골라 떠나기 직전. **여기가 이동 기록의 유일한 지점이다.**
+   *
+   * 출발지로 넘기는 값은 라우트 파라미터가 아니라 스토어의 `chapterNum` — 그때 화면에
+   * 보이던 장이다. /bible/ps/13으로 들어와 15장까지 읽었으면 돌아갈 곳은 13이 아니라 15다.
+   */
+  const pick = (destAbbrev: string, destChapter: number) => {
+    // 제자리를 다시 고른 경우는 pushJump가 알아서 걸러낸다.
+    pushJump(bookAbbrev, chapterNum, destAbbrev, destChapter);
+    change(false);
+  };
+
   return (
     <Sheet open={open} onOpenChange={change}>
       {/* 제목 구역 전체가 트리거다. h1을 유지하되 그 안을 버튼으로 채운다 —
@@ -126,7 +139,7 @@ export function BiblePicker({ bookName, bookAbbrev }: { bookName: string; bookAb
             // 다른 권을 고르는 중이면 짚어 줄 "현재 장"이 없다.
             currentChapterNum={picking.abbrev === bookAbbrev ? chapterNum : undefined}
             onBack={() => setPicking(null)}
-            onPick={() => change(false)}
+            onPick={pick}
           />
         ) : (
           <BookStep currentAbbrev={bookAbbrev} onPick={setPicking} />
@@ -270,7 +283,8 @@ function ChapterStep({
   /** 이 권이 지금 읽는 권일 때만 들어온다. */
   currentChapterNum?: number;
   onBack: () => void;
-  onPick: () => void;
+  /** 목적지를 넘긴다 — 부모가 시트를 닫으면서 점프를 기록해야 하는데, 그 판단에 목적지가 필요하다. */
+  onPick: (abbrev: string, chapterNum: number) => void;
 }) {
   const router = useRouter();
 
@@ -281,7 +295,7 @@ function ChapterStep({
   // Link가 아니라 router.push인 이유: 이동과 동시에 시트를 닫아야 한다. Link만 두면
   // 라우팅은 되는데 시트가 그대로 열려 있다.
   const go = (n: number) => {
-    onPick();
+    onPick(book.abbrev, n);
     router.push(`/bible/${book.abbrev}/${n}`);
   };
 

@@ -4,6 +4,7 @@ import { useHideOnScroll } from "@/hooks/useHideOnScroll";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { cn } from "@/lib/utils";
 import { CopyVerseButton } from "./CopyVerseButton";
+import { JumpNavButtons } from "./JumpNavButtons";
 
 /**
  * 읽는 동안 화면을 꽉 쓰도록 하단 크롬을 관리한다.
@@ -24,6 +25,10 @@ export function ReaderChrome({ nav }: { nav: React.ReactNode }) {
 
   return (
     <>
+      {/* 하단에 뜨는 것을 여기서 모두 소유한다. 오프셋을 각자 하드코딩하면 반드시 겹친다.
+          좌하단 이전 / 우하단 다음 / 가운데 복사·해제 / 아래 네비 — 전부 같은 200ms로
+          함께 움직인다. */}
+      <JumpNavButtons navHidden={hidden} />
       <CopyVerseButton navHidden={hidden} />
       <div
         className={cn(
