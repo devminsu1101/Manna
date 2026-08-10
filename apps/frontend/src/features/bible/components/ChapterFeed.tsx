@@ -34,29 +34,61 @@ const CURRENT_CHAPTER_BAND_BOTTOM = "-80%";
 /** 스크롤이 이만큼 조용하면 멎은 것으로 본다. iOS 모멘텀은 계속 scroll 이벤트를 쏜다. */
 const SCROLL_SETTLE_MS = 120;
 
+/**
+ * **손가락 조건에만** 걸리는 상한. 이만큼 지나면 터치 상태를 무시한다.
+ *
+ * 안전판이다. touchend를 한 번 놓치면 activeTouches가 선 채로 남아 기다림이 영원해지고,
+ * 그러면 inFlightPrev도 선 채로 남아 이전 장 로딩이 세션 내내 죽는다.
+ *
+ * 스크롤 침묵 조건에는 상한을 두지 않는다. 거기까지 상한을 걸면 긴 플링 한가운데서
+ * 붙게 되고, 그게 정확히 D-104 이전의 실패다.
+ */
+const TOUCH_WAIT_CEILING_MS = 1200;
+
 type Status = "idle" | "loading" | "error";
 
 /**
- * 스크롤이 멎을 때까지 기다린다.
+ * 스크롤이 멎고 **손가락도 떨어질 때까지** 기다린다.
  *
- * 앞에 장을 붙이면 보정 스크롤이 따라붙는데, **모멘텀 중에는 그 보정이 관성과 싸운다.**
+ * 앞에 장을 붙이면 보정 스크롤이 따라붙는데, **움직이는 중에는 그 보정이 관성·제스처와 싸운다.**
  * 우리가 아래로 되돌리면 관성이 다시 위로 끌어 센티넬이 또 걸리고, 또 붙고, 또 싸운다.
  * 시편 43편에서 40편까지 밀리던 연쇄가 바로 이것이었다 — 한 번 튕길 때마다 몇 장씩 붙었다.
  * 멎은 뒤에 붙이면 보정이 조용히 성공하고, 한 번에 한 장만 붙는다.
+ *
+ * scroll 침묵만으로는 부족하다. 천천히 읽으며 올리는 사람은 손가락을 댄 채로 120ms 넘게
+ * 멈췄다가 다시 끄는데, 그 정지 구간이 "멎었다"로 판정된다. 그런데 진행 중인 터치 스크롤은
+ * iOS에서 컴포지터가 몰고 가므로 그때 부탁한 scrollTo는 제스처에 밀려 유실되고, 읽던 자리가
+ * 삽입된 장 높이만큼 아래로 밀린 채 굳는다. 그래서 손가락 상태까지 본다.
+ *
+ * 손가락이 남아 있으면 폴링하지 않는다 — 뗄 때 touchend가 다시 bump한다.
  */
-function waitForScrollSettle(): Promise<void> {
+function waitForScrollIdle(hasActiveTouch: () => boolean): Promise<void> {
   return new Promise((resolve) => {
+    const touchDeadline = performance.now() + TOUCH_WAIT_CEILING_MS;
     let timer = 0;
-    const done = () => {
+
+    const cleanup = () => {
+      window.clearTimeout(timer);
       window.removeEventListener("scroll", bump);
+      window.removeEventListener("touchend", bump);
+      window.removeEventListener("touchcancel", bump);
+    };
+    const check = () => {
+      if (hasActiveTouch() && performance.now() < touchDeadline) return;
+      cleanup();
       resolve();
     };
     const bump = () => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(done, SCROLL_SETTLE_MS);
+      timer = window.setTimeout(check, SCROLL_SETTLE_MS);
     };
-    timer = window.setTimeout(done, SCROLL_SETTLE_MS);
+
+    // 손가락이 닿은 채 멈춰 있으면 check가 그냥 돌아간다. 폴링하지 않는다 — 뗄 때
+    // touchend가, 다시 끌면 scroll이 bump해서 처음부터 다시 잰다.
+    timer = window.setTimeout(check, SCROLL_SETTLE_MS);
     window.addEventListener("scroll", bump, { passive: true });
+    window.addEventListener("touchend", bump, { passive: true });
+    window.addEventListener("touchcancel", bump, { passive: true });
   });
 }
 
@@ -75,6 +107,16 @@ function scrollWithoutIntent(to: number): boolean {
   const moved = window.scrollY !== before;
   if (moved) rebaseHideOnScroll();
   return Math.round(window.scrollY) >= Math.round(to);
+}
+
+/**
+ * 문서 기준 세로 위치. **스크롤해도 변하지 않는다** — 아래 앵커 보정의 전제다.
+ *
+ * getBoundingClientRect()는 뷰포트 기준이라 스크롤과 함께 움직인다. 그 값으로 앵커를 잡으면
+ * 두 시점의 차분에 "삽입된 높이"와 "그 사이 사용자가 스크롤한 양"이 섞인다.
+ */
+function documentTop(el: HTMLElement): number {
+  return el.getBoundingClientRect().top + window.scrollY;
 }
 
 /**
@@ -133,6 +175,25 @@ export function ChapterFeed({
 
   const sectionRefs = useRef(new Map<number, HTMLElement>());
 
+  // 화면에 닿아 있는 손가락 수. waitForScrollIdle이 드래그 중 삽입을 막는 데 쓴다.
+  //
+  // 이벤트마다 touches.length를 통째로 다시 읽는다. 증감으로 세면 이벤트 하나만 놓쳐도
+  // 값이 어긋난 채 영영 안 돌아오고, 그러면 이전 장 로딩이 죽는다.
+  const activeTouches = useRef(0);
+  useEffect(() => {
+    const sync = (e: TouchEvent) => {
+      activeTouches.current = e.touches.length;
+    };
+    window.addEventListener("touchstart", sync, { passive: true });
+    window.addEventListener("touchend", sync, { passive: true });
+    window.addEventListener("touchcancel", sync, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", sync);
+      window.removeEventListener("touchend", sync);
+      window.removeEventListener("touchcancel", sync);
+    };
+  }, []);
+
   const registerSection = useCallback((chapterNum: number, el: HTMLElement | null) => {
     if (el) sectionRefs.current.set(chapterNum, el);
     else sectionRefs.current.delete(chapterNum);
@@ -147,12 +208,20 @@ export function ChapterFeed({
   //
   // scrollHeight 차분이 아니라 앵커 기준인 이유: 위쪽에서 스켈레톤이 사라지고 장이 붙는
   // 식으로 여러 개가 한꺼번에 바뀌어도, "이 섹션을 제자리에 붙들라"는 규칙은 그대로 성립한다.
+  //
+  // **뷰포트 좌표가 아니라 문서 좌표로 잰다.** 한때 getBoundingClientRect().top을 그대로
+  // 담았는데, 그러면 차분에 두 가지가 섞인다 — (a) 위에 삽입된 높이(보정할 것)와 (b) 재는
+  // 두 시점 사이에 사용자가 스크롤한 양(건드리면 안 되는 것). 두 시점 사이에는 절 수십 개짜리
+  // 장의 렌더·커밋이 통째로 들어가고, 그 수십~수백 ms 동안 iOS는 컴포지터에서 스크롤을 계속
+  // 진행시킨다. 그래서 보정이 (b)까지 되돌려 "읽다가 뒤로 툭 튀는" 증상이 됐다. 위로 올리다
+  // 방향을 바꿔 내리는 중에도 같은 일이 나서, 아래로 내릴 때도 튀는 것처럼 보였다.
+  // 문서 좌표는 스크롤에 불변이라 (a)만 남는다.
   const anchor = useRef<{ el: HTMLElement; top: number } | null>(null);
 
   /** 위쪽 높이를 바꾸는 setState 직전마다 부른다. 커밋 사이에 DOM이 바뀌므로 매번 다시 재야 한다. */
   const captureAnchor = useCallback((chapterNum: number) => {
     const el = sectionRefs.current.get(chapterNum);
-    if (el) anchor.current = { el, top: el.getBoundingClientRect().top };
+    if (el) anchor.current = { el, top: documentTop(el) };
   }, []);
 
   // 페인트 전에 되돌려야 한다. useEffect면 한 프레임 튄 뒤 제자리를 찾는 게 보인다.
@@ -161,12 +230,27 @@ export function ChapterFeed({
     if (!a) return;
     anchor.current = null;
 
-    const delta = a.el.getBoundingClientRect().top - a.top;
-    if (delta === 0) return;
+    // 문서 좌표라 이 차분에는 위에 삽입된 높이만 담긴다. 그 사이 사용자가 스크롤했더라도
+    // 값이 흔들리지 않고, 그 스크롤은 그대로 존중된다.
+    const delta = documentTop(a.el) - a.top;
+    // 1px 미만은 삽입이 아니라 서브픽셀 잡음이다(rect.top과 scrollY의 양자화가 다르다).
+    // 그걸로 scrollTo를 부르면 화면은 그대로인데 rebase 플래그만 태워, 다음 사용자
+    // 스크롤 한 번의 크롬 판정이 삼켜진다.
+    if (Math.abs(delta) < 1) return;
 
-    // 반환값을 반드시 본다. 못 닿았으면 읽던 자리가 이미 밀린 것이고, 그 상태로 또 당기면
-    // 폭주한다. 한때 이 값을 버렸고 그게 /ps/44 → 38편의 원인이었다.
-    if (!scrollWithoutIntent(window.scrollY + delta)) prevStalled.current = true;
+    const target = window.scrollY + delta;
+    if (scrollWithoutIntent(target)) return;
+
+    // 못 닿았다고 곧바로 굳히지 않는다. iOS 상단 고무줄 구간에서는 방금 부탁한 scrollTo가
+    // 진행 중인 바운스에 밀려 반영되지 않는데, 그건 실패가 아니라 "아직"이다. 한 프레임 뒤엔
+    // 대개 끝나 있다. target이 절대 위치라 다시 시도해도 이중 보정이 되지 않는다.
+    //
+    // 그래도 못 닿으면 그때 막는다. 반환값을 버리면 안 된다 — 읽던 자리가 이미 밀린 상태로
+    // 또 당기면 폭주한다. 한때 이 값을 버렸고 그게 /ps/44 → 38편의 원인이었다.
+    const raf = requestAnimationFrame(() => {
+      if (!scrollWithoutIntent(target)) prevStalled.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
   }, [chapters, statusPrev]);
 
   // ── 진입 시 스크롤 위치 ───────────────────────────────────────
@@ -194,8 +278,7 @@ export function ChapterFeed({
     if (!section || !band || !header) return;
 
     const target =
-      section.getBoundingClientRect().top +
-      window.scrollY -
+      documentTop(section) -
       header.getBoundingClientRect().height +
       band.getBoundingClientRect().height;
 
@@ -286,9 +369,9 @@ export function ChapterFeed({
         return;
       }
 
-      // 스크롤이 멎은 뒤에 붙인다. 모멘텀 중에 붙이면 보정이 관성과 싸워 연쇄로 밀린다.
-      // 기다리는 동안 센티넬이 계속 걸려도 inFlightPrev가 막으므로 한 장만 붙는다.
-      await waitForScrollSettle();
+      // 스크롤이 멎고 손가락이 떨어진 뒤에 붙인다. 움직이는 중에 붙이면 보정이 관성·제스처와
+      // 싸운다. 기다리는 동안 센티넬이 계속 걸려도 inFlightPrev가 막으므로 한 장만 붙는다.
+      await waitForScrollIdle(() => activeTouches.current > 0);
 
       captureAnchor(firstChapterNum);
       setChapters((prev) =>
