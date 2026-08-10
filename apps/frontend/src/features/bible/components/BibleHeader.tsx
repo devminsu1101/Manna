@@ -19,7 +19,13 @@ import { BiblePicker } from "./BiblePicker";
  * 장 숫자와 스토어 구독은 BiblePicker가 갖는다. 트리거가 현재 장을 보여줘야 하는데
  * 트리거와 시트는 한 몸이어야 하기 때문이다. 여기는 배치만 한다.
  */
-export function BibleHeader({ bookName }: { bookName: string }) {
+export function BibleHeader({
+  bookName,
+  bookAbbrev,
+}: {
+  bookName: string;
+  bookAbbrev: string;
+}) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-1 border-b border-border bg-header px-4 py-3">
       <Button variant="ghost" size="icon-lg" className="relative" aria-label="알림">
@@ -31,8 +37,9 @@ export function BibleHeader({ bookName }: { bookName: string }) {
         />
       </Button>
 
-      {/* 책 경계를 넘지 않으므로 권 이름은 피드 내내 고정이다. 장 숫자만 스크롤에 따라 바뀐다. */}
-      <BiblePicker bookName={bookName} />
+      {/* 책 경계를 넘지 않으므로 권 이름은 피드 내내 고정이다. 장 숫자만 스크롤에 따라 바뀐다.
+          abbrev는 시트가 "지금 읽는 권"을 목록에서 짚는 데 쓴다. */}
+      <BiblePicker bookName={bookName} bookAbbrev={bookAbbrev} />
 
       <Button variant="ghost" size="icon-lg" aria-label="내 프로필">
         <User className="size-6" />

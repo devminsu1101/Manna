@@ -533,8 +533,83 @@ F3(이전 말씀 돌아가기) → F4(현재 권부터 열리는 시트) 순으�
   배포본 기준으로 짠다.** LAN IP 확인은 그 API에 대해 아무것도 증명하지 않는다.
 - 판정 기준: 아이폰에서 성경을 열고 2분 방치(안 꺼져야 함) + **홈 탭으로 나가서 방치(꺼져야
   함)**. 후자가 더 중요하다 — 여기서 안 꺼지면 리더를 떠나도 락이 남아 배터리를 계속 먹는다.
+- **결과: 배포본 실기기 확인 완료. 동작함.**
 
 **✅ D-1307. 계획에 있던 "타입 없으면 `declare` 블록" 우려는 무효**
 - `WakeLock`·`WakeLockSentinel`·`Navigator.wakeLock`이 TS 5.9 `lib.dom.d.ts`에 이미 있다.
 - 다만 타입상 `navigator.wakeLock`은 **필수 프로퍼티**라 없을 수 있다는 걸 타입이 안 알려준다.
   런타임 `"wakeLock" in navigator` 가드가 여전히 필요하다.
+
+---
+
+## 2026-08-10 · 선택 시트가 현재 권/장부터 (QA 후속 3/4)
+
+수정: `BiblePicker.tsx` · `BibleHeader.tsx` · `app/bible/[book]/[chapter]/page.tsx`
+
+시트를 열면 늘 창세기부터 시작했다. 예레미야를 읽다가 다른 장으로 가려면 매번 검색을 쳐야
+했고, 앞뒤 권으로 조금 옮기는 것도 목록으로는 못 했다.
+
+---
+
+### 영역 14 — 권/장 선택 시트
+
+**✅ D-1401. `bookAbbrev`를 page → `BibleHeader` → `BiblePicker`로 내려보낸다**
+- 왜: 시트가 "지금 읽는 권"을 짚으려면 라우트 키가 필요한데, 지금까지 `bookName`만 받았다.
+  이름으로 맞춰도 66개가 유일하지만, 라우트에 쓰는 값과 다른 걸로 판정할 이유가 없다.
+- `useParams()`도 가능하나 명시적 prop이 이 코드베이스 관례에 맞는다.
+
+**✅ D-1402. `scrollIntoView`를 쓰지 않고 `scrollTop`을 rect 차분으로 직접 잡는다**
+- 이유 둘. (1) 시트 진입 애니메이션이 translate 키프레임이라, 움직이는 요소에 걸면 조상까지
+  스크롤시켜 **뒤에 있는 성경 본문이 딸려 움직인다.** (2) 스크롤 노드인 Radix Viewport 안의
+  컨텐츠 div가 `display:table`이라 `offsetTop` 계산이 통상적으로 동작하지 않는다.
+- 두 rect가 같은 translate를 받으므로 차분은 애니메이션 중에도 정확하다.
+
+**⚠️ D-1403. 스크롤 노드를 ref로 내려가지 않고 대상에서 `closest`로 올라간다** (구현 중 선회)
+- 초안: `ScrollArea`에 ref를 걸고 `querySelector`로 내려갔다.
+- 왜 바꿨나: 그건 우리 래퍼의 `{...props}` → Radix Root → DOM 두 단계 전달을 가정한다.
+  어긋나면 **예외 없이 조용히 아무 일도 안 일어나** 원인 찾기가 어렵다. `closest`는
+  "대상이 뷰포트 안에 있다"는 사실 하나만 쓰고, ref도 하나 준다.
+
+**❌→✅ D-1404. 마운트 직후엔 Viewport가 스크롤되지 않는다 — 다음 프레임에 한 번 더 건다**
+- **첫 배포가 실제로 실패했다.** 하이라이트와 "읽는 중" 칩은 나오는데 스크롤만 안 먹었다.
+- 원인: Radix는 Viewport에 `overflowY: scrollbarYEnabled ? "scroll" : "hidden"`을 주는데,
+  그 플래그를 켜는 게 `ScrollAreaScrollbar`의 **passive `useEffect`**다
+  (`@radix-ui/react-scroll-area` index.mjs:150). 순서가
+  `첫 렌더(hidden) → layout effect(우리) → passive effect(플래그 on) → 재렌더(scroll)`라,
+  우리가 도는 시점엔 아직 `overflow:hidden`이다. **스크롤 불가한 요소의 `scrollTop`은 예외도
+  경고도 없이 0으로 클램프된다.**
+- 수정: `apply()` 직후 `requestAnimationFrame(apply)`로 한 번 더. 보정이 **상대값**이라 두 번
+  불러도 안전하다 — 첫 번째가 성공했으면 두 번째는 차분이 0이다.
+- 교훈: **서드파티 스크롤 컨테이너에 layout effect로 개입할 때는 그 컨테이너가 자기 스타일을
+  언제 확정하는지 확인한다.** "조용히 클램프"되는 API는 실패해도 로그가 없어서, 되는지 여부를
+  코드로 확인할 방법을 같이 심어 두는 게 낫다.
+
+**✅ D-1405. 검색 중에는 다시 스크롤하지 않는다**
+- `useLayoutEffect(..., [])` 빈 deps. 시트는 열 때마다 새로 마운트되므로(`forceMount` 없음)
+  이걸로 "열 때마다 현재 권으로"가 성립한다. `q`를 의존성에 넣으면 키를 칠 때마다 스크롤을
+  잡아채 검색 결과를 훑을 수 없다.
+- 검색 input 자체는 손대지 않았다. autofocus가 없어 누르기 전엔 키보드가 안 뜬다 —
+  "목록으로 훑다가 필요하면 검색" 흐름은 이미 성립해 있었고, 빠졌던 건 시작 위치뿐이었다.
+
+**✅ D-1406. 표시는 배경 + 칩 + 채움으로**
+- 권 목록: `bg-highlight` + 굵은 글씨 + "읽는 중" 칩. 장 수(`52장`)는 그대로 둔다.
+  hover와 같은 `bg-muted`를 쓰면 둘이 구분되지 않아 `bg-highlight`를 골랐다.
+- 장 그리드: 현재 장만 `variant="secondary"`(채운 청록). 리더의 복사 버튼과 같은
+  "지금 이것" 표시다. 다른 권을 고르는 중이면 짚을 현재 장이 없으므로 표시하지 않는다.
+- 접근성: 둘 다 `aria-current="true"`. 색과 위치만으로 알리지 않는다.
+
+---
+
+### 사고 기록 — 돌아가는 dev 서버 밑에서 `.next`를 지웠다
+
+- **무슨 일**: F4 빌드를 확인하려고 `rm -rf .next && npm run build`를 돌렸는데, 그때
+  사용자의 `next dev`가 떠 있었다. turbopack 캐시 DB의 SST 파일 참조가 통째로 깨져
+  `Failed to restore task data (corrupted database or bug)` 패닉이 쏟아졌다.
+- **왜 안 끝났나**: 같은 `apps/frontend`를 cwd로 하는 **7월 26일부터 살아 있던
+  `next-server`(포트 3100)** 가 하나 더 있었다. 두 프로세스가 같은 `.next`를 공유해,
+  지우고 다시 만들어도 쓰기가 겹쳤다(`Another write batch or compaction is already active`).
+- **곁가지 피해**: 그 상태의 Fast Refresh가 `Can't find variable: label` / `Icon` 같은
+  **이미 존재하지 않는 식별자**의 ReferenceError를 뱉었다. 코드 버그로 오인하기 딱 좋다.
+- **규칙**: dev 서버가 도는 동안 `.next`를 지우거나 `npm run build`를 돌리지 않는다.
+  검증이 필요하면 먼저 서버를 내린다. `tsc --noEmit`과 `eslint`는 `.next`를 건드리지 않으므로
+  언제든 안전하다.

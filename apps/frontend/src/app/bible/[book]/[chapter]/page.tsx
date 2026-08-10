@@ -37,7 +37,7 @@ export default async function BibleChapterPage(props: PageProps) {
       <CurrentChapterProvider initialChapterNum={chapter.chapterNum}>
         {/* sticky라 흐름에 남으므로 main보다 앞, 흐름상 최상단에 와야 한다.
             책 경계를 넘지 않으므로 권 이름은 피드 내내 고정이고, 장 숫자만 스크롤에 따라 바뀐다. */}
-        <BibleHeader bookName={chapter.book.name} />
+        <BibleHeader bookName={chapter.book.name} bookAbbrev={chapter.book.abbrev} />
 
         {/* px-4를 주지 않는다 — 선택 하이라이트가 화면 끝까지 닿아야 한다. 여백은 절이 갖는다.
             pb-32는 고정된 네비와 나눔 버튼에 가리지 않기 위한 것.
