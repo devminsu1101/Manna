@@ -24,5 +24,8 @@ npm-debug.log*
 *.iml
 .idea/
 .vscode/
+# Salesforce CLI가 열린 워크스페이스마다 만드는 org 로컬 캐시.
+# Manna와 무관하고 generation 카운터만 계속 올라 워킹트리를 더럽힌다.
+.sf/
 .vercel
 .env*
