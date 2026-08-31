@@ -41,12 +41,14 @@ erDiagram
         int id PK
         string name
         int created_by FK
+        string invite_code "초대 링크. 재발급 가능, id와 별개"
     }
     community_members {
         int id PK
         int community_id FK
         int user_id FK
         string role "leader|member"
+        string status "pending|active"
     }
     sharings {
         int id PK
@@ -92,8 +94,8 @@ erDiagram
 |---|---|---|
 | `users` | 사용자 프로필 | — |
 | `user_identities` | 소셜 로그인 | `UNIQUE(provider, provider_uid)`. 한 user가 여러 provider 연결 |
-| `communities` | 공동체 | `created_by → users` |
-| `community_members` | 소속 | `UNIQUE(community_id, user_id)`, role leader/member |
+| `communities` | 공동체 | `created_by → users`, `UNIQUE(invite_code)` |
+| `community_members` | 소속 | `UNIQUE(community_id, user_id)`, role leader/member, status pending/active |
 | `sharings` | 나눔 | type/visibility CHECK, 성경참조 전부-또는-전무 CHECK, 절 범위 CHECK |
 | `sharing_communities` | 나눔↔공동체 (다대다) | 복합 PK |
 | `prayer_logs` | "기도했어요" | `UNIQUE(prayed_for, pray_by, prayed_on)`, 자기참조 금지 |
@@ -106,6 +108,14 @@ erDiagram
 
 ### 공동체는 계층 없이 평평하다
 화면에 "푸른교회 수도권지부", "2026-2기 수요 새가족반"처럼 계층이 보이지만, `parent_id`를 두지 않는다. 카톡 단톡방처럼 **생성 시 이름을 짓고 모임장이 바꾸는** 모델이다. 교회-지부-반 3단계가 확정된 요구가 아니라, 지금 트리를 넣으면 안 쓰는 복잡도만 생긴다. 필요해지면 `parent_id` 한 컬럼으로 자기참조 트리를 나중에 얹는다.
+
+### 가입은 초대 링크 + 리더 승인을 거친다
+기도제목은 이 앱에서 가장 사적인 데이터라 **링크를 주운 사람이 그대로 들어오면 안 된다**(D-1004, D-1707). 그래서 컬럼 둘이 붙는다.
+
+- **`communities.invite_code`** — 링크가 곧 코드다. **`id`와 별개인 이유는 재발급 때문이다**: 코드를 방 ID로 쓰면 재발급이 곧 방을 새로 만드는 일이 되고, `id`를 FK로 참조하는 `community_members`·`sharing_communities`·`prayer_partners`가 전부 깨진다. 만료는 두지 않고 **재발급만** 한다(D-1708) — 승인이 있으면 코드 유출의 피해가 "가입 신청이 하나 뜬다"로 줄어들기 때문이다.
+- **`community_members.status`** — `pending`은 방 내용을 **하나도** 못 본다. 그것이 승인의 존재 이유다. 리더는 `created_by`가 자동으로 `role='leader'`이며, 위임·복수 리더는 MVP에서 제외한다.
+- ⚠️ **`status` DEFAULT가 `'pending'`이라 생성자도 그대로 두면 자기 방에 갇힌다.** 공동체 생성 시 리더 행은 `status='active'`, `role='leader'`를 명시적으로 넣는다.
+- 주소가 둘로 나뉜다 — `/invite/{code}`는 코드로 방을 찾고, `/communities/{id}`는 멤버가 쓴다. `id`가 순차 정수로 노출돼도 승인 전에는 아무것도 보이지 않아 MVP에서는 문제가 아니다.
 
 ### 기도 카운트는 "사람 기준 + 하루 하나"다 (제목 기준 아님)
 가장 중요한 결정. "기도했어요"의 단위가 **기도제목이 아니라 사람**이다.
@@ -128,6 +138,8 @@ SELECT * FROM sharings WHERE author_id = :who AND type = 'prayer'
  ORDER BY created_at DESC LIMIT 1;
 ```
 append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. 여러 기도제목이 좋아요처럼 병렬로 쌓이지 않는다.
+
+그래서 **화면의 말은 "수정"이 아니라 "업데이트"다**(D-1706). 편집 폼에 기존 내용을 채워 열고 저장하면 새 행이 생기므로 사용자에게는 이어지는 하나로 보이고, `created_at`이 갱신돼 카드의 "○일 전"이 저절로 맞는다. 1:1 UPDATE로 바꾸지 않은 이유는 이력을 잃기 때문이다 — 본인만 보는 기도제목 이력 화면은 MVP에서 빼지만 데이터는 이미 쌓인다.
 
 ### 나눔↔공동체는 다대다
 작성 화면에 공동체 체크박스가 여러 개다(수요 새가족반 + 푸른교회 수도권지부). 슬랙에서 한 메시지를 여러 채널에 크로스포스트하듯, 한 나눔을 여러 방에 공유한다. `sharing_communities` 조인 테이블.

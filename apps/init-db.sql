@@ -92,16 +92,25 @@ CREATE TABLE IF NOT EXISTS communities (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     created_by INT NOT NULL REFERENCES users(id),
+    -- 초대 링크가 곧 코드다(D-1004). id와 별개 컬럼인 이유: 재발급하면 코드가 바뀌는데
+    -- id는 세 테이블이 FK로 참조한다. 만료는 두지 않고 재발급만 한다(D-1708).
+    invite_code VARCHAR(16) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 가입은 리더 승인을 거친다(D-1707). pending은 방 내용을 하나도 못 본다 — 그것이 승인의
+-- 존재 이유다. 절반만 보여주면 승인이 아무것도 막지 못한다.
+-- ⚠️ status DEFAULT가 'pending'이라, 공동체를 만든 사람의 행은 반드시 status='active',
+--    role='leader'를 명시적으로 넣어야 한다. 안 그러면 생성자가 자기 방에 승인 대기로 갇힌다.
 CREATE TABLE IF NOT EXISTS community_members (
     id SERIAL PRIMARY KEY,
     community_id INT NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL DEFAULT 'member',  -- leader | member
+    role VARCHAR(20) NOT NULL DEFAULT 'member',    -- leader | member
+    status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending | active (D-1707)
     joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT community_members_role_valid CHECK (role IN ('leader','member')),
+    CONSTRAINT community_members_status_valid CHECK (status IN ('pending','active')),
     UNIQUE (community_id, user_id)
 );
 
