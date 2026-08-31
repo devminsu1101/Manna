@@ -158,16 +158,22 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 
 ## API 명세 대응
 
-`03_API_SPEC.md`의 엔드포인트 초안이 어느 테이블을 다루는지:
+`03_API_SPEC.md`의 엔드포인트가 어느 테이블을 다루는지:
 
-| 엔드포인트 (초안) | 테이블 |
+| 엔드포인트 | 테이블 |
 |---|---|
-| `GET/POST /communities`, `GET /communities/{id}` | `communities`, `community_members` |
-| `POST /sharings`, `GET /sharings?communityId=` | `sharings`, `sharing_communities` |
-| `POST /prayers` (기도제목 작성) | `sharings(type='prayer')` |
-| `GET /prayers/partner` | `prayer_partners` |
-| `POST /prayers/{id}/pray` | `prayer_logs` |
+| `GET/POST /communities`, `GET/PATCH /communities/{id}` | `communities`, `community_members` |
+| `GET /invites/{code}`, `POST /invites/{code}/requests` | `communities.invite_code` → `community_members(status='pending')` |
+| `POST /communities/{id}/invite-code` | `communities.invite_code` (재발급) |
+| `POST /communities/{id}/members/{userId}/approve` | `community_members.status` → `'active'` |
+| `DELETE /communities/{id}/members/{userId}` | `community_members` 행 삭제 (거절·강퇴·나가기 공용) |
+| `GET/POST /pray/requests/me`, `GET /pray/requests/{userId}` | `sharings(type='prayer')`, `sharing_communities` |
+| `GET /pray/room` | `community_members` + `sharings` + `prayer_logs` (정렬) |
+| `POST /pray/{userId}` | `prayer_logs` |
+| `GET /pray/summary` | `prayer_logs` (어제 집계) |
+| `GET /communities/{id}`의 `prayerPartner`(그 방의 짝) · `GET /pray/summary`의 `partner`(내 짝 중 하나) · `GET /pray/room`의 `partners` 구획 — 셋 다 Phase 3까지 빈다 | `prayer_partners` |
+| `POST /sharings`, `GET /sharings?communityId=` (초안, Phase 3) | `sharings`, `sharing_communities` |
 | (로그인) | `users`, `user_identities` |
 | (알림 배지) | `notifications` |
 
-`POST /prayers/{id}/pray`의 `{id}`는 재검토가 필요하다 — 기도가 사람 기준이 됐으므로 `{id}`가 기도제목(sharing)이 아니라 **기도받는 사용자**를 가리켜야 한다. 구현 시 `POST /prayers/{userId}/pray`로 조정.
+**✅ 해결됨** — 초안의 `POST /prayers/{id}/pray`는 `{id}`가 기도제목을 가리켜 기도의 단위(사람)와 어긋났다. `POST /pray/{userId}`로 바로잡았다. 아울러 **기도제목(`sharings`)과 기도 행위(`prayer_logs`)는 경로에서도 갈라 둔다** — `/pray/requests/...`와 `/pray/{userId}`. 한 이름에 두 뜻을 담으면 `/prayers/{userId}/pray` 같은 주소가 나온다.
