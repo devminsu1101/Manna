@@ -29,11 +29,11 @@ export function PrayerPartnerCard({ partner }: { partner: PrayerPartner | null }
           </div>
 
           {partner.hasRequest ? (
-            // TODO(기도 도메인): 그 사람 기도제목 상세(`/prayer/{userId}`)로. 지금은 그
-            // 라우트가 없어 404가 되므로 탭의 "준비 중" 화면으로 보낸다 — 여기서
-            // 막다른 곳에 갇히지 않게 하는 것이 ComingSoonScreen을 둔 이유였다.
+            // 기도 도메인이 붙어 그 사람 상세로 직접 간다(D-1803이 예고한 한 줄).
+            // 목데이터가 두 파일에 나뉘어 있으므로 이 userId가 features/prayer/api.ts의
+            // 목록에도 있어야 404가 안 난다.
             <Link
-              href="/prayer"
+              href={`/prayer/${partner.userId}`}
               className={`${ROW_CLASS} justify-center font-bold text-foreground/50 transition-colors hover:bg-white/60`}
             >
               기도제목 보기

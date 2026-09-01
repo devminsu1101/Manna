@@ -205,6 +205,9 @@ CREATE INDEX idx_sharings_author_type_recent ON sharings(author_id, type, create
 CREATE INDEX idx_sharing_communities_community ON sharing_communities(community_id);
 -- "어제 나를 위해 기도한 사람" 집계 경로.
 CREATE INDEX idx_prayer_logs_target_day ON prayer_logs(prayed_for_user_id, prayed_on);
+-- 중보기도실 정렬 2순위 "내가 마지막으로 이 사람에게 기도한 날"(D-1908). 위 인덱스는 받는 사람
+-- 기준이라 pray_by = :me 필터를 못 탄다. max(prayed_on)을 뒤에서 잡을 수 있게 열 순서를 맞춘다.
+CREATE INDEX idx_prayer_logs_by_me ON prayer_logs(pray_by, prayed_for_user_id, prayed_on);
 CREATE INDEX idx_prayer_partners_lookup ON prayer_partners(community_id, week_start);
 -- 안읽은 알림만 빠르게(배지). 읽은 알림은 인덱스에서 빠진다.
 CREATE INDEX idx_notifications_unread ON notifications(user_id) WHERE read_at IS NULL;

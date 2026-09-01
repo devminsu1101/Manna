@@ -7,6 +7,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { getChapter } from "@/features/bible/api";
 import { LAST_READ_COOKIE, lastReadLocation } from "@/features/bible/last-read";
 import { MainTopBar } from "@/features/home/MainTopBar";
+import { getPraySummary } from "@/features/prayer/api";
+import { PraySummaryRows } from "@/features/prayer/components/PraySummaryRows";
 
 /**
  * 홈("만나!"). 여러 도메인을 모아 보여주는 대시보드다.
@@ -14,11 +16,14 @@ import { MainTopBar } from "@/features/home/MainTopBar";
  * v1(골격 MVP)에서는 백엔드가 인증뿐이라, 데이터가 필요 없는 섹션만 실제로 채운다:
  *  - 오늘의 말씀: 우리 성경 데이터(개역개정)에서 직접
  *  - 최근 읽은 말씀: 쿠키(이미 구현)
- * 기도·공동체 섹션은 해당 도메인이 붙기 전까지 "곧 제공" 스텁이다.
+ * 기도 섹션은 목데이터로 실화면이 됐다(features/prayer/api.ts). 공동체(나눔) 섹션만 아직
+ * "곧 제공" 스텁이다 — 나눔 도메인은 Phase 3다.
  */
 export default async function MainPage() {
   const store = await cookies();
   const lastRead = lastReadLocation(store.get(LAST_READ_COOKIE)?.value);
+
+  const praySummary = await getPraySummary();
 
   // 오늘의 말씀은 사 41:10. 하드코딩한 문자열이 아니라 우리 데이터에서 뽑아 번역본(개역개정)을 맞춘다.
   const isaiah = await getChapter("is", 41);
@@ -29,10 +34,10 @@ export default async function MainPage() {
       <MainTopBar />
 
       <main className="flex-1 space-y-6 px-4 py-5 pb-28">
-        {/* ── 사랑으로 나누세요 (기도) — 스텁 ── */}
+        {/* ── 사랑으로 나누세요 (기도) ── */}
         <section className="rounded-2xl bg-surface-love p-4">
           <SectionHeader icon="/mascot/warm.png" title="사랑으로 나누세요" />
-          <ComingSoon>기도짝과 중보기도는 곧 제공됩니다</ComingSoon>
+          <PraySummaryRows summary={praySummary} />
         </section>
 
         {/* ── 지금 공동체에서는 (나눔) — 스텁 ── */}
