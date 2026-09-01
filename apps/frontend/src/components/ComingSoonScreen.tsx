@@ -5,7 +5,8 @@ import { MainTopBar } from "@/features/home/MainTopBar";
 import { cn } from "@/lib/utils";
 
 /**
- * 아직 도메인이 붙지 않은 탭의 화면. `/community` · `/prayer` · `/sharings/new`가 쓴다.
+ * 아직 도메인이 붙지 않은 탭의 화면. `/prayer` · `/sharings/new`가 쓴다.
+ * (`/community`도 이걸 썼지만 `/communities` 목록 화면으로 대체됐다.)
  *
  * 404를 주지 않고 실제 화면을 두는 이유: 이 셋은 **하단 네비가 늘 가리키고 있는 곳**이라
  * 사용자가 오타로 들어오는 자리가 아니라 눌러서 들어오는 자리다. 없는 페이지가 아니라

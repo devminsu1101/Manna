@@ -14,7 +14,8 @@ const TABS = [
   // 장을 직접 찍지 않는다. /bible이 마지막에 읽던 장으로 이어준다 — 이 한 겹 덕분에
   // 여기가 정적인 href를 갖는 서버 컴포넌트로 남는다.
   { href: "/bible", label: "성경 읽기", icon: "/mascot/bible.png" },
-  { href: "/community", label: "공동체", icon: "/mascot/together.png" },
+  // 방 하나가 아니라 목록으로 간다 — 개수와 무관하게 항상 거친다(D-1001, D-1701).
+  { href: "/communities", label: "공동체", icon: "/mascot/together.png" },
   { href: "/prayer", label: "기도하기", icon: "/mascot/warm.png" },
 ] as const;
 
