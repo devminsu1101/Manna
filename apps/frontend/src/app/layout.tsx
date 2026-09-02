@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
-import { BRAND_COLOR } from "@/lib/brand";
+import { ToneNavigation } from "@/components/ToneNavigation";
+import { SURFACE_COLOR } from "@/lib/brand";
 import "./globals.css";
 
 // Pretendard를 셀프 호스팅한다. CDN을 쓰면 크리티컬 패스에 서드파티 오리진이 붙고,
@@ -22,8 +23,16 @@ export const metadata: Metadata = {
   icons: { apple: "/icons/icon-192.png" },
 };
 
+/**
+ * 기본 상단바 색. 홈 · 공동체 · /sharings/new · /login · /landing · 404가 전부 warm이라
+ * 여기 한 줄이 그 전부를 덮는다. 성경·기도는 자기 세그먼트 layout에서 덮어쓴다.
+ *
+ * 매니페스트의 `theme_color`도 같은 warm이어야 한다(app/manifest.ts) — iOS standalone은
+ * **앱을 켜는 순간**의 상태바 색을 매니페스트에서, 그 뒤로는 이 meta에서 가져온다.
+ * start_url이 `/`라 둘이 같은 값이라야 켤 때 색이 튀지 않는다.
+ */
 export const viewport: Viewport = {
-  themeColor: BRAND_COLOR,
+  themeColor: SURFACE_COLOR.warm,
 };
 
 export default function RootLayout({
@@ -33,7 +42,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={`${pretendard.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {/* 색이 바뀌는 이동만 문서 이동으로 돌린다 — iOS가 상태바 색을 다시 읽게. */}
+        <ToneNavigation />
+        {children}
+      </body>
     </html>
   );
 }

@@ -23,7 +23,10 @@ export function BottomNav() {
   const [left, right] = [TABS.slice(0, 2), TABS.slice(2)];
 
   return (
-    <nav className="flex items-center justify-around border-t border-border bg-background px-2 py-2">
+    // 아래 여백이 위보다 두껍다. 화면 맨 아래 모서리는 엄지가 닿기 나쁜 자리라 탭 영역이
+    // 거기서 끝나면 안 된다. env(safe-area-inset-bottom)은 쓰지 않는다 — viewport-fit=cover가
+    // 없으면 그 값이 0이라 지금보다 나빠진다.
+    <nav className="flex items-center justify-around border-t border-border bg-background px-2 pt-2 pb-6">
       {left.map((tab) => (
         <NavTab key={tab.href} {...tab} />
       ))}

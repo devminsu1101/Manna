@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { AppShell } from "@/components/AppShell";
 import { LoginButtons } from "@/features/auth/LoginButtons";
 
 /**
@@ -10,7 +11,7 @@ import { LoginButtons } from "@/features/auth/LoginButtons";
  */
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 flex-col items-center bg-muted px-8 pb-16">
+    <AppShell className="flex flex-col items-center bg-muted px-8 py-0 pb-16">
       {/* 마스코트를 화면 가운데 위쪽에 크게. 로그인 버튼은 아래 3분의 1 지점. */}
       <div className="flex flex-1 flex-col items-center justify-center">
         <Image
@@ -31,6 +32,6 @@ export default function LoginPage() {
         여러분 모두를 환영합니다
       </p>
       <p className="mt-2 text-sm text-foreground/50">(창 00:00)</p>
-    </main>
+    </AppShell>
   );
 }

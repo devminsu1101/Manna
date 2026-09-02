@@ -3,6 +3,20 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { ProfileButton } from "@/features/auth/ProfileButton";
+import { cn } from "@/lib/utils";
+
+/**
+ * 화면의 도메인 색. globals.css의 배분을 그대로 따른다 — warm=공동체·홈, cool=말씀, love=기도.
+ *
+ * ⚠️ **라우트 세그먼트의 `themeColor`와 반드시 짝이어야 한다**(lib/brand.ts의 SURFACE_COLOR,
+ * app/prayer/layout.tsx 등). 상태바(시계·배터리 뒤)는 CSS가 아니라 그 meta가 칠하므로,
+ * 한쪽만 바꾸면 상단바와 상태바 사이에 색 경계선이 생긴다.
+ */
+const TONE = {
+  warm: "bg-surface-warm",
+  cool: "bg-surface-cool",
+  love: "bg-surface-love",
+} as const;
 
 /**
  * 메인 화면 상단 바. 좌: 알림, 중앙: 앱 이름, 우: 프로필(로그인 상태).
@@ -19,12 +33,23 @@ export function MainTopBar({
   title = "Manna",
   /** 제목 왼쪽 마스코트. 홈에는 없고 대문에만 있다. */
   icon,
+  /** 화면의 도메인 색. 라우트의 themeColor와 같은 값이라야 한다(TONE 주석 참고). */
+  tone = "warm",
 }: {
   title?: string;
   icon?: string;
+  tone?: keyof typeof TONE;
 } = {}) {
   return (
-    <header className="flex items-center justify-between gap-2 border-b border-border bg-muted px-4 py-3">
+    // sticky가 없다. 이 바는 AppShell의 스크롤러 **바깥**에 있어서 처음부터 움직이지 않는다
+    // — sticky가 하던 일을 셸이 구조로 한다. iOS 고무줄에 같이 끌려 내려가지 않는 것도
+    // 그래서다(sticky로는 그게 안 됐다).
+    <header
+      className={cn(
+        "flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3",
+        TONE[tone],
+      )}
+    >
       <Button variant="ghost" size="icon-lg" className="relative shrink-0" aria-label="알림">
         <Bell className="size-6" />
         {/* TODO(알림 도메인): 안 읽은 알림 여부를 실제 데이터에 연결. 지금은 항상 표시. */}

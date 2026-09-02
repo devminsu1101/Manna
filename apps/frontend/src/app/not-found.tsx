@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -21,7 +22,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function NotFound() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center bg-muted px-8 py-16">
+    <AppShell className="flex flex-col items-center justify-center bg-muted px-8 py-16">
       <Image
         src="/mascot/tears.png"
         alt="울고 있는 만나 마스코트"
@@ -52,6 +53,6 @@ export default function NotFound() {
           <Link href="/bible">성경 읽기</Link>
         </Button>
       </div>
-    </main>
+    </AppShell>
   );
 }

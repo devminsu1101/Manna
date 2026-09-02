@@ -27,7 +27,10 @@ export function BibleHeader({
   bookAbbrev: string;
 }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-1 border-b border-border bg-header px-4 py-3">
+    // header-bleed: 헤더 위쪽으로 같은 색을 한 장 더 깐다(globals.css). 리더만 문서 스크롤을
+    // 쓰기 때문에 iOS 고무줄에 이 헤더가 끌려 내려가고, 그 틈으로 흰 배경이 드러난다.
+    // 다른 화면은 AppShell이 문서를 잠가서 애초에 그 일이 안 생긴다.
+    <header className="header-bleed sticky top-0 z-30 flex items-center justify-between gap-1 border-b border-border bg-header px-4 py-3">
       <Button variant="ghost" size="icon-lg" className="relative" aria-label="알림">
         <Bell className="size-6" />
         {/* TODO: 읽지 않은 알림 여부를 실제 데이터에 연결할 것 */}

@@ -130,4 +130,26 @@
   html {
     @apply font-sans;
   }
+
+  /* 셸이 있는 화면은 문서 자체가 스크롤되지 않는다. iOS 고무줄은 sticky든 fixed든 상단바를
+     같이 끌고 내려가는데, 문서가 안 움직이면 문서가 튕길 것도 없다 — 튕김은 셸 안의
+     main이 대신 받는다(components/AppShell.tsx). */
+  html:has([data-app-shell]),
+  html:has([data-app-shell]) body {
+    overflow: hidden;
+  }
+
+  /* 성경 리더 전용. 리더는 문서 스크롤을 유지해야 해서(D-1101~1105) 셸로 옮길 수 없다.
+     대신 헤더 위쪽으로 같은 색 블록을 한 장 깔아, 고무줄 구간에 흰 틈이 아니라 헤더 색이
+     보이게 한다. background:inherit라 헤더 색을 자동으로 따라간다 — 색을 두 번 적지 않는다.
+     헤더가 sticky(=positioned)라 이 ::before의 컨테이닝 블록이 되어 준다. */
+  .header-bleed::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: inherit;
+  }
 }

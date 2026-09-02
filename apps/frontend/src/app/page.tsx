@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { getChapter } from "@/features/bible/api";
 import { LAST_READ_COOKIE, lastReadLocation } from "@/features/bible/last-read";
 import { MainTopBar } from "@/features/home/MainTopBar";
@@ -26,59 +26,50 @@ export default async function MainPage() {
   const praySummary = await getPraySummary();
 
   // 오늘의 말씀은 사 41:10. 하드코딩한 문자열이 아니라 우리 데이터에서 뽑아 번역본(개역개정)을 맞춘다.
-  const isaiah = await getChapter("is", 41);
-  const todaysVerse = isaiah?.verses.find((v) => v.verseNum === 10);
+  const isaiah = await getChapter("dt", 29);
+  const todaysVerse = isaiah?.verses.find((v) => v.verseNum === 29);
 
   return (
-    <>
-      <MainTopBar />
+    <AppShell topBar={<MainTopBar />} className="space-y-6">
+      {/* ── 사랑으로 나누세요 (기도) ── */}
+      <section className="rounded-2xl bg-surface-love p-4">
+        <SectionHeader icon="/mascot/warm.png" title="사랑으로 나누세요" />
+        <PraySummaryRows summary={praySummary} />
+      </section>
 
-      <main className="flex-1 space-y-6 px-4 py-5 pb-28">
-        {/* ── 사랑으로 나누세요 (기도) ── */}
-        <section className="rounded-2xl bg-surface-love p-4">
-          <SectionHeader icon="/mascot/warm.png" title="사랑으로 나누세요" />
-          <PraySummaryRows summary={praySummary} />
-        </section>
+      {/* ── 지금 공동체에서는 (나눔) — 스텁 ── */}
+      <section className="rounded-2xl bg-surface-warm p-4">
+        <SectionHeader icon="/mascot/together.png" title="지금 공동체에서는" />
+        <ComingSoon>공동체 나눔은 곧 제공됩니다</ComingSoon>
+      </section>
 
-        {/* ── 지금 공동체에서는 (나눔) — 스텁 ── */}
-        <section className="rounded-2xl bg-surface-warm p-4">
-          <SectionHeader icon="/mascot/together.png" title="지금 공동체에서는" />
-          <ComingSoon>공동체 나눔은 곧 제공됩니다</ComingSoon>
-        </section>
+      {/* ── 오늘의 말씀 (실데이터) ── */}
+      <section className="rounded-2xl bg-surface-cool p-4">
+        <SectionHeader icon="/mascot/bible.png" title="오늘의 말씀" />
 
-        {/* ── 오늘의 말씀 (실데이터) ── */}
-        <section className="rounded-2xl bg-surface-cool p-4">
-          <SectionHeader icon="/mascot/bible.png" title="오늘의 말씀" />
+        {todaysVerse && (
+          <blockquote className="mt-3 rounded-xl bg-white/70 px-4 py-5 text-center">
+            <p className="leading-relaxed text-foreground">{todaysVerse.text}</p>
+            <cite className="mt-3 block text-sm text-foreground/60 not-italic">신명기 29:29</cite>
+          </blockquote>
+        )}
 
-          {todaysVerse && (
-            <blockquote className="mt-3 rounded-xl bg-white/70 px-4 py-5 text-center">
-              <p className="leading-relaxed text-foreground">{todaysVerse.text}</p>
-              <cite className="mt-3 block text-sm text-foreground/60 not-italic">이사야 41:10</cite>
-            </blockquote>
-          )}
-
-          {lastRead && (
-            <Link
-              href={lastRead.path}
-              className="mt-3 flex items-center justify-between rounded-xl bg-white px-4 py-3 transition-colors hover:bg-white/60"
-            >
-              <span>
-                <span className="block font-bold text-foreground">최근 읽은 말씀 바로가기</span>
-                <span className="block text-sm text-foreground/60">
-                  {lastRead.bookName} {lastRead.chapterNum}장
-                </span>
+        {lastRead && (
+          <Link
+            href={lastRead.path}
+            className="mt-3 flex items-center justify-between rounded-xl bg-white px-4 py-3 transition-colors hover:bg-white/60"
+          >
+            <span>
+              <span className="block font-bold text-foreground">최근 읽은 말씀 바로가기</span>
+              <span className="block text-sm text-foreground/60">
+                {lastRead.bookName} {lastRead.chapterNum}장
               </span>
-              <ChevronRight className="size-5 shrink-0 text-foreground/40" />
-            </Link>
-          )}
-        </section>
-      </main>
-
-      {/* 리더의 ReaderChrome과 달리 스크롤에 숨지 않는다. 홈은 몰입 화면이 아니다. */}
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+            </span>
+            <ChevronRight className="size-5 shrink-0 text-foreground/40" />
+          </Link>
+        )}
+      </section>
+    </AppShell>
   );
 }
 

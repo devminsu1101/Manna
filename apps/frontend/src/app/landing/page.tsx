@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { AppShell } from "@/components/AppShell";
+
 /**
  * 진입 스플래시. 마스코트 + 진행 바를 잠깐 보여주고 로그인으로 넘긴다.
  *
@@ -28,7 +30,7 @@ export default function LandingPage() {
   }, [router]);
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center bg-muted px-8">
+    <AppShell className="flex flex-col items-center justify-center bg-muted px-8">
       <Image
         src="/mascot/hi.png"
         alt="만나"
@@ -54,6 +56,6 @@ export default function LandingPage() {
         </div>
         <p className="text-sm text-foreground/60">앱을 준비하는 중…</p>
       </div>
-    </main>
+    </AppShell>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { EmptyRow } from "@/features/community/components/CommunitySection";
 import { MainTopBar } from "@/features/home/MainTopBar";
@@ -29,33 +29,28 @@ export default async function MyPrayerRequestsPage() {
   const requests = await getMyPrayerRequests();
 
   return (
-    <>
-      <MainTopBar icon="/mascot/tears.png" title="이전 기도제목" />
+    <AppShell
+      topBar={<MainTopBar icon="/mascot/tears.png" title="이전 기도제목" tone="love" />}
+      className="flex flex-col"
+    >
+      {requests.length === 0 ? (
+        <EmptyRow>아직 올린 기도제목이 없어요</EmptyRow>
+      ) : (
+        <ul className="space-y-3">
+          {requests.map((request, index) => (
+            <li key={request.id}>
+              {/* 맨 위 한 건만 남들에게 보인다 — 조회 규칙이 `LIMIT 1`이기 때문(D-1706).
+                  화면이 그 사실을 직접 말해 주지 않으면 아래 것들도 보이는 줄 안다. */}
+              <RequestCard request={request} isCurrent={index === 0} />
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <main className="flex flex-1 flex-col px-4 py-5 pb-28">
-        {requests.length === 0 ? (
-          <EmptyRow>아직 올린 기도제목이 없어요</EmptyRow>
-        ) : (
-          <ul className="space-y-3">
-            {requests.map((request, index) => (
-              <li key={request.id}>
-                {/* 맨 위 한 건만 남들에게 보인다 — 조회 규칙이 `LIMIT 1`이기 때문(D-1706).
-                    화면이 그 사실을 직접 말해 주지 않으면 아래 것들도 보이는 줄 안다. */}
-                <RequestCard request={request} isCurrent={index === 0} />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <Button asChild variant="ghost" className="mt-4 h-11 w-full rounded-xl">
-          <Link href="/prayer">중보기도실로 돌아가기</Link>
-        </Button>
-      </main>
-
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+      <Button asChild variant="ghost" className="mt-4 h-11 w-full rounded-xl">
+        <Link href="/prayer">중보기도실로 돌아가기</Link>
+      </Button>
+    </AppShell>
   );
 }
 

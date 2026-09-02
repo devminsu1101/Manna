@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { BACKGROUND_COLOR, BRAND_COLOR } from "@/lib/brand";
+import { BACKGROUND_COLOR, SURFACE_COLOR } from "@/lib/brand";
 
 // 서비스워커는 아직 없다(로드맵 Phase 3). 따라서 매니페스트는 감지되지만
 // 설치 가능(installable) 판정은 나지 않는 것이 정상이다.
@@ -13,7 +13,12 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     background_color: BACKGROUND_COLOR,
-    theme_color: BRAND_COLOR,
+    // **실행 직후 상태바 색이 이 값이다.** iOS standalone은 앱을 켤 때 문서의 theme-color가
+    // 아니라 여기를 본다 — 브랜드 노랑(#FFCC00)을 두었더니 켤 때마다 시계 뒤가 노랬다.
+    // start_url이 `/`(홈)이므로 홈의 상단바 색과 같아야 한다.
+    // ⚠️ iOS는 '홈 화면에 추가' 시점에 매니페스트를 캐시한다. 이 값을 바꿔도 이미 설치된
+    //    앱에는 반영되지 않는다 — 지우고 다시 추가해야 보인다.
+    theme_color: SURFACE_COLOR.warm,
     icons: [
       // TODO: 브랜드 색 단색 플레이스홀더. Figma에서 실제 아이콘을 export해 교체할 것.
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

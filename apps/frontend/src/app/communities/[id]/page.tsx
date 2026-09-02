@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { getCommunity } from "@/features/community/api";
 import { MemberList } from "@/features/community/components/MemberList";
 import { PrayerPartnerCard } from "@/features/community/components/PrayerPartnerCard";
@@ -38,24 +38,17 @@ export default async function CommunityPage(props: PageProps) {
   if (!community) notFound();
 
   return (
-    <>
-      <MainTopBar icon="/mascot/together.png" title={community.name} />
-
-      {/* pb-28은 고정 하단 네비(+홈 인디케이터)만큼 본문을 비워 두는 값. 홈과 같다. */}
-      <main className="flex-1 space-y-6 px-4 py-5 pb-28">
-        <PrayerPartnerCard partner={community.prayerPartner} />
-        <SharingShelf sharings={community.sharings} />
-        <MemberList
-          members={community.members}
-          myRole={community.myRole}
-          inviteCode={community.inviteCode}
-        />
-      </main>
-
-      {/* 홈과 같이 스크롤에 숨지 않는다. 몰입 화면은 리더뿐이다. */}
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+    <AppShell
+      topBar={<MainTopBar icon="/mascot/together.png" title={community.name} />}
+      className="space-y-6"
+    >
+      <PrayerPartnerCard partner={community.prayerPartner} />
+      <SharingShelf sharings={community.sharings} />
+      <MemberList
+        members={community.members}
+        myRole={community.myRole}
+        inviteCode={community.inviteCode}
+      />
+    </AppShell>
   );
 }

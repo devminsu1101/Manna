@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
 import { MainTopBar } from "@/features/home/MainTopBar";
@@ -26,39 +26,32 @@ export default async function PrayerPage() {
   const { partners, members } = await getPrayRoom();
 
   return (
-    <>
-      <MainTopBar icon="/mascot/warm.png" title="중보기도실" />
+    <AppShell
+      topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" tone="love" />}
+      className="flex flex-col space-y-6"
+    >
+      <RequestSection />
 
-      {/* pb-28은 고정 하단 네비(+홈 인디케이터)만큼 본문을 비워 두는 값. 홈과 같다. */}
-      <main className="flex flex-1 flex-col space-y-6 px-4 py-5 pb-28">
-        <RequestSection />
+      {/* 배정 스케줄러가 Phase 3라 지금은 늘 빈 배열이다. 그때 제목만 덩그러니 남지 않도록
+          **구획을 통째로 렌더하지 않는다.** */}
+      {partners.length > 0 && (
+        <CommunitySection icon="/mascot/warm.png" title="이번주 기도짝" surface="love">
+          {partners.map((person) => (
+            <PrayerPersonCard key={person.userId} person={person} />
+          ))}
+        </CommunitySection>
+      )}
 
-        {/* 배정 스케줄러가 Phase 3라 지금은 늘 빈 배열이다. 그때 제목만 덩그러니 남지 않도록
-            **구획을 통째로 렌더하지 않는다.** */}
-        {partners.length > 0 && (
-          <CommunitySection icon="/mascot/warm.png" title="이번주 기도짝" surface="love">
-            {partners.map((person) => (
-              <PrayerPersonCard key={person.userId} person={person} />
-            ))}
-          </CommunitySection>
-        )}
-
-        {members.length > 0 ? (
-          <CommunitySection icon="/mascot/together.png" title="함께 기도해요" surface="love">
-            {members.map((person) => (
-              <PrayerPersonCard key={person.userId} person={person} />
-            ))}
-          </CommunitySection>
-        ) : (
-          partners.length === 0 && <EmptyState />
-        )}
-      </main>
-
-      {/* 홈과 같이 스크롤에 숨지 않는다. 몰입 화면은 리더뿐이다. */}
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+      {members.length > 0 ? (
+        <CommunitySection icon="/mascot/together.png" title="함께 기도해요" surface="love">
+          {members.map((person) => (
+            <PrayerPersonCard key={person.userId} person={person} />
+          ))}
+        </CommunitySection>
+      ) : (
+        partners.length === 0 && <EmptyState />
+      )}
+    </AppShell>
   );
 }
 

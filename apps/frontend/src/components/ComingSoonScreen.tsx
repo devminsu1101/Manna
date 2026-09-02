@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { cn } from "@/lib/utils";
 
@@ -32,44 +32,32 @@ export function ComingSoonScreen({
   surface: "love" | "warm" | "cool";
 }) {
   return (
-    <>
-      <MainTopBar />
+    <AppShell topBar={<MainTopBar />} className="flex flex-col">
+      <section
+        className={cn(
+          "flex flex-1 flex-col items-center justify-center rounded-2xl px-6 py-16 text-center",
+          surface === "love" && "bg-surface-love",
+          surface === "warm" && "bg-surface-warm",
+          surface === "cool" && "bg-surface-cool",
+        )}
+      >
+        <Image
+          src={icon}
+          alt={iconAlt}
+          width={160}
+          height={160}
+          className="size-24 object-contain"
+        />
 
-      {/* pb-28은 고정 하단 네비(+홈 인디케이터)만큼 본문을 비워 두는 값. 홈과 같다. */}
-      <main className="flex flex-1 flex-col px-4 py-5 pb-28">
-        <section
-          className={cn(
-            "flex flex-1 flex-col items-center justify-center rounded-2xl px-6 py-16 text-center",
-            surface === "love" && "bg-surface-love",
-            surface === "warm" && "bg-surface-warm",
-            surface === "cool" && "bg-surface-cool",
-          )}
-        >
-          <Image
-            src={icon}
-            alt={iconAlt}
-            width={160}
-            height={160}
-            className="size-24 object-contain"
-          />
+        {/* h1이 아니라 h2다 — 이 셸에서는 MainTopBar의 "Manna"가 h1이다(홈과 같은 구조).
+            404는 상단바가 없어 거기서만 h1이 여기 온다. */}
+        <h2 className="mt-6 text-xl font-bold text-foreground">{title}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-foreground/60">{description}</p>
 
-          {/* h1이 아니라 h2다 — 이 셸에서는 MainTopBar의 "Manna"가 h1이다(홈과 같은 구조).
-              404는 상단바가 없어 거기서만 h1이 여기 온다. */}
-          <h2 className="mt-6 text-xl font-bold text-foreground">{title}</h2>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-            {description}
-          </p>
-
-          <span className="mt-6 rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-foreground/60">
-            준비 중
-          </span>
-        </section>
-      </main>
-
-      {/* 홈과 같이 스크롤에 숨지 않는다. 몰입 화면은 리더뿐이다. */}
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+        <span className="mt-6 rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-foreground/60">
+          준비 중
+        </span>
+      </section>
+    </AppShell>
   );
 }

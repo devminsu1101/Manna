@@ -3,7 +3,7 @@ import { ChevronRight, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { listMyCommunities } from "@/features/community/api";
 import type { CommunitySummary } from "@/features/community/types";
@@ -24,40 +24,33 @@ export default async function CommunitiesPage() {
   const communities = await listMyCommunities();
 
   return (
-    <>
-      <MainTopBar icon="/mascot/together.png" title="공동체" />
+    <AppShell
+      topBar={<MainTopBar icon="/mascot/together.png" title="공동체" />}
+      className="flex flex-col"
+    >
+      {communities.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          <ul className="space-y-2">
+            {communities.map((community) => (
+              <li key={community.id}>
+                <CommunityRow community={community} />
+              </li>
+            ))}
+          </ul>
 
-      {/* pb-28은 고정 하단 네비(+홈 인디케이터)만큼 본문을 비워 두는 값. 홈과 같다. */}
-      <main className="flex flex-1 flex-col px-4 py-5 pb-28">
-        {communities.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <>
-            <ul className="space-y-2">
-              {communities.map((community) => (
-                <li key={community.id}>
-                  <CommunityRow community={community} />
-                </li>
-              ))}
-            </ul>
-
-            {/* 생성 진입점이 목록에 있다는 것이 D-1701이 자동 진입을 반려한 근거 중 하나다.
-                목록은 어차피 탭에서 한 번에 닿아야 한다. */}
-            <Button asChild variant="outline" className="mt-4 h-12 w-full rounded-xl">
-              <Link href="/communities/new">
-                <Plus className="size-5" />
-                공동체 만들기
-              </Link>
-            </Button>
-          </>
-        )}
-      </main>
-
-      {/* 홈과 같이 스크롤에 숨지 않는다. 몰입 화면은 리더뿐이다. */}
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <BottomNav />
-      </div>
-    </>
+          {/* 생성 진입점이 목록에 있다는 것이 D-1701이 자동 진입을 반려한 근거 중 하나다.
+              목록은 어차피 탭에서 한 번에 닿아야 한다. */}
+          <Button asChild variant="outline" className="mt-4 h-12 w-full rounded-xl">
+            <Link href="/communities/new">
+              <Plus className="size-5" />
+              공동체 만들기
+            </Link>
+          </Button>
+        </>
+      )}
+    </AppShell>
   );
 }
 
