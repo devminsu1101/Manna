@@ -58,9 +58,8 @@ export default async function PrayerPage() {
 /**
  * 시안의 첫 구역 "기도를 요청하세요". D-903이 말한 작성 유도의 자리가 여기다.
  *
- * 작성은 `POST /pray/requests/me`라 `/communities/new`의 "만들기"와 **같은 문턱**
- * (백엔드 배포 + CSRF, D-404) 뒤에 있다. 모양은 두고 아직 안 열렸다고 말한다 — 이 화면의
- * 주 동작 중 하나라 빼면 화면이 반쪽이 된다(D-1803).
+ * 버튼은 `/prayer/requests/new`로 간다. 백엔드 문턱(CSRF D-404)은 **그 화면의 제출 버튼**이
+ * 지고 있다 — 쓰는 동안은 아무것도 안 막히고, 막히는 자리는 실제로 서버에 닿는 한 곳뿐이다.
  *
  * ⚠️ 시안의 `...`(메뉴) 대신 텍스트 링크를 뒀다. 지금 걸 항목이 "이전 기도제목" 하나뿐이고
  * `components/ui/`에 dropdown-menu가 없어 radix 드롭다운을 새로 깔아야 한다. 항목 하나에
@@ -82,14 +81,11 @@ function RequestSection() {
         </Link>
       }
     >
-      {/* TODO(POST /pray/requests/me): CSRF 재활성(D-404) 후 작성 화면으로 연결.
-          말은 "수정"이 아니라 "업데이트"다 — 저장이 append-only라 이력이 쌓인다(D-1706). */}
-      <Button variant="secondary" className="h-12 w-full rounded-xl" disabled>
-        기도제목 작성하기
+      {/* 문턱(CSRF D-404)은 작성 화면의 제출 버튼으로 내려갔다. 여기서는 그냥 열린다 —
+          말은 "수정"이 아니라 "업데이트"다, 저장이 append-only라 이력이 쌓인다(D-1706). */}
+      <Button asChild variant="secondary" className="h-12 w-full rounded-xl">
+        <Link href="/prayer/requests/new">기도제목 작성하기</Link>
       </Button>
-      <p className="px-1 text-center text-xs text-foreground/50">
-        기도제목 쓰기는 백엔드가 연결되면 열립니다
-      </p>
     </CommunitySection>
   );
 }

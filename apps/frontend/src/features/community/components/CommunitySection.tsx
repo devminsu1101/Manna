@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * 시안(`Community Page.png`)에서 세 구역은 배경색과 우측 버튼만 다르고 나머지가 같다 —
  * 마스코트 + 제목 + 우측 액션, 그 아래 흰 줄들. 그 공통 골격만 여기 둔다.
  *
- * 색은 홈·`ComingSoonScreen`과 같은 도메인 배분을 따른다
+ * 색은 홈과 같은 도메인 배분을 따른다
  * (globals.css: love=기도, warm=공동체·나눔, cool=말씀).
  */
 export function CommunitySection({
