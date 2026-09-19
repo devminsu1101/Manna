@@ -46,8 +46,10 @@ flowchart LR
         LANDING["/landing<br/>⚠️ 고아"]
         LOGIN["/login"]
         OAUTH["Spring<br/>/oauth2/*"]
+        MYPAGE["/mypage<br/>마이페이지"]
         LANDING -.->|"1800ms"| LOGIN
         LOGIN -->|"Google"| OAUTH
+        MYPAGE -->|"로그아웃 POST /logout"| LOGIN
     end
 
     %% ═══════════ 홈 ═══════════
@@ -127,6 +129,7 @@ flowchart LR
     HOME -->|"기도 요약 3줄"| PRAY
     HOME -->|"최근 읽은 말씀<br/>쿠키 있을 때만"| READER
     HOME -->|"프로필 · 미로그인"| LOGIN
+    HOME -->|"프로필 이미지 · 로그인"| MYPAGE
     HOME -.->|"⛔ 지금 공동체에서는<br/>= 스텁, 링크 없음"| COMS
 
     NF --> HOME
@@ -174,6 +177,7 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 | `/prayer/requests` | 중보기도실로 돌아가기 | `/prayer` |
 | `/prayer/requests/new` | 취소하기 | `/prayer` |
 | `/communities/new` | 취소 | `/communities` |
+| `/mypage` | 홈으로 돌아가기 | `/` 홈 — 탭이 아니라 홈 상단바에서 들어오는 화면이라 |
 | `/sharings/new` | 취소 | **`/` 홈** — 탭이 아니라 ＋로 들어오는 화면이라 |
 | 리더 `/bible/{book}/{ch}` | 좌·우하단 chevron | 되짚어 온 장 (D-1501~1511) |
 
@@ -195,8 +199,15 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 **진입**: 홈 화면 아이콘(매니페스트 `start_url: "/"`) 또는 주소창
 
 1. `/` 홈이 그냥 뜬다. **로그인 검사가 없다** — `middleware.ts`가 없고 홈은 세션을 보지 않는다
-2. 우상단 프로필만 "로그인"으로 보인다 (`features/auth/ProfileButton.tsx:32`)
+2. 우상단 프로필만 "로그인"으로 보인다 (`features/auth/ProfileButton.tsx:38`)
 3. 눌러서 `/login` → Google 버튼 → Spring `/oauth2/authorization/google`로 **문서 이동**
+4. 돌아오면 같은 자리가 **프로필 이미지**로 바뀐다 — 이것이 로그인 성공의 **유일한 표시**다
+   (Spring `defaultSuccessUrl("/")`로 홈에 떨어지고, 프론트에는 콜백 화면이 없다).
+   누르면 `/mypage`이고 **로그아웃은 거기 있다**(D-2403)
+
+⚠️ **이 자리가 2026-09-19까지 깨져 있었다.** 로그인·DB 저장은 되는데 `/api/v1/me`가 500이라
+상단바가 계속 "로그인"으로 남았다(D-2402). 로그인이 됐는지 화면으로 확인할 때 **여기 말고
+볼 곳이 없다**는 뜻이기도 하다.
 
 **분기**: 없다. 미로그인도 홈·성경·기도·공동체를 전부 볼 수 있다(전부 목데이터·로컬 JSON이라
 그려진다).
@@ -436,13 +447,13 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 
 ⚠️ **벨은 링크가 아니다.** `onClick`도 `asChild`도 없는 진짜 막다른 버튼이고
 (`MainTopBar.tsx:53`, `BibleHeader.tsx:34`), **빨간 점은 항상 켜져 있다.**
-성경 리더의 프로필 버튼도 마찬가지로 아무 데도 안 간다(`BibleHeader.tsx:47`) — 인증이
-프로덕션에서 살아난 뒤 `<ProfileButton />`으로 바꾼다.
 
-**가짜 어포던스 3곳** — 눌릴 것처럼 생겼는데 안 눌린다:
+✅ 성경 리더의 프로필 버튼은 **2026-09-19에 `<ProfileButton />`으로 바뀌었다**(D-2405) —
+홈 상단바와 같은 컴포넌트이고 `/mypage`로 간다. 가짜 어포던스가 셋에서 둘로 줄었다.
+
+**가짜 어포던스 2곳** — 눌릴 것처럼 생겼는데 안 눌린다:
 1. 상단 벨 (두 화면)
-2. 리더의 프로필 버튼
-3. 대문 나눔 자료실의 줄 — `ChevronRight`까지 그려져 있는데 `<div>`다(`SharingShelf.tsx:42`)
+2. 대문 나눔 자료실의 줄 — `ChevronRight`까지 그려져 있는데 `<div>`다(`SharingShelf.tsx:42`)
 
 ---
 
@@ -469,7 +480,7 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 | `나눔2 - 기도제목Detail.png` | 〃 | 일부 | 〃 |
 
 **시안이 없는 화면**: `/communities`(목록) · `/communities/new` · `/prayer/requests`(이력) ·
-`/invite/{code}` · 404. 앞의 셋은 이미 만들었고, `/invite/{code}`는 **만들 때 시안이 있으면 좋다.**
+`/mypage` · `/invite/{code}` · 404. 앞의 셋은 이미 만들었고, `/invite/{code}`는 **만들 때 시안이 있으면 좋다.**
 
 ---
 

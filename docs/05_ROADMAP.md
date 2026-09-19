@@ -10,7 +10,7 @@
 - [x] 성경 데이터 적재 스크립트 (apps/frontend/scripts/build-bible-sql.mjs → data/bible-seed.sql, 검증 완료)
 
 ## Phase 1: 인증 + 성경 읽기 MVP
-- [x] Spring Boot 프로젝트 생성 (Spring Boot 4 / Security 7, apps/manna-backend)
+- [x] Spring Boot 프로젝트 생성 (Spring Boot 4 / Security 7, apps/backend)
 - [x] PostgreSQL 스키마 설계 (전 도메인, docs/06_ERD.md)
 - [x] 성경 JSON 파싱 및 DB 저장 (build-bible-sql.mjs, 개역개정 66권)
 - [x] GET /api/v1/bible/{book}/{chapter} 구현 (프론트 라우트 핸들러, 백엔드 전환은 대기)
@@ -18,7 +18,10 @@
 - [x] 성경 읽기 UI 구현 (무한 스크롤·선택 시트·이어읽기)
 - [x] 구절 선택 → 복사 (연속 절 묶음, 07_HISTORY 영역7)
 - [x] 랜딩·로그인·메인 셸 페이지 (골격 MVP)
-- [~] OAuth 로그인 (Google) — 백엔드 코드·로컬 검증 완료(`users`,`user_identities`, find-or-create).
+- [~] OAuth 로그인 (Google) — 백엔드 코드·**로컬 실동작 확인(2026-09-19)**: 로그인 왕복 ·
+      find-or-create(`users`,`user_identities`) · 상단바 프로필 이미지까지 눈으로 확인.
+      ⚠️ 그전까지 `/api/v1/me`가 `LazyInitializationException`으로 500이었다 —
+      "로컬 검증 완료"가 콜백·저장까지만이었던 것(D-2402). 로그아웃은 `/mypage`로 옮겼다(D-2403).
       **프로덕션 미동작**: Spring 백엔드 미배포 + `BACKEND_ORIGIN` 미설정.
       ~~Kakao/Naver는 후속~~ → **카카오는 MVP 필수로 승격**(D-1702). Naver만 후속.
 - [ ] CSRF 재활성 (v1.1 쓰기 API 전 필수 — SecurityConfig TODO)
@@ -38,9 +41,10 @@
 > 지금 고쳐도 연결할 데이터가 없어 또 하드코딩이 된다. 두 번 고치지 않도록 자리만 잡아 둔다.
 > 사용자 결정 — "실제 기능 생기면 그에 맞게 돌아가게 바꾸자."
 
-- [ ] 성경 화면 헤더의 프로필 버튼 (`BibleHeader.tsx`) — 지금은 정적 아이콘.
-      **인증이 프로덕션에서 살아난 뒤** `<ProfileButton />`으로. 지금 바꾸면 로그인 자체가
-      안 되는 화면에 "로그인" 글자만 뜬다
+- [x] 성경 화면 헤더의 프로필 버튼 (`BibleHeader.tsx`) — **`<ProfileButton />`으로 교체
+      (2026-09-19, D-2405).** 미뤄 둔 이유가 "로그인도 안 되는 화면에 '로그인' 글자만 뜬다"
+      였는데, 로컬에서 인증이 실제로 돌고 `/mypage`라는 목적지가 생겨 사라졌다.
+      프로덕션은 여전히 미동작이라 거기선 "로그인"으로 보이는데, 그건 **사실이라 맞다**
 - [ ] 상단 벨의 빨간 점 (`BibleHeader.tsx`, `MainTopBar.tsx`) — 항상 켜져 있다.
       **알림 도메인(Phase 3)** 에서 실데이터로. 두 파일 다 TODO 주석이 달려 있다
 

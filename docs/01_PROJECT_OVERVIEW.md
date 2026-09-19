@@ -9,7 +9,7 @@ Manna/
 ├─ apps/
 │  ├─ frontend/        Next.js 16 (App Router) — 사용자 앱 · PWA
 │  │  └─ vercel.json   ⚠️ framework:nextjs 필수 (07_HISTORY 영역6)
-│  ├─ manna-backend/   Spring Boot 4 / Security 7 — 인증 · (향후) 도메인 API
+│  ├─ backend/         Spring Boot 4 / Security 7 — 인증 · (향후) 도메인 API
 │  ├─ init-db.sql      전 도메인 PostgreSQL 스키마 (docker-entrypoint-initdb.d)
 │  └─ docker-compose.yml  Postgres 15 + pgAdmin
 └─ docs/               설계·규약·ERD·히스토리
@@ -22,14 +22,15 @@ Manna/
 - **인증**: Google OAuth2(OIDC) + Spring 세션. `users`/`user_identities`에 find-or-create.
 - **DB 스키마는 `init-db.sql`이 소유**, Hibernate는 `ddl-auto=validate`로 검증만.
 
-## 현재 상태 (2026-08-07 · MVP 골격)
+## 현재 상태 (2026-09-19 · MVP 골격)
 
 | 영역 | 상태 |
 |---|---|
 | 성경 읽기 (무한 스크롤·선택 시트·이어읽기·개역개정) | ✅ 완성·배포 |
 | 구절 선택 → 복사 | ✅ 완성 (연속 절 묶어 `[권 장:범위]` 형식) |
 | 홈·랜딩·로그인 화면 | ✅ 완성·배포 (메인은 기도·공동체 섹션 스텁) |
-| Google OAuth 백엔드 | ✅ 코드·로컬 검증 완료 / ❌ 프로덕션 미동작(백엔드 미배포) |
+| Google OAuth 백엔드 | ✅ **로컬 실동작 확인(2026-09-19)** — 로그인 → 상단바 프로필 이미지까지. `/api/v1/me`가 500이던 것을 고쳤다(D-2402) / ❌ 프로덕션 미동작(백엔드 미배포) |
+| 마이페이지 (`/mypage`) | ✅ 프로필 이미지·이름·로그아웃. 상단바에서 로그아웃을 내린 자리(D-2403) |
 | 전 도메인 ERD·스키마 | ✅ 확정 (docs/06_ERD.md) |
 | 공동체 (목록·대문·생성) | 🟡 **화면 완료(목데이터)** / 쓰기는 CSRF 대기 |
 | 기도 (중보기도실·상세·기도제목 작성/이력) | 🟡 **화면 완료(목데이터)** / 쓰기는 CSRF 대기 |

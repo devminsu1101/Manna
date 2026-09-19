@@ -1473,3 +1473,123 @@ D-1801의 방식을 반복한다 — 백엔드 선행 조건(배포 · CSRF D-40
 - **쓰기 셋이 착지할 곳이 없다** — 기도했어요 · 기도제목 올리기 · 나눔 공유하기.
   쓰기 API를 켜는 날 가장 먼저 정해야 하는 것이 그 셋이다.
 - 곁다리: `01_PROJECT_OVERVIEW.md`의 현재 상태 표가 2026-08-07에 멈춰 있어 같이 갱신했다.
+
+---
+
+## 2026-09-19 · 로컬 개발 환경 복구 · 로그인 실동작 · 마이페이지
+
+집 컴퓨터에서 처음으로 **DB·백엔드·프론트 셋을 동시에 띄운 날**이다. 그 과정에서 7월 이후
+아무도 안 찔러본 `/api/v1/me`가 **로그인 직후 500으로 터지고 있었다**는 것이 드러났다.
+로드맵의 "OAuth 로컬 검증 완료"는 **콜백과 DB 저장까지만** 맞는 말이었다.
+
+---
+
+### 영역 24 — 환경 (셋이 동시에 뜨기까지 걸린 것들)
+
+**📝 brew `postgresql@15`가 Docker Postgres를 가리고 있었다**
+- 증상이 배신적이다 — 백엔드는 `FATAL: database "manna_db" does not exist`로 죽는데
+  `docker exec manna_postgres psql -d manna_db -c "\dt"`는 12테이블을 멀쩡히 보여준다.
+- 원인: brew 인스턴스가 `127.0.0.1:5432`를, Docker가 `*:5432`를 잡아 **둘이 공존**하고
+  `localhost`는 brew 쪽으로 간다. 컨테이너 안과 호스트 포트가 서로 다른 서버였다.
+- **확인법은 `lsof -nP -iTCP:5432 -sTCP:LISTEN` 한 줄이다.** `postgres`와 `com.docke`가
+  같이 나오면 그 상황. `brew services stop postgresql@15`로 닫았다(그 인스턴스는 기본 DB
+  3개뿐이었다 — Phase 0 "임시 PG 검증"의 잔재).
+- 교훈은 D-704·D-1307과 같은 계열이다: **에러 메시지가 가리키는 곳과 원인이 있는 곳이 다르다.**
+  "DB가 없다"는 말에 스키마를 뒤지면 한참 헤맨다.
+
+**📝 `docker compose`(공백)가 안 먹던 것 · 이미지 pull이 막히던 것**
+- brew formula `docker` CLI는 플러그인을 `~/.docker/cli-plugins`에서 찾는데 실제 위치는
+  `/opt/homebrew/lib/docker/cli-plugins`였다 → `compose`를 인자로 보고 `-d`에서 터진다.
+  심볼릭 링크로 해결.
+- Docker Desktop이 쓴 `config.json`의 `credsStore: desktop`이 가리키는
+  `docker-credential-desktop`이 PATH에 없어 public 이미지 pull까지 막혔다 → 같은 방식으로 링크.
+- 둘 다 **brew CLI와 Docker Desktop을 섞어 쓴 데서** 나온다. 레포와 무관한 머신 설정이라
+  코드에는 흔적을 남기지 않았다.
+
+**✅ D-2401. 백엔드 폴더는 `apps/backend`. 프로젝트 이름은 `manna-backend` 그대로** (사용자 질문)
+- `apps/frontend` ↔ `apps/manna-backend` 비대칭을 없앴다. 참조가 5곳뿐이고 **코드가 그 경로를
+  import하지 않는다**(Java 패키지는 `com.manna.backend`라 폴더명과 무관).
+- **지금이 가장 싼 시점이라서 지금 했다** — Railway 배포 설정과 GitHub Actions에 경로가
+  박히기 전이다.
+- `rootProject.name` · `spring.application.name`은 **안 바꿨다.** 그건 파일 위치가 아니라
+  산출물·로그의 식별자고, 배포했을 때 `backend-0.0.1-SNAPSHOT.jar`보다
+  `manna-backend-...jar`가 무엇인지 말해 준다.
+- `run-local.sh` 신규 — `.env`(gitignore됨)의 `GOOGLE_CLIENT_ID/SECRET`을 올리고 `bootRun`.
+  시크릿이 비면 먼저 죽으며 이유를 말한다.
+
+**📝 Google Console에서 실제로 등록이 필요한 칸은 하나뿐이다**
+- **승인된 리디렉션 URI**에 `http://localhost:3000/login/oauth2/code/google`. 끝이다.
+- **승인된 도메인**(브랜딩 탭)은 로컬에 필요 없다 — 스킴·포트를 못 받고 `localhost`는 등록
+  자체가 안 되며, 그 칸은 동의 화면에 띄울 홈페이지·약관 링크의 도메인을 받는 자리다.
+  세 링크를 비우면 등록할 도메인도 없다.
+- `:8080`이 아니라 `:3000`인 근거는 `forward-headers-strategy=framework`다. 직접
+  `:8080/oauth2/authorization/google`을 찔러 보면 `redirect_uri`가 `:8080`으로,
+  `:3000`을 거치면 `:3000`으로 나온다 — 프록시가 붙인 `X-Forwarded-*`의 차이가 눈에 보인다.
+
+---
+
+### 영역 25 — `/api/v1/me`가 로그인 직후 500이었다
+
+**✅ D-2402. 연관을 EAGER로 바꾸지 않고 그 조회에만 `@EntityGraph`를 건다**
+- 증상: 로그인은 되는데(콜백 성공, `users`·`user_identities`에 행 생성) **화면에 아무 티가
+  안 났다.** 사용자가 "로그인 성공 후 로직이 없어서 티가 안 난다"고 말한 그것이 실제로는
+  버그였다 — `ProfileButton`은 `/api/v1/me`가 200일 때만 이름을 보여주는데 그게 500이었다.
+- 원인: `MeController`가 `identity.getUser()`로 LAZY 프록시를 건드리는데
+  `spring.jpa.open-in-view=false`라 컨트롤러에는 영속성 컨텍스트가 없다 →
+  `LazyInitializationException`.
+- 고친 곳은 `UserIdentityRepository.findByProviderAndProviderUid`에 `@EntityGraph("user")` 한 줄.
+- **반려한 두 대안**: (1) `@ManyToOne(fetch = EAGER)` — 이 엔티티를 읽는 *모든* 쿼리에 조인을
+  강제한다. (2) `open-in-view=true` — 뷰 렌더링 중에 쿼리가 나가는 것을 되살리는 것이라
+  애초에 끈 이유를 되돌린다. **필요한 한 조회에서만 켜는 것**이 맞다. 이 finder를 부르는
+  두 곳(`MeController`, `OAuthUserService`)이 **둘 다 곧바로 User를 읽으므로** 손해도 없다.
+- ⚠️ **로드맵의 "OAuth 로컬 검증 완료"가 과장이었다**는 기록을 남긴다. 검증된 것은
+  *로그인 왕복과 find-or-create*였고 **세션을 읽는 엔드포인트는 한 번도 안 불렸다.**
+  쓰기 API를 붙일 때도 같은 함정이 있다 — "저장까지 됐다"와 "화면이 그걸 읽는다"는 다른 검증이다.
+
+---
+
+### 영역 26 — 프로필 버튼과 마이페이지
+
+**✅ D-2403. 상단바 프로필은 이미지만. 로그아웃은 마이페이지로 내린다** (사용자 결정)
+- 그전까지 상단바 우측은 **이름 + 로그아웃 아이콘** 두 칸이었다.
+- 내린 이유 둘. (1) 로그아웃이 **늘 한 번 누르면 닿는 자리**에 있었다. (2) 같은 바를 공동체
+  대문이 방 이름으로 쓰는데(`MainTopBar`의 `title`), 우측이 두 칸이면 긴 방 이름이 밀린다.
+- 그래서 이 버튼은 이제 **상태를 보여주는 일과 거기로 데려가는 일만** 한다.
+- `/mypage` 신규. 지금 있는 것은 프로필 이미지 · 이름 · 로그아웃뿐이다. 프로필 수정 ·
+  알림 설정 · 내 기도제목 바로가기는 **그 도메인이 붙을 때** 줄을 늘린다.
+- **상단바의 프로필이 마이페이지에서 자기 자신을 가리키는 것은 그대로 뒀다.** 이 앱은 이미
+  "같은 곳을 가리키는 버튼"을 되돌아가는 수단으로 쓴다(탭을 다시 누르면 그 화면, D-1701).
+- 톤은 `warm` — `toneOf()`의 폴백이라 세그먼트 layout의 `themeColor`를 따로 두지 않는다(D-2006).
+- 돌아가는 길은 **홈**이다. 탭이 아니라 홈 상단바에서 들어오는 화면이라
+  (`/communities/new`의 "취소"와 같은 자리·같은 모양, 가는 곳만 다르다).
+
+**✅ D-2404. 프로필 이미지 호스트는 `next.config.ts`의 `remotePatterns`에 적는다**
+- `next/image`는 허용한 호스트만 최적화하고 나머지는 400으로 막는다. Google은
+  `lh3.googleusercontent.com`.
+- **provider가 늘면 이 목록도 는다**(카카오는 `k.kakaocdn.net`, D-1702). 프로필 이미지가
+  기본 아이콘으로만 나오면 여기부터 본다.
+- 평범한 `<img>`로 가는 길도 있었지만(허용 목록 유지가 없다) 레포가 이미 `next/image`를
+  쓰고 `core-web-vitals` 린트가 그쪽을 본다. 한 줄 늘리는 쪽이 싸다.
+
+**✅ D-2405. 성경 리더 헤더도 같은 `<ProfileButton />`을 쓴다** (사용자 지시 "성경도!")
+- 리더 헤더만 **정적 `User` 아이콘**이었다 — 눌러도 아무 일이 없는, 08_USER_FLOWS가 세어 둔
+  가짜 어포던스 셋 중 하나.
+- 로드맵이 이 교체를 "**인증이 프로덕션에서 살아난 뒤**"로 미뤄 둔 이유는 *"지금 바꾸면 로그인
+  자체가 안 되는 화면에 '로그인' 글자만 뜬다"*였다. 그 전제가 오늘 두 군데서 무너졌다 —
+  인증이 로컬에서 실제로 돌고(D-2402), 프로필이 데려갈 **목적지**가 생겼다(D-2403).
+- 프로덕션에서는 여전히 "로그인"으로 보인다. 하지만 그건 **틀린 표시가 아니라 사실이다** —
+  거기서는 정말로 로그인이 안 되어 있다. 미뤄 둘 때 걱정한 것은 "되는데 안 된다고 말하는 화면"
+  이었지 "안 되는데 안 된다고 말하는 화면"이 아니었다.
+- 상단바 셋(홈·대문·리더) 중 둘이 이제 같은 컴포넌트를 쓴다. 남은 차이는 벨뿐이고,
+  그건 알림 도메인이 붙을 때 함께 정리된다(Phase 3).
+- **가짜 어포던스가 3곳에서 2곳으로 줄었다** — 상단 벨, 대문 나눔 줄.
+
+**📝 만든 것 / 고친 것**
+- 신규: `app/mypage/page.tsx` · `features/auth/MyPageContent.tsx` · `apps/backend/run-local.sh`
+- 수정: `features/auth/ProfileButton.tsx`(이미지만) · `features/bible/components/BibleHeader.tsx`
+  (정적 아이콘 → `<ProfileButton />`) · `next.config.ts`(images) · `UserIdentityRepository`(@EntityGraph)
+- `useMe`·`/api/v1/me` 라우트 핸들러는 **그대로다** — 둘 다 맞게 돼 있었고 문제는 백엔드에 있었다
+
+**검증** — `lint` · `build` 통과, 라우트 표에 `/mypage`가 정적으로 잡혔다. 실제 브라우저에서
+Google 로그인 → 상단바에 프로필 이미지 표시 → `users`·`user_identities` 행 1개씩 확인.
+재로그인 시 find-or-create의 **find** 쪽이 타 행이 늘지 않는 것까지는 아직 안 봤다.
