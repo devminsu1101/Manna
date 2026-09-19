@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, User } from "lucide-react";
+import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ProfileButton } from "@/features/auth/ProfileButton";
 import { BiblePicker } from "./BiblePicker";
 
 /**
@@ -44,9 +45,11 @@ export function BibleHeader({
           abbrev는 시트가 "지금 읽는 권"을 목록에서 짚는 데 쓴다. */}
       <BiblePicker bookName={bookName} bookAbbrev={bookAbbrev} />
 
-      <Button variant="ghost" size="icon-lg" aria-label="내 프로필">
-        <User className="size-6" />
-      </Button>
+      {/* 홈 상단바와 같은 컴포넌트다. 2026-09-19까지 여기만 정적 아이콘이었는데, 그건
+          "인증이 프로덕션에서 살아나기 전에 바꾸면 로그인도 안 되는 화면에 '로그인' 글자만
+          뜬다"는 이유였다. 로컬에서 인증이 실제로 돌고 마이페이지라는 목적지가 생겨
+          그 이유가 사라졌다(D-2403, D-2405). */}
+      <ProfileButton />
     </header>
   );
 }

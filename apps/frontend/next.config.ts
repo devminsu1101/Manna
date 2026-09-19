@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
 
   /**
+   * OAuth provider가 주는 프로필 이미지 호스트. next/image는 허용한 호스트만 최적화하고
+   * 나머지는 400으로 막는다 — 임의의 외부 URL을 최적화 서버에 먹이지 못하게 하는 장치다.
+   *
+   * `users.profile_image_url`에 그대로 저장되는 값이라 **로그인 provider가 늘면 여기도 는다**
+   * (카카오는 `k.kakaocdn.net`, D-1702). 프로필 이미지가 기본 아이콘으로만 나오면 이 목록부터 본다.
+   */
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "lh3.googleusercontent.com" }],
+  },
+
+  /**
    * 인증 경로만 Spring 백엔드로 프록시한다. 브라우저는 :3000만 상대하므로 세션 쿠키가
    * first-party로 동작하고, 프록시가 X-Forwarded-* 를 붙여 Spring이 redirect_uri를
    * :3000 오리진으로 만든다(server.forward-headers-strategy=framework와 짝).
