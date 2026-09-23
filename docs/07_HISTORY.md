@@ -1639,3 +1639,82 @@ Phase 0의 "기술 스택 설치"에는 **왜**가 없었다. 사용자에게 �
   더더욱 백엔드 몫이다.
 
 Next.js · TypeScript · PostgreSQL을 고른 이유는 아직 사용자 확인 전이라 적지 않는다.
+
+---
+
+## 2026-09-23 · 백엔드 배포 — 프로덕션 로그인이 처음으로 돈다
+
+관련 커밋: `155f3ea`(Dockerfile · PORT) · `d42f344`(FRONTEND_ORIGIN)
+
+로드맵 Phase 2의 첫 선행 조건이 닫혔다. 7월부터 "코드는 있는데 프로덕션에선 안 된다"였던
+Google 로그인이 Vercel → Railway → Google → Vercel로 한 바퀴 돈다. 프로덕션 DB에 첫 사용자 행.
+
+---
+
+### 영역 29 — Railway 배포
+
+**✅ D-2901. 백엔드는 Dockerfile로 빌드한다 — 자동 감지에 맡기지 않는다**
+- 자동 감지(지금은 Railpack, 예전 Nixpacks)의 Gradle 빌드는 `./gradlew build`라 테스트까지 돈다.
+  테스트가 스프링 컨텍스트를 띄워 DB·Google 시크릿을 요구하는데 빌드 서버엔 둘 다 없다.
+  Dockerfile은 `bootJar -x test` → JRE 이미지에 jar 하나.
+- **배포 전에 로컬에서 같은 이미지를 띄웠다** — 도커 네트워크의 DB에 붙이고 `PORT=9090`을
+  주입해 `server.port=${PORT:8080}`이 따라가는지, `/api/v1/me` 401 · OAuth 302까지.
+- 📝 **첫 배포는 "Railpack could not determine how to build"로 실패했다.** Root Directory가
+  비어 저장소 맨 위(`apps/`, `docs/`)를 봤기 때문. 서비스 Settings → Root Directory `apps/backend`.
+  한 번 넣었는데 빈 칸으로 남아 있었다 — 입력 후 저장(✓)과 Apply까지 해야 한다.
+- 📝 두 번째는 빌드는 되고 `JdbcEnvironmentInitiator`에서 죽었다 — DB 환경변수 전이라
+  `localhost:5432`로 붙으려 한 것. 예상된 실패였다.
+
+**✅ D-2902. 프로덕션 DB 연결은 참조 변수로, 스키마는 손으로 한 번**
+- `SPRING_DATASOURCE_URL=jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}`,
+  USERNAME·PASSWORD도 `${{Postgres.*}}`. Spring은 같은 이름의 환경변수가 properties를 덮는다.
+  Railway의 `DATABASE_URL`은 `postgresql://` 형식이라 JDBC가 못 읽어 조각으로 다시 조립한다.
+  참조라서 DB 비밀번호를 재생성해도 백엔드가 따라간다.
+- Railway Postgres는 `docker-entrypoint-initdb.d`가 없어 **빈 DB**다. `ddl-auto=validate`라
+  스키마 없이는 기동이 실패한다. TCP Proxy를 잠깐 열어 `psql -f init-db.sql` → 12테이블(로컬과 동일).
+  끝나고 Proxy는 닫았다.
+- `DATABASE_URL`의 `postgres.railway.internal`은 **내부망 전용**이라 밖에서 못 붙는다.
+  외부용 `DATABASE_PUBLIC_URL`은 TCP Proxy를 켜야 생긴다.
+- ⚠️ **Railway Postgres는 18, 로컬 도커는 15다.** 지금 스키마는 양쪽에서 똑같이 서지만
+  어긋남이다. 로컬을 18로 올리는 건 미뤄 둔다.
+
+**❌ D-2903(폐기). redirect_uri를 요청 헤더(`forward-headers-strategy`)로 만든다**
+- 로컬에서는 Next가 `X-Forwarded-Host: localhost:3000`을 붙여 맞았다(D-401).
+- 실패 이유: Vercel → Railway 경로에서는 Spring이 받는 호스트가 **Railway 주소**였다.
+  `redirect_uri=https://manna-production-f54d.up.railway.app/...`, 로그아웃 후 이동도 Railway.
+  Google이 거부하고, 통과시켜도 세션 쿠키가 Railway 도메인에 붙어 프론트에선 로그인이 안 된
+  것으로 보인다. `ForwardedHeaderFilter`가 상대 경로 리다이렉트까지 그 호스트로 절대화한다.
+- → **✅ `app.frontend-origin=${FRONTEND_ORIGIN:http://localhost:3000}`으로 못박았다.**
+  `redirect-uri`, 로그인 성공 · **실패**(새로 둠) · 로그아웃 후 이동이 전부 이 값 기준 절대 주소.
+  `forward-headers-strategy`는 https 판정용으로 남긴다.
+- 📝 **변수를 빠뜨리면 로그인 후 `localhost:3000`으로 튄다** — push만 하고 Railway에
+  `FRONTEND_ORIGIN`을 안 넣은 채로 실제로 한 번 겪었다. 기본값이 로컬용이라 조용히 틀린다.
+
+**✅ D-2904. Google OAuth 클라이언트는 `Web application` 타입이어야 한다**
+- 쓰던 클라이언트가 **`Desktop`** 이었다. Desktop은 리디렉션 URI 칸이 없고 `localhost`
+  복귀만 암묵적으로 허용한다 — **로컬에서 잘 된 이유가 바로 그것**이라 7월부터 드러나지 않았다.
+- Web application으로 새로 만들고 redirect URI 둘(`http://localhost:3000/...`,
+  `https://manna-five-tau.vercel.app/...`)을 등록. 로컬 `.env`와 Railway 둘 다 새 값으로 교체.
+- 사용자 조회는 Google `sub` 기준이라 클라이언트가 바뀌어도 기존 사용자를 그대로 찾는다.
+  Desktop 클라이언트 둘은 삭제했다.
+- 📝 드롭다운을 펼치지 않으면 Web application이 안 보인다 — 한 번 Desktop을 또 만들었다.
+
+**📝 Vercel `BACKEND_ORIGIN`은 빌드 시점에 읽힌다.** rewrites가 `next.config.ts`에서 평가되므로
+변수 저장 후 재배포해야 먹는다.
+
+**📝 Swagger(`/swagger-ui.html`)는 프로덕션에도 열어 둔다** (사용자 결정). 지금은 API가
+`/me`뿐이다. 쓰기 API가 늘면 다시 본다.
+
+**남은 것** — Google 동의 화면이 Testing이면 공동체 사람들을 부르기 전에 Publish.
+
+---
+
+### 영역 30 — 카톡 인앱 브라우저 확인 (D-2701의 첫 결과)
+
+**✅ D-3001. 아이폰 카톡 인앱 브라우저에서 Google 로그인이 된다** (사용자 실측)
+- 배포본 링크를 카톡에서 열어 Google 로그인까지 끝까지 됐다. D-1006이 걱정한
+  `disallowed_useragent`는 **아이폰에서는 나오지 않았다.**
+- D-1702가 카카오를 MVP 필수로 올린 근거가 **적어도 아이폰에서는 성립하지 않는다.**
+  D-2701(카카오 보류)을 뒤집을 이유가 없다.
+- **안드로이드는 아직 안 봤다.** 판정은 거기까지 보고 닫는다. 안드로이드가 막히면 D-1006의
+  (b) `intent://`로 외부 브라우저 열기가 카카오 로그인보다 훨씬 싸다.

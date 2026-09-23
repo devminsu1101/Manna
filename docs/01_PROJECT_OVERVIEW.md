@@ -17,6 +17,7 @@ Manna/
 
 ## 아키텍처
 
+- **배포**: 프론트 Vercel · 백엔드 Railway(Docker) · DB Railway Postgres. 브라우저는 Vercel만 상대한다.
 - **프론트(Next :3000)가 얼굴**, **백엔드(Spring :8080)는 프록시 뒤.** 브라우저는 :3000만 상대 → 세션 쿠키가 first-party. 인증 경로(`/oauth2/*`, `/login/oauth2/*`, `/logout`)만 Next가 Spring으로 rewrite 프록시.
 - **성경 데이터는 Next가 로컬 JSON으로 직접 서빙** (`/api/v1/bible/*` 라우트 핸들러). 백엔드 불필요. 개역개정 66권은 `build-bible.mjs`가 권별 JSON으로 빌드.
 - **인증**: Google OAuth2(OIDC) + Spring 세션. `users`/`user_identities`에 find-or-create.
@@ -29,7 +30,7 @@ Manna/
 | 성경 읽기 (무한 스크롤·선택 시트·이어읽기·개역개정) | ✅ 완성·배포 |
 | 구절 선택 → 복사 | ✅ 완성 (연속 절 묶어 `[권 장:범위]` 형식) |
 | 홈·랜딩·로그인 화면 | ✅ 완성·배포 (메인은 기도·공동체 섹션 스텁) |
-| Google OAuth 백엔드 | ✅ **로컬 실동작 확인(2026-09-19)** — 로그인 → 상단바 프로필 이미지까지. `/api/v1/me`가 500이던 것을 고쳤다(D-2402) / ❌ 프로덕션 미동작(백엔드 미배포) |
+| Google OAuth 백엔드 | ✅ **프로덕션 실동작(2026-09-23)** — 로그인 → 상단바 프로필 이미지까지. 아이폰 카톡 인앱에서도 된다(D-3001) |
 | 마이페이지 (`/mypage`) | ✅ 프로필 이미지·이름·로그아웃. 상단바에서 로그아웃을 내린 자리(D-2403) |
 | 전 도메인 ERD·스키마 | ✅ 확정 (docs/06_ERD.md) |
 | 공동체 (목록·대문·생성) | 🟡 **화면 완료(목데이터)** / 쓰기는 CSRF 대기 |
@@ -37,12 +38,15 @@ Manna/
 | 나눔 작성 | 🟡 **화면 완료(목데이터)** / 조회 화면은 Phase 3 |
 | 초대 링크 받는 화면 (`/invite/{code}`) | ❌ **없음** — 가입 경로가 끊겨 있다 (08_USER_FLOWS F-2) |
 | Vercel 프론트 배포 | ✅ manna-five-tau.vercel.app |
+| Railway 백엔드 + Postgres | ✅ manna-production-f54d.up.railway.app (Dockerfile 빌드, 2026-09-23) |
 
 > 위 🟡 셋의 **막힌 버튼이 전부 같은 하나에 묶여 있다** — CSRF 재활성(D-404). 켜는 순간
 > 공동체 생성 · 기도제목 작성 · 나눔 작성 · 기도했어요 · 멤버 승인이 동시에 열린다.
 
 ## 문서 안내
 
+- `00_SETUP_GUIDE.md` — **로컬 개발.** 켜는 순서 · DB 보기 · 배포 전 리허설 · 자주 겪는 문제
+- `09_DEPLOYMENT.md` — **배포 매뉴얼.** 환경변수 전체 · 처음부터 다시 붙이기 · 프로덕션 스키마 · 장애 대응
 - `03_API_SPEC.md` — API 계약
 - `04_CONVENTIONS.md` — 커밋·네이밍·코드 스타일
 - `05_ROADMAP.md` — Phase별 진행

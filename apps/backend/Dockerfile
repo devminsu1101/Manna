@@ -1,7 +1,8 @@
 # Manna 백엔드 컨테이너.
 #
-# Railway는 이 파일이 있으면 Nixpacks 자동 감지 대신 이것을 쓴다. Docker로 가는 이유:
-# Nixpacks의 Gradle 기본 빌드는 `./gradlew build`라 **테스트까지 돈다**. 그 테스트는
+# Railway는 이 파일이 있으면 자동 감지(Railpack, 예전 Nixpacks) 대신 이것을 쓴다.
+# 서비스 Root Directory가 `apps/backend`여야 이 파일을 찾는다(모노레포).
+# Docker로 가는 이유: 자동 감지의 Gradle 기본 빌드는 `./gradlew build`라 **테스트까지 돈다**. 그 테스트는
 # 스프링 컨텍스트를 띄우므로 DB와 Google 시크릿이 있어야 하고, 빌드 서버에는 둘 다 없다.
 # 여기서 무엇을 어떻게 빌드할지 직접 적어 그 함정을 피한다. 덤으로 플랫폼을 옮겨도 그대로 쓴다.
 

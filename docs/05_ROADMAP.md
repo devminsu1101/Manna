@@ -18,11 +18,12 @@
 - [x] 성경 읽기 UI 구현 (무한 스크롤·선택 시트·이어읽기)
 - [x] 구절 선택 → 복사 (연속 절 묶음, 07_HISTORY 영역7)
 - [x] 랜딩·로그인·메인 셸 페이지 (골격 MVP)
-- [~] OAuth 로그인 (Google) — 백엔드 코드·**로컬 실동작 확인(2026-09-19)**: 로그인 왕복 ·
+- [x] OAuth 로그인 (Google) — **프로덕션 실동작 확인(2026-09-23)**, 로컬은 2026-09-19: 로그인 왕복 ·
       find-or-create(`users`,`user_identities`) · 상단바 프로필 이미지까지 눈으로 확인.
       ⚠️ 그전까지 `/api/v1/me`가 `LazyInitializationException`으로 500이었다 —
       "로컬 검증 완료"가 콜백·저장까지만이었던 것(D-2402). 로그아웃은 `/mypage`로 옮겼다(D-2403).
-      **프로덕션 미동작**: Spring 백엔드 미배포 + `BACKEND_ORIGIN` 미설정.
+      프로덕션은 Railway 배포 + `BACKEND_ORIGIN` + `FRONTEND_ORIGIN`으로 살아났다(영역 29).
+      재로그인 시 `users`가 늘지 않는 것(find 쪽)도 확인했다.
       ~~Kakao/Naver는 후속~~ → ~~카카오는 MVP 필수로 승격(D-1702)~~ →
       **카카오는 MVP에서 다시 뺐다 — 인앱 차단을 실사용으로 확인한 뒤 정한다**(D-2701). Naver는 후속.
 - [ ] CSRF 재활성 (v1.1 쓰기 API 전 필수 — SecurityConfig TODO)
@@ -85,9 +86,12 @@
 > 리더 승인(D-1707) · 초대 코드(D-1708). **스키마가 두 컬럼 늘었다**(`invite_code`, `status`).
 
 **선행 조건 (기능 아님)**
-- [ ] Spring 백엔드 배포 + Vercel `BACKEND_ORIGIN` 설정 → 프로덕션 로그인 활성화
+- [x] Spring 백엔드 배포 + Vercel `BACKEND_ORIGIN` 설정 → 프로덕션 로그인 활성화 (2026-09-23, 영역 29).
+      Railway(Dockerfile) + Railway Postgres. 백엔드에 `FRONTEND_ORIGIN`이 **반드시** 있어야 한다 —
+      없으면 로그인 후 `localhost:3000`으로 튄다(D-2903)
 - [ ] CSRF 재활성 (D-404) — **첫 쓰기 API보다 먼저.** 나중에 켜면 모든 fetch를 되돌아가 고쳐야 한다
-- [ ] **카톡 인앱 브라우저에서 Google 로그인이 실제로 막히는지 확인** (D-2701).
+- [~] **카톡 인앱 브라우저에서 Google 로그인이 실제로 막히는지 확인** (D-2701).
+      **아이폰: 막히지 않았다 — 로그인까지 된다(2026-09-23, D-3001).** 안드로이드는 아직.
       ~~MVP 포함 확정(D-1702)~~ → **MVP에서 빼고 실사용으로 확인한다.** 차단은 문서로만 안
       사실이고 한 번도 눈으로 본 적이 없다. **백엔드 배포가 먼저다** — 프로덕션 로그인이
       안 되면 카톡에서 눌러 볼 것 자체가 없다.
@@ -167,4 +171,6 @@
 - [ ] GitHub Actions CI/CD
 - [x] Vercel (Frontend) 배포 — manna-five-tau.vercel.app. **주의**: `apps/frontend/vercel.json`의
       `framework: nextjs`가 필수(프로젝트 설정 framework=null → 없으면 정적 빌더로 404, 07_HISTORY 영역6 참고).
-- [ ] AWS/Railway (Backend) 배포 — 붙으면 Vercel 환경변수 `BACKEND_ORIGIN`을 그 주소로 설정 → 로그인 활성화
+- [x] Railway (Backend) 배포 — manna-production-f54d.up.railway.app (2026-09-23, 07_HISTORY 영역 29).
+      Root Directory `apps/backend` 필수. Vercel `BACKEND_ORIGIN` → 이 주소, 백엔드 `FRONTEND_ORIGIN` → Vercel 주소.
+      스키마는 자동으로 안 선다 — `init-db.sql`을 TCP Proxy로 한 번 부었다(D-2902)
