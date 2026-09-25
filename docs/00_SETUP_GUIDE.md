@@ -40,6 +40,8 @@ npm install
 ```
 
 프론트는 로컬에 `.env`가 필요 없다. `BACKEND_ORIGIN`이 없으면 `http://localhost:8080`을 쓴다.
+상단바에 개발 문서 아이콘(`/dev/docs`)을 띄우려면 `apps/frontend/.env.local`에
+`NEXT_PUBLIC_DEV_USER_IDS=1`(로컬 DB의 내 `users.id`)을 넣는다. 없어도 주소로는 열린다.
 
 ## 2. 매일 — 켜는 순서
 

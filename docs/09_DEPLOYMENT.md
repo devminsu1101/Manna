@@ -51,6 +51,12 @@
 | 이름 | 값 | 비고 |
 |---|---|---|
 | `BACKEND_ORIGIN` | `https://manna-production-f54d.up.railway.app` (끝 `/` 없이) | ⚠️ **빌드 시점에 읽힌다** — 바꾸면 Redeploy |
+| `NEXT_PUBLIC_DEV_USER_IDS` | 개발자의 **프로덕션** `users.id` (쉼표로 여럿) | 없으면 상단바 문서 아이콘이 안 보일 뿐. `/dev/docs`는 주소로 열린다. 빌드 시점 값 — 바꾸면 Redeploy |
+
+- `/dev/docs`(개발 문서 뷰어)는 저장소 루트의 `docs/`를 **빌드 때** 읽는다. Root Directory가
+  `apps/frontend`라 그 밖의 폴더다 — Settings → Build and Deployment의 **"Include files outside the
+  root directory in the Build Step"이 켜져 있어야 한다**(기본값 켜짐). 꺼져 있으면 빌드가
+  `docs 폴더에 md가 없다`로 멈추고 이전 배포가 그대로 남는다.
 
 **Google Cloud Console → APIs & Services → Credentials → OAuth client (Web application)**
 

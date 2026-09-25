@@ -20,7 +20,8 @@ export const metadata: Metadata = {
   description: "말씀과 기도로 함께하는 공동체",
   // iOS Safari '홈 화면에 추가'가 /apple-touch-icon.png를 찾다 404를 낸다.
   // 이 링크를 주면 그걸 대신 쓴다 — 404도 없애고 홈 아이콘도 제대로 나온다.
-  icons: { apple: "/icons/icon-192.png" },
+  // 180px 전용 파일을 따로 둔다(iOS 홈 아이콘 규격). iOS는 투명을 검게 칠하므로 배경이 꽉 찬 그림이다.
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 /**

@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { ProfileButton } from "@/features/auth/ProfileButton";
+import { DocsButton } from "@/features/devdocs/DocsButton";
 import { cn } from "@/lib/utils";
 
 /**
@@ -50,14 +51,18 @@ export function MainTopBar({
         TONE[tone],
       )}
     >
-      <Button variant="ghost" size="icon-lg" className="relative shrink-0" aria-label="알림">
-        <Bell className="size-6" />
-        {/* TODO(알림 도메인): 안 읽은 알림 여부를 실제 데이터에 연결. 지금은 항상 표시. */}
-        <span
-          className="absolute end-1.5 top-1.5 size-2 rounded-full bg-accent"
-          aria-label="읽지 않은 알림 있음"
-        />
-      </Button>
+      {/* 벨 옆 문서 아이콘은 개발자 계정에만 뜬다(DocsButton). 아니면 자리도 없다. */}
+      <div className="flex shrink-0 items-center">
+        <Button variant="ghost" size="icon-lg" className="relative shrink-0" aria-label="알림">
+          <Bell className="size-6" />
+          {/* TODO(알림 도메인): 안 읽은 알림 여부를 실제 데이터에 연결. 지금은 항상 표시. */}
+          <span
+            className="absolute end-1.5 top-1.5 size-2 rounded-full bg-accent"
+            aria-label="읽지 않은 알림 있음"
+          />
+        </Button>
+        <DocsButton />
+      </div>
 
       {/* 방 이름은 길어질 수 있다. 벨·프로필을 밀어내지 않도록 이 가운데 칸만 줄어든다. */}
       <div className="flex min-w-0 items-center gap-2">
