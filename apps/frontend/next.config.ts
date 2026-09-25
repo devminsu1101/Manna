@@ -45,6 +45,9 @@ const nextConfig: NextConfig = {
    *
    * OAuth 경로(/oauth2/*, /login/oauth2/*, /logout)는 브라우저 리다이렉트라 rewrite여야 한다 —
    * 라우트 핸들러로는 provider로 튀는 전체 이동을 못 다룬다. /login 페이지와는 경로가 겹치지 않음.
+   *
+   * /api/v1/csrf도 rewrite여야 한다(D-404). 목적이 백엔드의 Set-Cookie(XSRF-TOKEN)를 브라우저에
+   * 그대로 전하는 것인데, me 라우트 핸들러처럼 fetch로 중계하면 Set-Cookie가 버려진다.
    */
   async rewrites() {
     const backend = process.env.BACKEND_ORIGIN ?? "http://localhost:8080";
@@ -52,6 +55,7 @@ const nextConfig: NextConfig = {
       { source: "/oauth2/:path*", destination: `${backend}/oauth2/:path*` },
       { source: "/login/oauth2/:path*", destination: `${backend}/login/oauth2/:path*` },
       { source: "/logout", destination: `${backend}/logout` },
+      { source: "/api/v1/csrf", destination: `${backend}/api/v1/csrf` },
     ];
   },
 };

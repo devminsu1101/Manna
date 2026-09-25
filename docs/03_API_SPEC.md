@@ -8,9 +8,12 @@
 - **필드는 camelCase.** DB는 snake_case이고 변환은 경계에서 한 번만 한다.
 - **인증은 세션 쿠키.** Spring Security 세션을 Next 프록시가 그대로 전달한다. 로그인이
   필요한데 없으면 `401`. 아래 표에서 **비로그인**이라 적힌 하나를 빼고 전부 로그인이 필요하다.
-- **쓰기 요청에는 CSRF 토큰**(`X-XSRF-TOKEN`)이 필요하다. 지금은 꺼져 있고
-  (`SecurityConfig.java` TODO), **첫 쓰기 API보다 먼저 켠다**(D-404) — 나중에 켜면 모든
-  fetch를 되돌아가 고쳐야 한다.
+- **쓰기 요청(POST/PUT/PATCH/DELETE)에는 CSRF 토큰**이 필요하다(D-404, D-3101). `XSRF-TOKEN`
+  쿠키 값을 `X-XSRF-TOKEN` **헤더**로 보낸다. 없거나 다르면 `403`. 프론트는 쓰기 요청을 전부
+  `src/lib/api.ts`의 `apiFetch`로 보내면 이 처리가 자동으로 된다. 폼 파라미터 `_csrf`로
+  쿠키 값을 보내면 안 된다 — `csrf.spa()`는 그 자리를 XOR 인코딩 값으로 읽는다.
+- **`GET /api/v1/csrf`** (비로그인) — 본문 없이 `204`, `XSRF-TOKEN` 쿠키를 심는다. 쿠키가
+  없을 때(첫 방문 · 로그인 직후) `apiFetch`가 알아서 부른다. Next rewrite 경유.
 - **에러는 한 가지 형태**다. 성경 엔드포인트가 이미 쓰는 모양을 그대로 쓴다.
   ```json
   { "error": { "code": "NOT_FOUND", "message": "없는 권 또는 장입니다." } }

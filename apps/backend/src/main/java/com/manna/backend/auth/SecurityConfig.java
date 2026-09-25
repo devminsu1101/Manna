@@ -35,11 +35,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // ⚠️ TODO(v1.1): CSRF를 끈다. 지금은 변경 API가 없어(로그인/로그아웃뿐) 위험이 낮지만,
-            // 나눔·기도 쓰기(POST/PUT/DELETE)가 들어오면 **반드시** 다시 켜야 한다. 세션 쿠키 앱은
-            // CSRF에 취약하다. 표준 방법: CookieCsrfTokenRepository.withHttpOnlyFalse() + 프론트가
-            // XSRF-TOKEN 쿠키를 읽어 X-XSRF-TOKEN 헤더로 보낸다.
-            .csrf(csrf -> csrf.disable())
+            // CSRF(D-404 → 재활성). 세션 쿠키는 다른 사이트가 보낸 요청에도 자동으로 실리므로,
+            // 쓰기 요청(POST/PUT/PATCH/DELETE)은 쿠키와 헤더의 토큰이 같아야 통과한다.
+            // spa(): 토큰을 JS가 읽을 수 있는 XSRF-TOKEN 쿠키로 주고 X-XSRF-TOKEN 헤더로 받는다.
+            // 다른 사이트는 우리 쿠키를 읽지 못하니 헤더를 만들 수 없다. 쿠키를 받는 길은 CsrfController.
+            // 프론트는 쓰기 요청을 전부 lib/api.ts의 apiFetch로 보낸다.
+            .csrf(csrf -> csrf.spa())
             .authorizeHttpRequests(
                 authorize ->
                     authorize
