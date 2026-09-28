@@ -10,6 +10,7 @@ next-env.d.ts
 build/
 dist/
 .gradle/
+bin/
 
 # 환경변수
 .env
