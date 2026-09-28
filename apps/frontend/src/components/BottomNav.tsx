@@ -35,7 +35,7 @@ export function BottomNav() {
       <Link
         href="/sharings/new"
         aria-label="새로 작성하기"
-        className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-secondary text-secondary"
+        className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-tone text-tone"
       >
         <Plus className="size-6" />
       </Link>

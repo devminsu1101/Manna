@@ -5,7 +5,7 @@ import { createContext, useContext, useState } from "react";
 /**
  * 지금 읽고 있는 장 번호를 외부 스토어로 들고 있다.
  *
- * 쓰는 쪽은 ChapterFeed(스크롤 관찰), 읽는 쪽은 BibleHeader뿐이다. 그런데도 스토어인
+ * 쓰는 쪽은 ChapterFeed(스크롤 관찰), 읽는 쪽은 상단바의 BiblePicker뿐이다. 그런데도 스토어인
  * 이유는 VerseSelectionProvider와 같다: 이 값을 useState로 공통 조상에 두면 장이 바뀔
  * 때마다 ChapterFeed가 리렌더되고, 그러면 **이어 붙인 모든 장의 모든 절**이 함께 리렌더된다.
  * 헤더의 숫자 하나 때문에 수천 행을 다시 그릴 일이 아니다.

@@ -11,7 +11,7 @@ import { VerseList } from "./VerseList";
  * 다음 섹션의 밴드에 밀려 나간다. JS 없이 시안의 동작이 그대로 나온다.
  *
  * z-20은 상단 헤더(z-30)보다 낮아야 한다. 밴드는 헤더 밑으로 미끄러져 들어가 가려지고,
- * 바로 그 시점에 헤더의 장 숫자가 다음 장으로 넘어간다. 배경(bg-header)이 서로 같아서
+ * 바로 그 시점에 헤더의 장 숫자가 다음 장으로 넘어간다. 배경(bg-tone-surface)이 헤더와 같아서
  * 이어지듯 보인다. 이 컴포넌트는 헤더의 존재를 몰라도 되고, top은 영원히 0이다.
  *
  * 헤더가 항상 떠 있으므로 밴드가 top-0에 붙어 있는 동안은 늘 헤더에 가려 안 보인다.
@@ -43,7 +43,7 @@ export function ChapterSection({
     >
       <h2
         id={headingId}
-        className="sticky top-0 z-20 border-b border-border bg-header px-4 py-3 text-center text-lg font-bold text-foreground"
+        className="sticky top-0 z-20 border-b border-border bg-tone-surface px-4 py-3 text-center text-lg font-bold text-foreground"
       >
         {chapter.book.name} {chapter.chapterNum}장
       </h2>

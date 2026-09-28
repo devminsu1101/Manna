@@ -51,7 +51,7 @@ export default async function PrayerPersonPage(props: PageProps) {
 
   return (
     <AppShell
-      topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" tone="love" />}
+      topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" />}
       className="flex flex-col"
     >
       <section className="rounded-2xl bg-surface-love p-4">

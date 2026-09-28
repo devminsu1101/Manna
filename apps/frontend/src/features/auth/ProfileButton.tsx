@@ -31,11 +31,11 @@ export function ProfileButton() {
       </Button>
     );
   }
-
+  
   if (!me) {
     return (
-      <Button asChild variant="ghost" className="font-medium">
-        <Link href="/login">로그인</Link>
+      <Button asChild variant="ghost" className="font-medium" size="icon-lg">
+        <Link href="/login"><User className="size-6"/></Link>
       </Button>
     );
   }

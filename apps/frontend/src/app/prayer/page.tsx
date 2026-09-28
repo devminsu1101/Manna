@@ -27,7 +27,7 @@ export default async function PrayerPage() {
 
   return (
     <AppShell
-      topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" tone="love" />}
+      topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" />}
       className="flex flex-col space-y-6"
     >
       <RequestSection />

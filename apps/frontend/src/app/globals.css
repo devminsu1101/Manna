@@ -57,10 +57,16 @@
   --ring: var(--manna-second);
 
   /* Manna 고유 토큰 — shadcn 계약에 대응 이름이 없다. */
-  --header: var(--manna-second-light);
-  /* 선택/hover된 절의 배경. 오늘은 --header와 값이 같지만 의미가 다르므로 이름을 나눠 둔다.
-     둘을 갈라야 할 때 이 한 줄만 바꾸면 된다. */
+  /* 선택/hover된 절의 배경. 오늘은 성경의 --tone-surface와 값이 같지만 의미가 다르므로
+     이름을 나눠 둔다. 둘을 갈라야 할 때 이 한 줄만 바꾸면 된다. */
   --highlight: var(--manna-second-light);
+
+  /* 화면 톤 — "지금 이 화면의 색". 컴포넌트는 톤을 prop으로 받지 않고 이걸 쓴다
+     (bg-tone, bg-tone/20, text-tone, border-tone, bg-tone-surface).
+     기본은 warm. 성경·기도 세그먼트 layout이 data-tone 마커를 심으면 아래 :has()가 바꾼다.
+     html에 거는 이유: Sheet·Dialog는 body로 포털되어 마커 래퍼 밖에 그려진다. */
+  --tone: var(--manna-brand);
+  --tone-surface: var(--manna-brand-light);
 
   /* 카드 섹션의 파스텔 배경. 메인·공동체·기도 화면이 도메인별로 색을 나눠 쓴다.
      love=기도/사랑(핑크), warm=공동체·나눔(크림), cool=말씀(민트). primitive를 직접
@@ -70,6 +76,17 @@
   --surface-cool: var(--manna-second-light);
 
   --radius: 0.5rem;
+}
+
+/* 값의 출처는 lib/brand.ts의 toneOf — 세그먼트 layout이 data-tone={toneOf(...)}로 심는다.
+   SURFACE_COLOR(theme-color hex)와 --tone-surface가 짝이어야 상태바와 상단바가 이어진다. */
+:root:has([data-tone="cool"]) {
+  --tone: var(--manna-second);
+  --tone-surface: var(--manna-second-light);
+}
+:root:has([data-tone="love"]) {
+  --tone: var(--manna-third);
+  --tone-surface: var(--manna-third-light);
 }
 
 @theme inline {
@@ -96,9 +113,10 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* @theme를 거치므로 bg-header / bg-highlight 유틸리티가 생성된다. */
-  --color-header: var(--header);
+  /* @theme를 거치므로 bg-highlight / bg-tone / bg-tone-surface 유틸리티가 생성된다. */
   --color-highlight: var(--highlight);
+  --color-tone: var(--tone);
+  --color-tone-surface: var(--tone-surface);
 
   /* bg-surface-love / bg-surface-warm / bg-surface-cool 유틸리티. */
   --color-surface-love: var(--surface-love);

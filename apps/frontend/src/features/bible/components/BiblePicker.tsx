@@ -70,7 +70,7 @@ function centerInScrollArea(el: HTMLElement | null): () => void {
  *
  * 시트 전체(트리거 + 내용)를 여기서 소유한다. 트리거가 현재 장을 보여줘야 하는데 그건
  * 스토어에만 있고, 트리거와 내용은 같은 Sheet 안에 있어야 하기 때문이다. 그래서 헤더의
- * 스토어 구독이 이쪽으로 넘어왔다 — BibleHeader는 배치만 한다.
+ * 스토어 구독이 이쪽으로 넘어왔다 — MainTopBar는 배치만 한다.
  *
  * 절은 고르지 않는다. 장까지만 고르고 라우팅한다.
  *
@@ -110,8 +110,8 @@ export function BiblePicker({ bookName, bookAbbrev }: { bookName: string; bookAb
           랜드마크(문서 제목)와 조작(시트 열기)이 둘 다 필요하다. */}
       <h1 className="min-w-0">
         <SheetTrigger asChild>
+          {/* hover·열림 색은 ghost가 화면 톤(bg-tone/20)으로 정한다. */}
           <Button variant="ghost" className="h-auto gap-1.5 px-2 py-1" aria-label="다른 장 선택">
-            <span aria-hidden>📖</span>
             <span className="truncate text-lg font-bold text-foreground">
               {bookName} {chapterNum}장
             </span>

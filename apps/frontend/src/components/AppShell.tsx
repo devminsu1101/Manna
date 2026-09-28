@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  *
  * **성경 리더는 이 셸을 쓰지 않는다.** ChapterFeed와 useHideOnScroll이 window.scrollY /
  * window.scrollTo / 뷰포트 루트 IntersectionObserver로 짜여 있고, D-1101~1105로 겨우 잡은
- * 스크롤 튐이 거기 걸려 있다. 리더의 고무줄 틈은 BibleHeader의 `header-bleed`가 색으로 덮는다.
+ * 스크롤 튐이 거기 걸려 있다. 리더의 고무줄 틈은 MainTopBar에 넘기는 `header-bleed`가 색으로 덮는다.
  *
  * 서버 컴포넌트를 노드 슬롯(`topBar`·`children`)으로 받는다 — ReaderChrome이 `nav`를 받는
  * 것과 같은 이유다. 클라이언트 컴포넌트는 서버 컴포넌트를 동적 prop으로 만들 수는 없지만,

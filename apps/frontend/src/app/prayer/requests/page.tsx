@@ -30,7 +30,7 @@ export default async function MyPrayerRequestsPage() {
 
   return (
     <AppShell
-      topBar={<MainTopBar icon="/mascot/tears.png" title="이전 기도제목" tone="love" />}
+      topBar={<MainTopBar icon="/mascot/tears.png" title="이전 기도제목" />}
       className="flex flex-col"
     >
       {requests.length === 0 ? (

@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 
 import { BottomNav } from "@/components/BottomNav";
 import { getChapter, getNextBook, getPrevBook } from "@/features/bible/api";
-import { BibleHeader } from "@/features/bible/components/BibleHeader";
+import { BiblePicker } from "@/features/bible/components/BiblePicker";
 import { ChapterFeed } from "@/features/bible/components/ChapterFeed";
 import { CurrentChapterProvider } from "@/features/bible/components/CurrentChapterProvider";
 import { ReaderChrome } from "@/features/bible/components/ReaderChrome";
 import { VerseSelectionProvider } from "@/features/bible/components/VerseSelectionProvider";
+import { MainTopBar } from "@/features/home/MainTopBar";
 
 // Next 16에서 params는 Promise다. 반드시 await 해야 한다.
 type PageProps = { params: Promise<{ book: string; chapter: string }> };
@@ -37,7 +38,11 @@ export default async function BibleChapterPage(props: PageProps) {
       <CurrentChapterProvider initialChapterNum={chapter.chapterNum}>
         {/* sticky라 흐름에 남으므로 main보다 앞, 흐름상 최상단에 와야 한다.
             책 경계를 넘지 않으므로 권 이름은 피드 내내 고정이고, 장 숫자만 스크롤에 따라 바뀐다. */}
-        <BibleHeader bookName={chapter.book.name} bookAbbrev={chapter.book.abbrev} />
+        <MainTopBar
+          icon="/mascot/bible.png"
+          className="header-bleed sticky top-0 z-30"
+          title={<BiblePicker bookName={chapter.book.name} bookAbbrev={chapter.book.abbrev} />}
+        />
 
         {/* px-4를 주지 않는다 — 선택 하이라이트가 화면 끝까지 닿아야 한다. 여백은 절이 갖는다.
             pb-32는 고정된 네비와 나눔 버튼에 가리지 않기 위한 것.

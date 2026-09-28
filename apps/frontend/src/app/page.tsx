@@ -30,7 +30,7 @@ export default async function MainPage() {
   const todaysVerse = isaiah?.verses.find((v) => v.verseNum === 29);
 
   return (
-    <AppShell topBar={<MainTopBar />} className="space-y-6">
+    <AppShell topBar={<MainTopBar icon="/mascot/hi.png" />} className="space-y-6">
       {/* ── 사랑으로 나누세요 (기도) ── */}
       <section className="rounded-2xl bg-surface-love p-4">
         <SectionHeader icon="/mascot/warm.png" title="사랑으로 나누세요" />

@@ -7,11 +7,16 @@ import { SURFACE_COLOR, toneOf } from "@/lib/brand";
  * (`/bible` 리다이렉트 · `/bible/{book}/{chapter}`).
  *
  * 값은 `toneOf`(lib/brand.ts)에서 가져온다 — 라우팅 규칙이 한 곳에만 적혀야 탭 이동 방식
- * (ToneNavigation)과 어긋나지 않는다. BibleHeader의 `bg-header`와 같은 값이어야 한다.
+ * (ToneNavigation)과 어긋나지 않는다. globals.css의 cool `--tone-surface`와 같은 값이어야 한다.
  */
 export const viewport: Viewport = { themeColor: SURFACE_COLOR[toneOf("/bible")] };
 
-// DOM을 더하지 않는다. 이 파일이 존재하는 이유는 위 한 줄뿐이다.
+// data-tone 마커: globals.css의 :root:has([data-tone])가 --tone을 이 탭 색으로 바꾼다.
+// contents라 박스를 만들지 않는다 — AppShell의 fixed, 성경 헤더의 sticky가 그대로 동작한다.
 export default function BibleLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <div data-tone={toneOf("/bible")} className="contents">
+      {children}
+    </div>
+  );
 }

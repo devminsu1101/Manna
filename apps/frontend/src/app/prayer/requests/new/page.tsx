@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "기도제목 작성 | 만나" };
 export default function NewPrayerRequestPage() {
   return (
     <AppShell
-      topBar={<MainTopBar icon="/mascot/tears.png" title="기도제목 작성" tone="love" />}
+      topBar={<MainTopBar icon="/mascot/tears.png" title="기도제목 작성" />}
       className="flex flex-col space-y-6"
     >
       <NewPrayerRequestForm />
