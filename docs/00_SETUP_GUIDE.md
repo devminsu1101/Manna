@@ -43,6 +43,16 @@ npm install
 상단바에 개발 문서 아이콘(`/dev/docs`)을 띄우려면 `apps/frontend/.env.local`에
 `NEXT_PUBLIC_DEV_USER_IDS=1`(로컬 DB의 내 `users.id`)을 넣는다. 없어도 주소로는 열린다.
 
+**윈도우라면** — 이 문서는 맥 기준이다. 윈도우에서는 네 가지가 다르다.
+
+- `docker compose up -d` 전에 **Docker Desktop을 먼저 켠다.** 안 켜져 있으면
+  `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`.
+- `.env`는 **LF로 저장**한다(VS Code 우하단 `CRLF` → `LF`). CRLF면 값 끝에 `\r`이 붙어 로그인이 깨진다.
+- `run-local.sh`는 **Git Bash**에서 돌린다. PowerShell에서 `./run-local.sh`는 새 창이 떴다 바로 꺼지고,
+  `bash ./run-local.sh`는 WSL bash를 불러 `execvpe(/bin/bash) failed`로 죽는다.
+- 윈도우용 PostgreSQL이 설치돼 있으면 5432를 먼저 잡는다. `services.msc`에서 `postgresql-x64-…`를
+  중지하고 시작 유형을 "수동"으로.
+
 ## 2. 매일 — 켜는 순서
 
 터미널 셋. **DB → 백 → 프론트** 순서다. DB 없이 백엔드를 켜면 연결 실패로 죽는다.
@@ -144,6 +154,8 @@ curl -s -o /dev/null -w "%{redirect_url}\n" localhost:18080/oauth2/authorization
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 백엔드가 `database "manna_db" does not exist`로 죽음 | brew `postgresql@15`가 5432를 먼저 잡음 | `brew services stop postgresql@15` |
+| (윈도우) 백엔드가 Hibernate 스택트레이스 후 `BUILD SUCCESSFUL`로 끝남 | 윈도우 PostgreSQL 서비스가 5432를 먼저 잡음 | `services.msc`에서 `postgresql-x64-…` 중지 |
+| (윈도우) `./run-local.sh`가 아무것도 안 하고 끝남 | 스크립트가 CRLF, 또는 PowerShell에서 실행 | Git Bash에서 실행. CRLF면 `rm run-local.sh && git checkout -- run-local.sh`(`.gitattributes`가 LF로 받는다) |
 | 백엔드가 `Connection refused` / `JdbcEnvironmentInitiator`로 죽음 | DB 컨테이너가 안 떠 있음 | `apps/`에서 `docker compose up -d` |
 | 백엔드가 `Schema-validation: missing table/column` | 엔티티와 `init-db.sql`이 다름, 또는 볼륨이 옛 스키마 | 4번 |
 | 로그인 후 `redirect_uri_mismatch` | Google 클라이언트에 `http://localhost:3000/login/oauth2/code/google` 없음 | Console에 추가(반영에 수 분) |
