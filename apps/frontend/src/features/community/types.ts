@@ -20,7 +20,8 @@ export type MemberRole = "leader" | "member";
 export type CommunitySummary = {
   id: number;
   name: string;
-  memberCount: number;
+  /** `pending`인 방에는 없다 — 인원 수도 방의 내용이다 (D-1707). */
+  memberCount?: number;
   /**
    * 내 상태. `pending`이면 목록에는 뜨지만 **누를 수 없다** — 승인 전에는 방 내용을
    * 하나도 보여주지 않는 것이 승인의 존재 이유다 (D-1707).
@@ -61,8 +62,8 @@ export type SharingSummary = {
 export type CommunityDetail = {
   id: number;
   name: string;
-  /** 초대 링크에 쓰는 회전 가능한 코드. `id`와 별개 컬럼이다 (D-1708). */
-  inviteCode: string;
+  /** 초대 링크에 쓰는 회전 가능한 코드. `id`와 별개 컬럼이다 (D-1708). 리더에게만 온다. */
+  inviteCode?: string;
   myRole: MemberRole;
   prayerPartner: PrayerPartner | null;
   sharings: SharingSummary[];

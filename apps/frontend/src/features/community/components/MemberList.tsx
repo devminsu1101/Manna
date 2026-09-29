@@ -21,7 +21,8 @@ export function MemberList({
 }: {
   members: CommunityMember[];
   myRole: MemberRole;
-  inviteCode: string;
+  /** 리더에게만 온다. 없으면 초대 버튼도 없다 — 초대는 리더의 일이다. */
+  inviteCode?: string;
 }) {
   const active = members.filter((m) => m.status === "active");
   // 리더가 아니면 신청자가 있는지조차 알 필요가 없다. 승인은 리더만 한다.
@@ -34,7 +35,7 @@ export function MemberList({
       surface="cool"
       // TODO(D-1003): `...`(관리 — 이름 변경 · 코드 재발급 · 강퇴)는 전부 쓰기 API가
       // 필요해 아직 두지 않았다. 지금 놓으면 눌러도 아무 일도 없는 버튼이 된다.
-      action={<InviteButton inviteCode={inviteCode} />}
+      action={inviteCode && <InviteButton inviteCode={inviteCode} />}
     >
       {pending.length > 0 && (
         <div className="rounded-xl bg-white/70 p-3">

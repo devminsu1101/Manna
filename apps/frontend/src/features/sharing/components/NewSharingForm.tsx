@@ -36,8 +36,9 @@ const FIELD_CLASS =
  * 4컬럼은 "전부 있거나 전부 없어야 한다" CHECK라 전부 NULL이면 그대로 통과한다. 구절
  * 선택기는 리더의 권/장 시트를 끌어와야 하는 별도 작업이라 타입만 먼저 가른다.
  *
- * ⚠️ **제출은 막혀 있다.** `POST /sharings`는 쓰기 API고 CSRF 재활성(D-404)이 먼저다 —
- * `/communities/new`의 "만들기"와 같은 문턱이다. 모양은 두고 아직 안 열렸다고 말한다(D-1803).
+ * ⚠️ **제출은 막혀 있다.** 백엔드에 `POST /sharings`가 아직 없다(나눔은 Phase 3).
+ * 붙일 때는 `/communities/new`의 NewCommunityForm처럼 `apiFetch`로 보낸다.
+ * 모양은 두고 아직 안 열렸다고 말한다(D-1803).
  */
 export function NewSharingForm({ communities }: { communities: CommunitySummary[] }) {
   const [type, setType] = useState<SharingType | null>(null);

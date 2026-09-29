@@ -66,10 +66,8 @@ function CommunityRow({ community }: { community: CommunitySummary }) {
   if (myStatus === "pending") {
     return (
       <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-4">
-        <span className="min-w-0">
-          <span className="block truncate font-bold text-foreground/50">{name}</span>
-          <span className="block text-sm text-foreground/40">{memberCount}명</span>
-        </span>
+        {/* 인원 수는 없다 — 그것도 방의 내용이라 백엔드가 주지 않는다. */}
+        <span className="min-w-0 truncate font-bold text-foreground/50">{name}</span>
         <span className="ml-3 shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-foreground/50">
           승인 대기 중
         </span>

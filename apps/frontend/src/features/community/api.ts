@@ -1,79 +1,112 @@
 import "server-only";
 
-import type { CommunityDetail, CommunitySummary } from "./types";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+import type {
+  CommunityDetail,
+  CommunityMember,
+  CommunitySummary,
+  MemberRole,
+  MemberStatus,
+} from "./types";
 
 /**
- * 공동체 데이터 접근 계층.
+ * 공동체 데이터 접근 계층. 백엔드 Community API(docs/03_API_SPEC.md)를 부른다.
  *
- * ⚠️ **지금은 목데이터다.** 백엔드의 Community API(docs/03_API_SPEC.md)가 붙으면
- * **이 파일만** fetch로 바꾼다. 호출부(page·컴포넌트)는 그대로 둔다 —
- * bible/api.ts가 로컬 JSON을 감춰 두고 쓰는 것과 같은 구조다.
+ * 호출부(page·컴포넌트)는 이 파일의 함수만 안다 — 목데이터에서 실제 API로 바뀔 때
+ * 이 파일만 고친 이유다(D-1801). 명세 응답과 화면 타입이 다른 곳도 여기서 맞춘다.
  *
- * 목데이터를 컴포넌트 안에 흩뿌리지 않고 여기 한곳에 모으는 이유가 그것이다.
- * 지울 때 한 파일만 보면 된다.
+ * 서버 컴포넌트에서 불리므로 브라우저를 거치지 않고 Next 서버가 백엔드로 직접 요청하고,
+ * 브라우저가 보낸 쿠키(세션)를 그대로 실어 준다 — app/api/v1/me/route.ts와 같은 방식.
  */
 
-const MOCK_COMMUNITIES: CommunitySummary[] = [
-  { id: 1, name: "2026-2기 수요 새가족반", memberCount: 12, myStatus: "active" },
-  { id: 2, name: "청년부 3목장", memberCount: 8, myStatus: "active" },
-  // 승인 대기 중인 방. 목록에는 뜨지만 눌러서 들어갈 수 없다(D-1707).
-  { id: 3, name: "토요 새벽기도 모임", memberCount: 5, myStatus: "pending" },
-];
+const BACKEND = process.env.BACKEND_ORIGIN ?? "http://localhost:8080";
 
-const MOCK_DETAILS: Record<number, CommunityDetail> = {
-  1: {
-    id: 1,
-    name: "2026-2기 수요 새가족반",
-    inviteCode: "a7Kd92MfQx",
-    myRole: "leader",
-    prayerPartner: { userId: 21, name: "김민수", hasRequest: true },
-    sharings: [
-      { id: 101, title: "260507 매일묵상 [삼하4:1-12]" },
-      { id: 102, title: "삼위일체 하나님의 내면생활은 완전히 다르다" },
-      { id: 103, title: "이번주 설교 나눔을 짧게 해보려고 합니다" },
-    ],
-    members: [
-      { userId: 1, name: "나", role: "leader", status: "active" },
-      { userId: 21, name: "김민수", role: "member", status: "active" },
-      { userId: 22, name: "박지영", role: "member", status: "active" },
-      { userId: 23, name: "이현우", role: "member", status: "active" },
-      { userId: 24, name: "정수빈", role: "member", status: "active" },
-      { userId: 31, name: "최다은", role: "member", status: "pending" },
-      { userId: 32, name: "한재민", role: "member", status: "pending" },
-    ],
-  },
-  2: {
-    id: 2,
-    name: "청년부 3목장",
-    inviteCode: "Zb31pLw8Rt",
-    myRole: "member",
-    // 기도짝 배정 스케줄러는 Phase 3다. 배정 전 상태를 화면이 감당하는지 보려고 null로 둔다.
-    prayerPartner: null,
-    sharings: [],
-    members: [
-      { userId: 41, name: "오세훈", role: "leader", status: "active" },
-      { userId: 1, name: "나", role: "member", status: "active" },
-      { userId: 42, name: "윤가은", role: "member", status: "active" },
-    ],
-  },
+/** 백엔드 GET. 로그인이 안 돼 있으면(401) 로그인 화면으로 보낸다. */
+async function backendGet(path: string): Promise<Response> {
+  const res = await fetch(`${BACKEND}/api/v1${path}`, {
+    headers: { cookie: (await cookies()).toString() },
+    redirect: "manual",
+    cache: "no-store",
+  });
+  // 그냥 두면 빈 목록("아직 속한 공동체가 없어요")이 떠서 로그인 안 된 걸 모른다.
+  if (res.status === 401) redirect("/login");
+  return res;
+}
+
+// ── 명세 응답 모양 ───────────────────────────────────────────────────────
+
+type ListResponse = {
+  communities: {
+    id: number;
+    name: string;
+    status: MemberStatus;
+    memberCount?: number; // pending에는 없다
+  }[];
 };
+
+type DetailResponse = {
+  id: number;
+  name: string;
+  myRole: MemberRole;
+  inviteCode?: string; // 리더에게만
+  prayerPartner: { userId: number; name: string } | null;
+  members: { userId: number; name: string; role: MemberRole }[];
+  pendingMembers?: { userId: number; name: string }[]; // 리더에게만
+};
+
+// ── 공개 함수 ────────────────────────────────────────────────────────────
 
 /** 내 공동체 목록. 승인 대기 중인 방도 함께 온다. */
 export async function listMyCommunities(): Promise<CommunitySummary[]> {
-  return MOCK_COMMUNITIES;
+  const res = await backendGet("/communities");
+  if (!res.ok) throw new Error(`공동체 목록을 불러오지 못했습니다 (${res.status})`);
+
+  const body: ListResponse = await res.json();
+  return body.communities.map((c) => ({
+    id: c.id,
+    name: c.name,
+    memberCount: c.memberCount,
+    myStatus: c.status,
+  }));
 }
 
 /**
- * 대문에 필요한 것 전부. 없는 방이거나 **내가 아직 `pending`이면 null**이다.
+ * 대문에 필요한 것 전부. 없는 방, 멤버가 아님(403), **내가 아직 `pending`**(404)이면 null이다.
  *
- * `pending`에 403이 아니라 "없음"을 주는 것이 D-1707의 취지다 — 403은 "그 방이 있긴
+ * `pending`에 403이 아니라 404를 주는 것은 백엔드가 정한다(D-1707) — 403은 "그 방이 있긴
  * 하다"를 알려 주는데, 승인 전에는 방의 존재 자체를 노출하지 않는다.
  */
 export async function getCommunity(id: number): Promise<CommunityDetail | null> {
   if (!Number.isInteger(id)) return null;
 
-  const summary = MOCK_COMMUNITIES.find((c) => c.id === id);
-  if (!summary || summary.myStatus === "pending") return null;
+  const res = await backendGet(`/communities/${id}`);
+  if (res.status === 403 || res.status === 404) return null;
+  if (!res.ok) throw new Error(`공동체를 불러오지 못했습니다 (${res.status})`);
 
-  return MOCK_DETAILS[id] ?? null;
+  const d: DetailResponse = await res.json();
+
+  // 화면(MemberList)은 멤버와 신청자를 한 배열에서 status로 가른다.
+  const members: CommunityMember[] = [
+    ...d.members.map((m) => ({ ...m, status: "active" as const })),
+    ...(d.pendingMembers ?? []).map((m) => ({
+      ...m,
+      role: "member" as const,
+      status: "pending" as const,
+    })),
+  ];
+
+  return {
+    id: d.id,
+    name: d.name,
+    inviteCode: d.inviteCode,
+    myRole: d.myRole,
+    // 배정 스케줄러가 Phase 3이라 지금은 항상 null이다. 값이 오기 시작하면 기도 도메인에서
+    // 기도제목 유무를 함께 받아 hasRequest를 채운다 — 그 전까지는 "안 올렸다"로 둔다.
+    prayerPartner: d.prayerPartner && { ...d.prayerPartner, hasRequest: false },
+    // 나눔 도메인은 Phase 3. 자료실은 빈 상태로 보인다.
+    sharings: [],
+    members,
+  };
 }
