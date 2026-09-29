@@ -34,9 +34,9 @@
 ### Community — 확정 (D-1701~1708)
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
-| GET | `/communities` | 내 공동체 목록 (승인 대기 중인 방 포함) |
-| POST | `/communities` | 생성 — 만든 사람이 곧 리더 |
-| GET | `/communities/{id}` | 대문 — 기도짝 · 멤버 목록 |
+| GET | `/communities` | 내 공동체 목록 (승인 대기 중인 방 포함) — **구현됨** |
+| POST | `/communities` | 생성 — 만든 사람이 곧 리더 — **구현됨** |
+| GET | `/communities/{id}` | 대문 — 기도짝 · 멤버 목록 — **구현됨** |
 | PATCH | `/communities/{id}` | 이름 변경 (리더) |
 | POST | `/communities/{id}/invite-code` | 초대 코드 재발급 (리더) |
 | GET | `/invites/{code}` | **비로그인** — 방 이름만 미리 보기 |

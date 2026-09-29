@@ -44,9 +44,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(
                 authorize ->
                     authorize
-                        // 인증이 필요한 건 /api/v1/me 뿐. 나머지(성경·페이지)는 공개.
-                        .requestMatchers("/api/v1/me")
+                        // API는 기본이 로그인 필수. 예외만 여기 연다.
+                        // 성경은 Next 라우트 핸들러가 로컬 JSON으로 주므로 이 백엔드를 거치지 않는다.
+                        .requestMatchers("/api/v1/csrf")
+                        .permitAll()
+                        .requestMatchers("/api/v1/**")
                         .authenticated()
+                        // 나머지(OAuth 콜백·Swagger 등)는 공개.
                         .anyRequest()
                         .permitAll())
             .oauth2Login(
