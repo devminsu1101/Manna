@@ -72,6 +72,29 @@ export async function listMyCommunities(): Promise<CommunitySummary[]> {
   }));
 }
 
+export type Invite = {
+  communityName: string;
+  /** 로그인했고 이미 그 방 사람일 때만 온다. */
+  myStatus?: MemberStatus;
+  /** `active`일 때만 온다 — 대문으로 보낼 주소. */
+  communityId?: number;
+};
+
+/**
+ * 초대 링크 미리보기. 비로그인도 부를 수 있어 `backendGet`(401 → /login)을 쓰지 않는다.
+ * 없는 코드거나 재발급으로 무효가 된 코드면 null.
+ */
+export async function getInvite(code: string): Promise<Invite | null> {
+  const res = await fetch(`${BACKEND}/api/v1/invites/${code}`, {
+    headers: { cookie: (await cookies()).toString() },
+    redirect: "manual",
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`초대를 불러오지 못했습니다 (${res.status})`);
+  return res.json();
+}
+
 /**
  * 대문에 필요한 것 전부. 없는 방, 멤버가 아님(403), **내가 아직 `pending`**(404)이면 null이다.
  *

@@ -103,10 +103,14 @@
 **공동체 (최소)**
 - [~] Community API — `communities`, `community_members` (생성 · 내 목록 · 상세)
       **1차 완료(2026-09-29)** — `POST/GET /communities`, `GET /communities/{id}`. 권한은
-      `CommunityService.requireActiveMember`(없는 방·pending 404, 비멤버 403). 나머지 6개는 2·3차
-- [ ] 초대 링크 가입 + **리더 승인** — `/invite/{code}`, `pending_invite` 쿠키 복귀
+      `CommunityService.requireActiveMember`(없는 방·pending 404, 비멤버 403).
+      **2차 완료(2026-10-02)** — 초대 미리보기 · 가입 신청 · 승인 · 거절(DELETE).
+      남은 2개(이름 변경 · 코드 재발급)는 3차, `...`(관리) 메뉴와 함께
+- [x] 초대 링크 가입 + **리더 승인** — `/invite/{code}`, `pending_invite` 쿠키 복귀
       (D-1004, D-1005). `pending`은 방 내용을 하나도 못 본다 (D-1707).
-      코드는 만료 없이 **재발급만**, `id`와 별개 컬럼 (D-1708)
+      코드는 만료 없이 **재발급만**, `id`와 별개 컬럼 (D-1708).
+      **2026-10-02** — 복귀 쿠키는 `manna_pending_invite`(코드만, 10분). 로그인 후 홈이 형식을
+      검사하고 `/invite/{code}`로 되돌린다(`features/community/invite.ts`)
 - [x] 공동체 목록 화면 — 개수와 무관하게 항상 거친다. 이름 + 인원 수만 (D-1001, D-1002).
       **"1개면 자동 진입"은 두 번 반려됐다**(D-1701) — 탭이 곧 목록이면 되돌아올 길을
       따로 만들 필요가 없고, 공동체 생성 진입점도 여기 있다.
@@ -117,7 +121,7 @@
       멤버 목록에 **"승인 대기 N명" 배지** (푸시 아님 — 알림 도메인은 Phase 3, D-1707).
       **UI 완료(2026-09-01)** — `/communities/{id}`. 초대는 링크 복사 버튼(D-1804), 리더에게만.
       **실데이터 연결(2026-09-29)** — 기도짝은 null(스케줄러 Phase 3), 나눔 자료실은 빈 상태.
-      승인/거절·`...`(관리)는 쓰기 API 대기 (D-1803)
+      **승인/거절 연결(2026-10-02).** `...`(관리)는 3차 (D-1803)
 - [x] 공동체 생성 화면 — `/communities/new`. `POST /communities`가 이 앱의 **첫 쓰기 API**다.
       **제출 연결(2026-09-29)** — `NewCommunityForm`이 `apiFetch`로 보내고(rewrite `/api/v1/communities`),
       성공하면 새 방 대문으로 간다

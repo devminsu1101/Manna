@@ -2,10 +2,12 @@ import { ChevronRight } from "lucide-react";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { getChapter } from "@/features/bible/api";
 import { LAST_READ_COOKIE, lastReadLocation } from "@/features/bible/last-read";
+import { isInviteCode, PENDING_INVITE_COOKIE } from "@/features/community/invite";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getPraySummary } from "@/features/prayer/api";
 import { PraySummaryRows } from "@/features/prayer/components/PraySummaryRows";
@@ -21,6 +23,11 @@ import { PraySummaryRows } from "@/features/prayer/components/PraySummaryRows";
  */
 export default async function MainPage() {
   const store = await cookies();
+
+  // 초대 링크에서 로그인하러 갔다가 돌아온 길. 백엔드는 로그인 후 항상 여기로 보낸다(D-1005).
+  const pendingInvite = store.get(PENDING_INVITE_COOKIE)?.value;
+  if (isInviteCode(pendingInvite)) redirect(`/invite/${pendingInvite}`);
+
   const lastRead = lastReadLocation(store.get(LAST_READ_COOKIE)?.value);
 
   const praySummary = await getPraySummary();

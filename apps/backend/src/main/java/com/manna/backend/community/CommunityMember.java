@@ -82,4 +82,9 @@ public class CommunityMember {
     public boolean isActive() {
         return ACTIVE.equals(status);
     }
+
+    /** 리더 승인(D-1707). pending → active. */
+    public void approve() {
+        this.status = ACTIVE;
+    }
 }

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +54,24 @@ public class CommunityController {
     public CommunityService.Detail detail(
             @AuthenticationPrincipal OidcUser principal,        // '누가 호출했는지 알기 위해' 로그인한 사람 정보(OidcUser)을 principal 에다 넣고  
             @PathVariable Integer id) {                         // 주소에서 받은 'id' 값을 넣으면 
-        return service.detail(currentUser.id(principal), id);   // CommunityService 의 detail 함수를 실행한 결과를 return 하겠다. 
+        return service.detail(currentUser.id(principal), id);   // CommunityService 의 detail 함수를 실행한 결과를 return 하겠다.
+    }
+
+    @PostMapping("/{id}/members/{userId}/approve")              // 가입 신청 승인 (리더)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void approve(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id,
+            @PathVariable Integer userId) {
+        service.approve(currentUser.id(principal), id, userId);
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")                    // 거절 · 강퇴 · 나가기
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remove(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id,
+            @PathVariable Integer userId) {
+        service.remove(currentUser.id(principal), id, userId);
     }
 }

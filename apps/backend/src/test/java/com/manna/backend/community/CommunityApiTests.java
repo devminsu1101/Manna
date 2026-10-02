@@ -2,6 +2,7 @@ package com.manna.backend.community;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -142,5 +143,84 @@ class CommunityApiTests {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"));
         mvc.perform(get("/api/v1/communities")).andExpect(status().isUnauthorized());
+    }
+
+    // ── 2차: 초대 · 승인 ─────────────────────────────────────────────────
+
+    private String inviteCode(int id) {
+        return communities.findById(id).orElseThrow().getInviteCode();
+    }
+
+    @Test
+    void 초대_미리보기_신청_승인_흐름() throws Exception {
+        user("leader");
+        User joiner = user("joiner");
+        int id = create("leader", "만나 개발팀");
+        String code = inviteCode(id);
+
+        // 비로그인 — 이름만
+        mvc.perform(get("/api/v1/invites/" + code))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.communityName").value("만나 개발팀"))
+            .andExpect(jsonPath("$.communityId").doesNotExist())
+            .andExpect(jsonPath("$.myStatus").doesNotExist());
+        mvc.perform(get("/api/v1/invites/nope")).andExpect(status().isNotFound());
+
+        // 신청 → pending, 중복 409, 대문은 404
+        mvc.perform(post("/api/v1/invites/" + code + "/requests").with(as("joiner")).with(csrf()))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.communityId").value(id))
+            .andExpect(jsonPath("$.status").value("pending"));
+        mvc.perform(post("/api/v1/invites/" + code + "/requests").with(as("joiner")).with(csrf()))
+            .andExpect(status().isConflict());
+        mvc.perform(get("/api/v1/invites/" + code).with(as("joiner")))
+            .andExpect(jsonPath("$.myStatus").value("pending"))
+            .andExpect(jsonPath("$.communityId").doesNotExist());
+        mvc.perform(get("/api/v1/communities/" + id).with(as("joiner")))
+            .andExpect(status().isNotFound());
+
+        // 신청자는 스스로 승인 못 한다(대문조차 못 보는 pending)
+        String approve = "/api/v1/communities/" + id + "/members/" + joiner.getId() + "/approve";
+        mvc.perform(post(approve).with(as("joiner")).with(csrf()))
+            .andExpect(status().isNotFound());
+
+        // 리더 승인 → 대문 200, 재승인 409, 미리보기는 active + id
+        mvc.perform(post(approve).with(as("leader")).with(csrf()))
+            .andExpect(status().isNoContent());
+        mvc.perform(post(approve).with(as("leader")).with(csrf()))
+            .andExpect(status().isConflict());
+        mvc.perform(get("/api/v1/communities/" + id).with(as("joiner")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.inviteCode").doesNotExist());
+        mvc.perform(get("/api/v1/invites/" + code).with(as("joiner")))
+            .andExpect(jsonPath("$.myStatus").value("active"))
+            .andExpect(jsonPath("$.communityId").value(id));
+    }
+
+    @Test
+    void 거절은_리더나_본인만_리더는_못_나간다() throws Exception {
+        User leader = user("leader");
+        User a = user("a");
+        User b = user("b");
+        int id = create("leader", "만나 개발팀");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(new CommunityMember(c, a, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+        members.save(new CommunityMember(c, b, CommunityMember.MEMBER, CommunityMember.PENDING));
+        String base = "/api/v1/communities/" + id + "/members/";
+
+        // 일반 멤버는 남을 못 지운다
+        mvc.perform(delete(base + b.getId()).with(as("a")).with(csrf()))
+            .andExpect(status().isForbidden());
+        // 리더의 거절
+        mvc.perform(delete(base + b.getId()).with(as("leader")).with(csrf()))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities").with(as("b")))
+            .andExpect(jsonPath("$.communities.length()").value(0));
+        // 본인 나가기
+        mvc.perform(delete(base + a.getId()).with(as("a")).with(csrf()))
+            .andExpect(status().isNoContent());
+        // 리더는 못 나간다 — 승인할 사람이 없어진다
+        mvc.perform(delete(base + leader.getId()).with(as("leader")).with(csrf()))
+            .andExpect(status().isConflict());
     }
 }

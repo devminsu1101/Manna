@@ -39,10 +39,10 @@
 | GET | `/communities/{id}` | 대문 — 기도짝 · 멤버 목록 — **구현됨** |
 | PATCH | `/communities/{id}` | 이름 변경 (리더) |
 | POST | `/communities/{id}/invite-code` | 초대 코드 재발급 (리더) |
-| GET | `/invites/{code}` | **비로그인** — 방 이름만 미리 보기 |
-| POST | `/invites/{code}/requests` | 가입 신청 → `pending` |
-| POST | `/communities/{id}/members/{userId}/approve` | 승인 (리더) |
-| DELETE | `/communities/{id}/members/{userId}` | 거절 · 강퇴 · 내가 나가기 |
+| GET | `/invites/{code}` | **비로그인** — 방 이름만 미리 보기 — **구현됨** |
+| POST | `/invites/{code}/requests` | 가입 신청 → `pending` — **구현됨** |
+| POST | `/communities/{id}/members/{userId}/approve` | 승인 (리더) — **구현됨** |
+| DELETE | `/communities/{id}/members/{userId}` | 거절 · 강퇴 · 내가 나가기 — **구현됨** |
 
 > **거절·강퇴·나가기가 한 엔드포인트인 이유**: 셋 다 하는 일이 "그 `community_members` 행을
 > 지운다"로 **동일하다.** `status`가 `pending`이면 거절, `active`면 강퇴로 읽힐 뿐이고,
@@ -284,6 +284,11 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 - **방 이름만 준다.** 어디 들어가는지 모른 채 로그인을 요구하면 이탈하므로 먼저 보여주되
   (D-1005), 그 이상은 로그인 전에 노출할 것이 아니다. 인원 수도 주지 않는다.
 - 없는 코드이거나 재발급으로 무효가 된 코드면 `404`.
+- **로그인했고 이미 그 방 사람이면** 상태가 붙는다 — 화면이 `active`는 대문으로 보내고
+  `pending`은 "승인 대기 중"을 보여 준다. `communityId`는 `active`에게만 준다.
+  ```json
+  { "communityName": "2026-2기 수요 새가족반", "myStatus": "active", "communityId": 3 }
+  ```
 
 #### POST /invites/{code}/requests — 가입 신청
 

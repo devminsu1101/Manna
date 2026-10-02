@@ -163,7 +163,97 @@ public class CommunityService {
             pending);
     }
 
+    // ── GET /invites/{code} ──────────────────────────────────────────────
+
+    /**
+     * 비로그인에게는 방 이름만(D-1005). 로그인했고 이미 그 방 사람이면 상태를 덧붙여, 화면이
+     * active는 대문으로 보내고 pending은 "승인 대기 중"을 보여 주게 한다.
+     * communityId는 active에게만 — pending에게 방 주소를 줄 이유가 없다(D-1707).
+     */
+    public record InvitePreview(
+            String communityName,
+            @JsonInclude(JsonInclude.Include.NON_NULL) Integer communityId,
+            @JsonInclude(JsonInclude.Include.NON_NULL) String myStatus) {}
+
+    @Transactional(readOnly = true)
+    public InvitePreview invite(Integer userId, String code) {
+        Community c = byInviteCode(code);
+        CommunityMember m =
+            userId == null
+                ? null
+                : members.findByCommunity_IdAndUser_Id(c.getId(), userId).orElse(null);
+        if (m == null) {
+            return new InvitePreview(c.getName(), null, null);
+        }
+        return new InvitePreview(
+            c.getName(), m.isActive() ? c.getId() : null, m.getStatus());
+    }
+
+    // ── POST /invites/{code}/requests ────────────────────────────────────
+
+    public record JoinRequested(Integer communityId, String status) {}
+
+    @Transactional
+    public JoinRequested requestJoin(Integer userId, String code) {
+        Community c = byInviteCode(code);
+        if (members.findByCommunity_IdAndUser_Id(c.getId(), userId).isPresent()) {
+            throw ApiException.conflict("이미 신청했거나 멤버입니다.");
+        }
+        members.save(
+            new CommunityMember(
+                c, users.getReferenceById(userId), CommunityMember.MEMBER, CommunityMember.PENDING));
+        return new JoinRequested(c.getId(), CommunityMember.PENDING);
+    }
+
+    // ── POST /communities/{id}/members/{userId}/approve ──────────────────
+
+    @Transactional
+    public void approve(Integer userId, Integer communityId, Integer targetUserId) {
+        requireLeader(communityId, userId);
+        CommunityMember target = requireMember(communityId, targetUserId);
+        if (target.isActive()) {
+            throw ApiException.conflict("이미 멤버입니다.");
+        }
+        target.approve();
+    }
+
+    // ── DELETE /communities/{id}/members/{userId} ────────────────────────
+    // 거절 · 강퇴 · 나가기가 한 곳이다 — 셋 다 그 행을 지우는 일이다(명세).
+
+    @Transactional
+    public void remove(Integer userId, Integer communityId, Integer targetUserId) {
+        if (!userId.equals(targetUserId)) {
+            requireLeader(communityId, userId);
+        }
+        CommunityMember target = requireMember(communityId, targetUserId);
+        // ponytail: MVP는 방마다 리더가 한 명(위임 없음, D-1707)이라 "리더 = 마지막 리더"로 본다.
+        // 복수 리더가 생기면 active 리더 수를 세서 막는다.
+        if (target.isLeader()) {
+            throw ApiException.conflict("리더는 나갈 수 없습니다.");
+        }
+        members.delete(target);
+    }
+
     // ── 권한 ─────────────────────────────────────────────────────────────
+
+    private Community byInviteCode(String code) {
+        return communities
+            .findByInviteCode(code)
+            .orElseThrow(() -> ApiException.notFound("없는 초대 링크입니다."));
+    }
+
+    private void requireLeader(Integer communityId, Integer userId) {
+        if (!requireActiveMember(communityId, userId).isLeader()) {
+            throw ApiException.forbidden("리더만 할 수 있습니다.");
+        }
+    }
+
+    /** 승인·삭제 대상. 상태는 묻지 않는다 — pending도 대상이다. */
+    private CommunityMember requireMember(Integer communityId, Integer userId) {
+        return members
+            .findByCommunity_IdAndUser_Id(communityId, userId)
+            .orElseThrow(() -> ApiException.notFound("이 공동체의 멤버가 아닙니다."));
+    }
 
     /**
      * 이 방의 승인된 멤버인지. 모든 "방 내용" API가 여기를 거친다.

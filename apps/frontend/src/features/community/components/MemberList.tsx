@@ -1,9 +1,9 @@
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
 import type { CommunityMember, MemberRole } from "../types";
 import { CommunitySection, ROW_CLASS } from "./CommunitySection";
 import { InviteButton } from "./InviteButton";
+import { PendingActions } from "./PendingActions";
 
 /**
  * 멤버 목록 (D-1003). 시안의 공지사항 자리에 대신 들어온 구역이다.
@@ -15,10 +15,12 @@ import { InviteButton } from "./InviteButton";
  * 알림에 기대면 MVP에서 아무 소식도 가지 않는다. 그래서 이 목록의 배지가 유일한 통보 수단이다.
  */
 export function MemberList({
+  communityId,
   members,
   myRole,
   inviteCode,
 }: {
+  communityId: number;
   members: CommunityMember[];
   myRole: MemberRole;
   /** 리더에게만 온다. 없으면 초대 버튼도 없다 — 초대는 리더의 일이다. */
@@ -45,23 +47,10 @@ export function MemberList({
             {pending.map((member) => (
               <li key={member.userId} className={ROW_CLASS}>
                 <MemberName name={member.name} />
-                <span className="flex shrink-0 gap-1">
-                  {/* TODO(Community API): POST .../approve · DELETE .../members/{userId}.
-                      거절·강퇴·나가기는 같은 엔드포인트다 — 셋 다 그 행을 지우는 일이라서. */}
-                  <Button size="sm" disabled>
-                    승인
-                  </Button>
-                  <Button size="sm" variant="outline" disabled>
-                    거절
-                  </Button>
-                </span>
+                <PendingActions communityId={communityId} userId={member.userId} />
               </li>
             ))}
           </ul>
-
-          <p className="mt-2 px-1 text-xs text-foreground/50">
-            승인·거절은 백엔드가 연결되면 열립니다
-          </p>
         </div>
       )}
 

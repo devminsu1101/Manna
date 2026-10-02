@@ -3,6 +3,7 @@ package com.manna.backend.auth;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,6 +48,9 @@ public class SecurityConfig {
                         // API는 기본이 로그인 필수. 예외만 여기 연다.
                         // 성경은 Next 라우트 핸들러가 로컬 JSON으로 주므로 이 백엔드를 거치지 않는다.
                         .requestMatchers("/api/v1/csrf")
+                        .permitAll()
+                        // 초대 미리보기(방 이름만). 어디 들어가는지 모른 채 로그인을 요구하면 이탈한다(D-1005).
+                        .requestMatchers(HttpMethod.GET, "/api/v1/invites/*")
                         .permitAll()
                         .requestMatchers("/api/v1/**")
                         .authenticated()

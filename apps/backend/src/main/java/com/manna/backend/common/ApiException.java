@@ -30,6 +30,10 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.FORBIDDEN, message);
     }
 
+    public static ApiException conflict(String message) {
+        return new ApiException(HttpStatus.CONFLICT, message);
+    }
+
     public static ApiException unauthorized() {
         return new ApiException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
     }

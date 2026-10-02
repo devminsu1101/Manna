@@ -45,6 +45,7 @@ export default async function CommunityPage(props: PageProps) {
       <PrayerPartnerCard partner={community.prayerPartner} />
       <SharingShelf sharings={community.sharings} />
       <MemberList
+        communityId={community.id}
         members={community.members}
         myRole={community.myRole}
         inviteCode={community.inviteCode}
