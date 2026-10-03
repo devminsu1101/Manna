@@ -75,10 +75,6 @@ function RequestCard({ request, isCurrent }: { request: MyPrayerRequest; isCurre
       <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground">
         {request.body}
       </p>
-
-      <p className="mt-3 truncate text-xs text-foreground/50">
-        {request.communities.map((c) => c.name).join(" · ")}
-      </p>
     </article>
   );
 }

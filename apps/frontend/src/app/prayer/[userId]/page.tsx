@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getPrayPerson } from "@/features/prayer/api";
+import { PrayButton } from "@/features/prayer/components/PrayButton";
 
 /**
  * "○일 전". 서버가 `daysAgo`를 숫자로 주기로 한 계약(API_SPEC) 덕에 이게 전부다.
@@ -39,9 +40,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
  * 한 사람의 기도제목과 "기도했어요" 버튼.
  *
  * 볼 수 없는 사람이면 404다. 403이 아닌 이유는 공동체 대문과 같다(D-1707) — 볼 수 없는
- * 대상은 존재 자체를 노출하지 않는다. **나 자신(userId 1)도 목록에 없어 자동으로 404**가
- * 되는데, 그게 맞다. 자기 기도는 `prayer_logs`의 CHECK 제약이 막는다(`prayed_for_user_id
- * <> pray_by`). 카드는 보이는데 버튼만 안 눌리는 상태를 만들 이유가 없다.
+ * 대상은 존재 자체를 노출하지 않는다. **나 자신도 백엔드가 404**를 주는데, 그게 맞다.
+ * 자기 기도는 `prayer_logs`의 CHECK 제약이 막는다(`prayed_for_user_id <> pray_by`). 카드는 보이는데 버튼만 안 눌리는 상태를 만들 이유가 없다.
  */
 export default async function PrayerPersonPage(props: PageProps) {
   const person = await resolvePerson(props);
@@ -94,27 +94,13 @@ export default async function PrayerPersonPage(props: PageProps) {
       </section>
 
       {prayedByMeToday ? (
-        // 진짜 상태다. 백엔드가 붙어도 이 자리는 그대로 남는다 — 하루 하나라
+        // 서버가 준 진짜 상태다. 하루 하나라
         // (`UNIQUE (prayed_for_user_id, pray_by, prayed_on)`) 더 눌러도 변하지 않는다.
         <p className="mt-4 rounded-xl bg-accent/20 px-4 py-4 text-center text-sm font-bold text-foreground/60">
           오늘 이미 기도했어요
         </p>
       ) : (
-        <>
-          {/* TODO(POST /pray/{userId}): CSRF 재활성(D-404) 후 연결. 멱등이라 두 번 눌러도
-              하나이고, 응답에 카운트를 돌려주지 않는다 — 어제 기준이라 돌려줄 새 숫자가 없다.
-              로컬 상태로 눌린 척하지 않는 이유: 기도했다는 기록이 이 앱의 신뢰 그 자체라
-              거기서 거짓말을 하면 안 된다. */}
-          <Button
-            className="mt-4 h-12 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/80"
-            disabled
-          >
-            기도했어요
-          </Button>
-          <p className="mt-2 text-center text-xs text-foreground/50">
-            기도하기는 백엔드가 연결되면 열립니다
-          </p>
-        </>
+        <PrayButton userId={person.userId} />
       )}
 
       {/* 시안의 "취소하기". 되돌릴 기록이 없어 **그냥 뒤로 가기**다 — `POST /pray/{userId}`에

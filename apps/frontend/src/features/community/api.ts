@@ -1,8 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
+import { backendFetch, backendGet } from "@/lib/backend";
 import type {
   CommunityDetail,
   CommunityMember,
@@ -16,24 +14,8 @@ import type {
  *
  * 호출부(page·컴포넌트)는 이 파일의 함수만 안다 — 목데이터에서 실제 API로 바뀔 때
  * 이 파일만 고친 이유다(D-1801). 명세 응답과 화면 타입이 다른 곳도 여기서 맞춘다.
- *
- * 서버 컴포넌트에서 불리므로 브라우저를 거치지 않고 Next 서버가 백엔드로 직접 요청하고,
- * 브라우저가 보낸 쿠키(세션)를 그대로 실어 준다 — app/api/v1/me/route.ts와 같은 방식.
+ * 백엔드를 부르는 길(쿠키 전달 · 401 처리)은 `lib/backend.ts`다.
  */
-
-const BACKEND = process.env.BACKEND_ORIGIN ?? "http://localhost:8080";
-
-/** 백엔드 GET. 로그인이 안 돼 있으면(401) 로그인 화면으로 보낸다. */
-async function backendGet(path: string): Promise<Response> {
-  const res = await fetch(`${BACKEND}/api/v1${path}`, {
-    headers: { cookie: (await cookies()).toString() },
-    redirect: "manual",
-    cache: "no-store",
-  });
-  // 그냥 두면 빈 목록("아직 속한 공동체가 없어요")이 떠서 로그인 안 된 걸 모른다.
-  if (res.status === 401) redirect("/login");
-  return res;
-}
 
 // ── 명세 응답 모양 ───────────────────────────────────────────────────────
 
@@ -85,11 +67,7 @@ export type Invite = {
  * 없는 코드거나 재발급으로 무효가 된 코드면 null.
  */
 export async function getInvite(code: string): Promise<Invite | null> {
-  const res = await fetch(`${BACKEND}/api/v1/invites/${code}`, {
-    headers: { cookie: (await cookies()).toString() },
-    redirect: "manual",
-    cache: "no-store",
-  });
+  const res = await backendFetch(`/invites/${code}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`초대를 불러오지 못했습니다 (${res.status})`);
   return res.json();

@@ -15,11 +15,10 @@ import { PraySummaryRows } from "@/features/prayer/components/PraySummaryRows";
 /**
  * 홈("만나!"). 여러 도메인을 모아 보여주는 대시보드다.
  *
- * v1(골격 MVP)에서는 백엔드가 인증뿐이라, 데이터가 필요 없는 섹션만 실제로 채운다:
+ *  - 기도: Pray API의 요약(features/prayer/api.ts). 비로그인이면 유도 줄만 보인다
  *  - 오늘의 말씀: 우리 성경 데이터(개역개정)에서 직접
  *  - 최근 읽은 말씀: 쿠키(이미 구현)
- * 기도 섹션은 목데이터로 실화면이 됐다(features/prayer/api.ts). 공동체(나눔) 섹션만 아직
- * "곧 제공" 스텁이다 — 나눔 도메인은 Phase 3다.
+ * 공동체(나눔) 섹션만 아직 "곧 제공" 스텁이다 — 나눔 도메인은 Phase 3다.
  */
 export default async function MainPage() {
   const store = await cookies();

@@ -1799,3 +1799,51 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - ⚠️ 폰은 '홈 화면에 추가' 때 아이콘을 캐시한다 — 이미 추가한 앱은 지우고 다시 추가해야 바뀐다.
 - iOS 실행 스플래시(`apple-touch-startup-image`)는 기기별 크기가 수십 개라 이번에 넣지 않았다.
   안드로이드 스플래시는 매니페스트의 아이콘 + `background_color`(흰색)로 자동 생성된다.
+
+---
+
+## 2026-10-04 · Pray API 1차 — 기도 화면 5개가 실데이터로 돈다
+
+초대·승인으로 공동체가 실제로 돌기 시작했으니, 그 안에서 **기도제목을 나누고 서로 기도하는
+핵심 루프**(D-801)를 잇는다. 명세의 `/pray/*` 6개를 만들고 목데이터(`features/prayer/api.ts`)를 걷어냈다.
+
+### 영역 34 — Pray API
+
+**✅ D-3401. 기도제목은 공동체와 엮지 않는다 — `sharing_communities`에 쓰지 않는다** (사용자 결정)
+- 기도제목은 어느 방에 거는 글이 아니라 **그 사람의 것**이다. 나중에 익명 기도제목(D-906)이
+  공동체 바깥으로도 흘러갈 수 있으니 **작성은 언제나 성공한다** — 공동체가 0개여도 `201`.
+- 그래서 보이는 규칙은 사람 기준이다: **지금 나와 active로 같은 방에 있는 사람의 최신 public
+  기도제목.** 나중에 같은 방에 들어온 사람도 이전에 올린 최신 것을 본다.
+- 폐기: 명세의 `communityIds`(필수 · 빈 배열 400 · 남의 방 403), ERD의 "저장 시점에 내 active
+  공동체 전부를 채운다", "공유된 방에 올린 것 중 최신". 이력 응답의 `communities`도 뺐다.
+
+**✅ D-3402. "오늘"·"어제"는 KST(`Asia/Seoul`)다**
+- 어디에도 정해져 있지 않았다. DB의 `CURRENT_DATE`는 세션 타임존을 따르므로 Railway(UTC)에서는
+  **아침 9시에 날이 바뀐다** — "오늘 이미 기도했어요"가 오전 9시에 풀리고 "어제" 숫자가 어긋난다.
+- 서버가 `LocalDate.now(Asia/Seoul)`로 계산해 쿼리에 넘긴다. `daysAgo`도 같은 기준.
+- 응답의 `createdAt`도 `+09:00`으로 내린다 — 이력 화면이 앞 10자를 날짜로 잘라 쓰기 때문이다.
+
+**✅ D-3403. 비공개는 막아 둔다 — D-2305 종결** (사용자 결정)
+- 열람 구역(D-906)이 Phase 3라 지금 열면 아무도 못 보는 글이 된다. 폼의 "비공개"는 보이되
+  누르지 못하고("비공개는 곧 열려요"), API는 `visibility`를 받지 않는다(항상 `public`).
+  읽기도 `public`만 내보낸다. 그 구역이 생기는 날 셋을 함께 연다.
+
+**✅ 올린 직후 착지점은 `/prayer/requests`** (사용자 결정) — 이력 맨 위에서 방금 올린 것을 눈으로 확인한다.
+
+**구현 메모**
+- 중보기도실 정렬(D-1909)은 SQL 한 방이 아니라 **쿼리 4번 + 메모리 정렬**이다. 페이징이 없는
+  MVP라 읽기 쉬운 쪽을 택했다(`PrayerService.people`). 사람이 수백 명을 넘으면 다시 본다.
+- 기도했어요는 `INSERT … ON CONFLICT DO NOTHING`. UNIQUE 위반을 예외로 받으면 트랜잭션이
+  rollback-only가 되므로 SQL에서 삼킨다(멱등).
+- 상세(`GET /pray/requests/{userId}`)에 `profileImageUrl`을 넣었다 — 상세 화면이 사진을 쓴다.
+- 홈은 비로그인도 열리므로 요약이 401이면 로그인으로 보내지 않고 0으로 그린다(유도 줄만).
+- `backendGet`을 `lib/backend.ts`로 옮겨 공동체 · 기도가 같이 쓴다. 401을 그대로 받는
+  `backendFetch`도 거기 있다(초대 미리보기 · 홈 요약).
+
+**📝 만든 것 / 지운 것**
+- 백엔드 신규: `sharing/{Sharing,SharingRepository}` · `prayer/{PrayerLog,PrayerLogRepository,
+  PrayerService,PrayerController}` · `PrayerApiTests`(5개). `CommunityMemberRepository`에
+  "같은 방 active" 쿼리 셋, `ApiException.badRequest`.
+- 프론트 신규: `lib/backend.ts` · `features/prayer/components/PrayButton.tsx`. rewrite `/api/v1/pray/:path*`.
+- 지운 것: `features/prayer/api.ts`의 목데이터 전부, `MyPrayerRequest.communities`.
+- 남은 것: 기도짝(`partners` · 요약의 `partner`)은 스케줄러(Phase 3)까지 비어 있다.

@@ -144,7 +144,7 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 ### 나눔↔공동체는 다대다
 나눔 작성 화면에 공동체 체크박스가 여러 개다(수요 새가족반 + 푸른교회 수도권지부). 슬랙에서 한 메시지를 여러 채널에 크로스포스트하듯, 한 나눔을 여러 방에 공유한다. `sharing_communities` 조인 테이블.
 
-⚠️ **기도제목(`type='prayer'`)은 방을 고르지 않는다**(D-2301). 기도제목은 내 카드 하나고, 정하는 것은 어느 방에 걸지가 아니라 그 카드를 남들에게 보일지 말지(`visibility`)다. 저장 시점에 백엔드가 **내 active 공동체 전부**를 `sharing_communities`에 채운다 — 조인 테이블은 그대로 쓰되 값이 선택이 아니라 파생이다. 중보기도실에 공동체 드릴다운이 없고(D-904) `prayer_logs`에 `community_id`가 없는 것과 같은 방향이다: 기도는 방 단위가 아니라 사람 단위다.
+⚠️ **기도제목(`type='prayer'`)은 방을 고르지 않는다**(D-2301). 기도제목은 내 카드 하나고, 정하는 것은 어느 방에 걸지가 아니라 그 카드를 남들에게 보일지 말지(`visibility`)다. **`sharing_communities`에 아무것도 쓰지 않는다**(D-3401) — 누가 보는지는 조회 시점의 "나와 active로 같은 방" 규칙이 정한다. ~~저장 시점에 내 active 공동체 전부를 채운다~~ → 폐기: 공동체가 없을 때 저장할 곳이 없고, 나중에 들어온 방에는 안 보이며, 익명 기도제목(D-906)은 방 바깥으로 흘러간다. 중보기도실에 공동체 드릴다운이 없고(D-904) `prayer_logs`에 `community_id`가 없는 것과 같은 방향이다: 기도는 방 단위가 아니라 사람 단위다.
 
 ### 나눔 타입 3종, 필드 유무가 타입에 달림
 `daily`(일상) / `scripture`(성경) / `prayer`(기도제목). 성경 참조 4컬럼은 scripture에만, 공개/익명은 prayer에만 의미가 있다. `sharings_scripture_ref` CHECK가 "성경 참조는 전부 있거나 전부 없어야 한다"를 강제해 부분 참조를 막는다.
@@ -169,7 +169,7 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 | `POST /communities/{id}/invite-code` | `communities.invite_code` (재발급) |
 | `POST /communities/{id}/members/{userId}/approve` | `community_members.status` → `'active'` |
 | `DELETE /communities/{id}/members/{userId}` | `community_members` 행 삭제 (거절·강퇴·나가기 공용) |
-| `GET/POST /pray/requests/me`, `GET /pray/requests/{userId}` | `sharings(type='prayer')`, `sharing_communities` |
+| `GET/POST /pray/requests/me`, `GET /pray/requests/{userId}` | `sharings(type='prayer')` (공동체 조인 없음, D-3401) + `community_members`(볼 수 있는가) |
 | `GET /pray/room` | `community_members` + `sharings` + `prayer_logs` (정렬) |
 | `POST /pray/{userId}` | `prayer_logs` |
 | `GET /pray/summary` | `prayer_logs` (어제 집계) |

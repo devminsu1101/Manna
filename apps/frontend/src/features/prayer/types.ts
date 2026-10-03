@@ -91,12 +91,12 @@ export type PraySummary = {
  *
  * ⚠️ `PrayerRequest`와 달리 **`daysAgo`가 없다** — API_SPEC이 `/pray/requests/me`에만 안 넣었다.
  * 이력은 연대기 목록이라 "○일 전"보다 절대 날짜가 맞으므로 `createdAt`을 앞 10자만 잘라 쓴다.
- * TODO(백엔드): 서버가 KST로 내려줄지 `daysAgo`를 여기도 추가할지 그때 정한다. 지금 잘라 쓰는
- * 값은 목데이터라 그대로 날짜다.
+ * 서버가 `+09:00`으로 내려 주므로(D-3402) 그 10자가 곧 KST 날짜다.
+ *
+ * 공동체가 없다 — 기도제목은 어느 방에 올리는 글이 아니다(D-3401).
  */
 export type MyPrayerRequest = {
   id: number;
   body: string;
   createdAt: string;
-  communities: PrayCommunityRef[];
 };

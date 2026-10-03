@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
+import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /** `sharings.visibility`. 저장 값은 스키마 그대로고, 화면의 말만 공개/비공개다. */
@@ -36,18 +38,48 @@ const OPTIONS: { value: Visibility; label: string; desc: string; icon: string }[
  * 저장은 append-only라 **화면의 말은 "수정"이 아니라 "업데이트"다**(D-1706). 남들에게 보이는
  * 것은 언제나 최신 한 건이고, 이전 것들은 `/prayer/requests`에 이력으로 쌓인다.
  *
- * ⚠️ **비공개를 고르면 지금은 아무도 못 본다.** 익명 기도제목을 보여 주는 구역은
- * 중보기도실 맨 아래에 따로 생기는데 그것이 Phase 3다(D-906). 쓰기 API를 켜는 날
- * 이 선택지를 함께 열지, 그때까지 막아 둘지 먼저 정해야 한다.
+ * **비공개는 막아 뒀다**(D-3403). 익명 기도제목을 보여 주는 구역(중보기도실 맨 아래, D-906)이
+ * Phase 3라, 지금 열면 아무도 못 보는 글이 된다. 선택지는 보여 주되 누르지 못하게 하고,
+ * API도 visibility를 받지 않는다(항상 public). 그 구역이 생기는 날 둘을 함께 연다.
  *
- * ⚠️ **제출은 막혀 있다.** `POST /pray/requests/me`는 CSRF 재활성(D-404) 뒤다(D-1803).
+ * 올리면 `/prayer/requests`로 간다 — 이력 맨 위에서 방금 올린 것을 눈으로 확인한다.
  */
 export function NewPrayerRequestForm() {
+  const router = useRouter();
   const [body, setBody] = useState("");
-  const [visibility, setVisibility] = useState<Visibility>("public");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const visibility: Visibility = "public";
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/api/v1/pray/requests/me", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error?.message ?? "올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      router.push("/prayer/requests");
+    } catch {
+      setError("올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <>
+    <form onSubmit={submit} className="space-y-6">
       <CommunitySection icon="/mascot/tears.png" title="기도제목을 작성해 주세요" surface="love">
         <textarea
           value={body}
@@ -65,9 +97,9 @@ export function NewPrayerRequestForm() {
               key={o.value}
               type="button"
               aria-pressed={visibility === o.value}
-              onClick={() => setVisibility(o.value)}
+              disabled={o.value !== "public"}
               className={cn(
-                "flex flex-col items-center gap-2 rounded-xl px-3 py-5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                "flex flex-col items-center gap-2 rounded-xl px-3 py-5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
                 visibility === o.value ? "bg-accent text-accent-foreground" : "bg-white",
               )}
             >
@@ -84,20 +116,23 @@ export function NewPrayerRequestForm() {
             </button>
           ))}
         </div>
+        <p className="mt-2 text-center text-xs text-foreground/50">비공개는 곧 열려요</p>
       </CommunitySection>
 
-      {/* TODO(POST /pray/requests/me): CSRF 재활성(D-404) 뒤에 잇는다. */}
       <div>
         <Button
+          type="submit"
           className="h-12 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/80"
-          disabled
+          disabled={submitting || body.trim() === ""}
         >
-          기도제목 올리기
+          {submitting ? "올리는 중…" : "기도제목 올리기"}
         </Button>
-        <p className="mt-2 text-center text-xs text-foreground/50">
-          기도제목 쓰기는 백엔드가 연결되면 열립니다
-        </p>
+        {error && (
+          <p role="alert" className="mt-2 text-center text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
-    </>
+    </form>
   );
 }

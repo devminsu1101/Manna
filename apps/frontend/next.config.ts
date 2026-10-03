@@ -49,9 +49,10 @@ const nextConfig: NextConfig = {
    * /api/v1/csrf도 rewrite여야 한다(D-404). 목적이 백엔드의 Set-Cookie(XSRF-TOKEN)를 브라우저에
    * 그대로 전하는 것인데, me 라우트 핸들러처럼 fetch로 중계하면 Set-Cookie가 버려진다.
    *
-   * /api/v1/communities·/api/v1/invites는 브라우저의 쓰기 요청(공동체 생성 · 가입 신청 ·
-   * 승인 · 거절)이 백엔드에 닿는 길이다. 읽기는 features/community/api.ts가 서버에서 직접
-   * 부르므로 여기를 거치지 않는다.
+   * /api/v1/communities·/api/v1/invites·/api/v1/pray는 브라우저의 쓰기 요청(공동체 생성 ·
+   * 가입 신청 · 승인 · 거절 · 기도제목 올리기 · 기도했어요)이 백엔드에 닿는 길이다. 읽기는
+   * features/{community,prayer}/api.ts가 서버에서 직접(lib/backend.ts) 부르므로
+   * 여기를 거치지 않는다.
    */
   async rewrites() {
     const backend = process.env.BACKEND_ORIGIN ?? "http://localhost:8080";
@@ -66,6 +67,7 @@ const nextConfig: NextConfig = {
         destination: `${backend}/api/v1/communities/:path*`,
       },
       { source: "/api/v1/invites/:path*", destination: `${backend}/api/v1/invites/:path*` },
+      { source: "/api/v1/pray/:path*", destination: `${backend}/api/v1/pray/:path*` },
     ];
   },
 };
