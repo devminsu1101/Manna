@@ -1847,3 +1847,54 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - 프론트 신규: `lib/backend.ts` · `features/prayer/components/PrayButton.tsx`. rewrite `/api/v1/pray/:path*`.
 - 지운 것: `features/prayer/api.ts`의 목데이터 전부, `MyPrayerRequest.communities`.
 - 남은 것: 기도짝(`partners` · 요약의 `partner`)은 스케줄러(Phase 3)까지 비어 있다.
+
+---
+
+## 2026-10-07 · Sharing API 1차 — 나눔을 올리고 방에서 읽는다
+
+기도 루프를 로컬에서 끝까지 확인했다(`prayer_logs`에 행이 쌓이는 것까지). 다음으로 2026-09-11부터
+제출만 막혀 있던 나눔 작성 폼을 열고, 대문 "나눔 자료실"을 실데이터로 채운다. 명세가 두 줄 초안이라
+**명세를 먼저 확정하고** 만들었다.
+
+### 영역 35 — Sharing API
+
+**✅ D-3501. 나눔은 공동체 없이 올릴 수 없다** (사용자 결정)
+- 나눔은 방에 거는 글이다 — "공동체가 있어야 나눔을 할 거니까." `communityIds` 빈 배열은 `400`.
+- 기도제목(D-3401)과 정반대다. 기도제목은 그 사람의 것이라 방과 엮지 않았다.
+
+**✅ D-3502. 목록은 공동체별로만 본다** (사용자 결정)
+- `GET /sharings?communityId=` 하나. 내가 속한 모든 방을 합친 통합 피드 · "내 나눔 모음"은 뒤로 미룬다.
+
+**✅ D-3503. 상세 화면을 둔다 — 댓글 · 좋아요가 붙을 자리** (사용자 결정)
+- `/sharings/{id}`. 댓글 · 좋아요는 후속이고 테이블도 아직 없다.
+
+**✅ D-3504. 수정은 본문만** (사용자 결정)
+- 타입 · 공유한 방은 고정. 방을 다시 고르게 하면 이미 읽은 사람이 있는 방에서 글이 빠지는 경우가 생긴다.
+- `updated_at`을 두지 않아 **스키마 변경이 없다**(로컬 · Railway ALTER 불필요). 대신 "수정됨" 표시도 없다.
+
+**✅ D-3505. 페이징 없음** — 기도실과 같은 판단. 한 방의 나눔이 수백 건을 넘으면 커서 페이징을 붙인다.
+
+**✅ D-3506. 삭제는 작성자만** (사용자 결정) — 리더 관리 기능은 공동체 3차 `...` 메뉴 때 함께 본다.
+
+**구현 메모**
+- `sharing_communities`는 엔티티 없이 `SharingRepository`의 네이티브 쿼리 셋(INSERT · 방별 목록 ·
+  "볼 수 있나" EXISTS)으로만 다룬다.
+- 방 권한은 `CommunityService.requireActiveMember`를 그대로 쓴다(package-private → public).
+  pending `404` · 비멤버 `403` 규칙이 공동체와 한 곳에서 나온다.
+- 상세 · 수정 · 삭제에서 볼 수 없는 글은 `404`, 보이는 남의 글을 고치려 하면 `403`.
+- `type='prayer'`는 이 경로에서 없는 것으로 친다 — `/sharings/{기도제목 id}`로 고치거나 지울 수 없다.
+- 응답 시각은 `PrayerService.KST`로 `+09:00`(D-3402).
+
+**📝 만든 것 / 지운 것**
+- 백엔드 신규: `sharing/{SharingService,SharingController}` · `SharingApiTests`(3개). `Sharing`에
+  `getType` · `updateBody`, 저장소에 쿼리 셋.
+- 프론트 신규: `features/sharing/{api,types}.ts` · `SharingRow` · `DeleteSharingButton` · `EditSharingForm`,
+  라우트 `/sharings/{id}` · `/sharings/{id}/edit` · `/communities/{id}/sharings`. rewrite `/api/v1/sharings`.
+- 지운 것: `community/types.ts`의 `SharingSummary` · `CommunityDetail.sharings`, 작성 폼의 "백엔드가 연결되면
+  열립니다" 안내.
+
+**📝 로컬에서 백엔드가 안 뜨던 날** — 같은 날 두 번 막혔다. 둘 다 `00_SETUP_GUIDE.md`에 있던 함정이다.
+- 8080을 Mendix(`javaw … runtimelauncher.jar`)가 잡고 있어 프론트가 `404`를 받았다.
+- 5432를 윈도우 `postgresql-x64-18`(자동 시작)이 IPv4로 잡아, 백엔드가 도커가 아닌 그쪽에 붙어
+  `manna_user` 인증 실패 → `BUILD SUCCESSFUL`로 끝났다. 도커는 IPv6(`::`)만 잡고 있었다.
+  도커를 껐다 켜도 해결되지 않는다 — 윈도우 서비스를 멈춰야 한다.

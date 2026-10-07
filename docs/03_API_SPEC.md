@@ -86,11 +86,14 @@
 > ⚠️ **둘을 같은 값으로 보고 한쪽을 지우면 안 된다.** 그러면 메인이 그릴 수 없게 된다.
 > 배정 스케줄러가 Phase 3이라 그때까지 양쪽 다 비어 있다.
 
-### Sharing (나눔) — 초안 (Phase 3)
-| 메서드 | 경로 | 비고 |
+### Sharing (나눔) — 확정 (D-3501~3506)
+| 메서드 | 경로 | 하는 일 |
 |---|---|---|
-| POST | `/sharings` | 초안 — 타입 3종 |
-| GET | `/sharings?communityId=` | 초안 |
+| POST | `/sharings` | 나눔 올리기 — 공동체 하나 이상 필수 |
+| GET | `/sharings?communityId=` | 한 방의 나눔, 최신순 (공동체별로만 본다) |
+| GET | `/sharings/{id}` | 나눔 상세 |
+| PATCH | `/sharings/{id}` | 본문 고치기 (작성자만) |
+| DELETE | `/sharings/{id}` | 지우기 (작성자만) |
 
 > 기도제목은 저장이 `sharings(type='prayer')`이지만 **경로는 `/pray` 아래에 둔다.** 테이블이
 > 같다고 API까지 같을 이유는 없고, 기도는 Phase 2 · 나눔 전체는 Phase 3이다.
@@ -576,3 +579,67 @@ SELECT count(*) FROM prayer_logs
 - 빈 본문(공백뿐)은 `400`. 앞뒤 공백은 잘라 저장한다.
 - **`visibility`를 받지 않는다**(D-3403). 익명 기도제목의 열람 구역(D-906)이 생길 때까지 항상
   `'public'`이다. 작성 폼의 "비공개"도 그때까지 눌리지 않는다.
+### Sharing
+
+#### 누가 무엇을 볼 수 있는가
+
+- 나눔은 **방에 거는 글**이다(D-3501). 올릴 때 고른 방들(`sharing_communities`)에 걸린다.
+- 볼 수 있는 사람 = **그 방들 중 하나에라도 active인 사람 + 작성자 본인.** pending은 못 본다(D-1707).
+- `type`은 `daily` · `scripture`뿐이다. `prayer` 행은 이 경로에 없는 것으로 친다(404) — 기도제목은
+  `/pray` 아래다(D-3401).
+
+공통 응답 한 줄(`Item`):
+
+```json
+{
+  "id": 12,
+  "type": "daily",
+  "body": "요즘 ...",
+  "author": { "userId": 3, "name": "김현정", "profileImageUrl": "https://..." },
+  "createdAt": "2026-10-07T16:20:00+09:00",
+  "mine": false
+}
+```
+
+`createdAt`은 `+09:00`(D-3402). 제목 컬럼은 없다 — 목록은 본문 첫 줄을 제목처럼 쓴다.
+
+#### POST /sharings — 올리기
+
+```json
+// 요청
+{ "type": "daily", "body": "...", "communityIds": [1, 4] }
+
+// 201
+{ "id": 12 }
+```
+
+- `communityIds` 빈 배열 `400`(D-3501). 중복은 하나로 친다.
+- 각 방은 대문과 같은 규칙: 없는 방 · 내가 pending `404`, 멤버 아님 `403`.
+- `type`이 `daily`/`scripture`가 아니면 `400`. 본문은 공백뿐이면 `400`, 2000자까지, 앞뒤 공백은 자른다.
+- 성경 구절 참조는 아직 받지 않는다(4컬럼 전부 NULL).
+
+#### GET /sharings?communityId= — 한 방의 나눔
+
+```json
+{ "sharings": [ Item, ... ] }   // 최신순
+```
+
+- 대문과 같은 규칙(없는 방 · pending `404`, 비멤버 `403`).
+- **페이징 없음**(D-3505). 대문은 앞 3개, "더보기"는 전부.
+
+#### GET /sharings/{id} — 상세
+
+`Item`. 볼 수 없으면 `404`(403 아님 — 존재를 알리지 않는다). 댓글·좋아요는 후속(D-3503).
+
+#### PATCH /sharings/{id} — 본문 고치기
+
+```json
+{ "body": "..." }   // 204
+```
+
+- **본문만**(D-3504). 타입 · 공유한 방은 바꿀 수 없다. "수정됨" 표시는 없다(`updated_at` 없음).
+- 작성자만(D-3506). 볼 수 있는 남의 글 `403`, 볼 수 없는 글 `404`.
+
+#### DELETE /sharings/{id} — 지우기
+
+`204`. 권한 규칙은 PATCH와 같다. 걸린 모든 방에서 함께 사라진다(`ON DELETE CASCADE`).

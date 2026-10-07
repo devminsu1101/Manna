@@ -106,8 +106,6 @@ export async function getCommunity(id: number): Promise<CommunityDetail | null> 
     // 배정 스케줄러가 Phase 3이라 지금은 항상 null이다. 값이 오기 시작하면 기도 도메인에서
     // 기도제목 유무를 함께 받아 hasRequest를 채운다 — 그 전까지는 "안 올렸다"로 둔다.
     prayerPartner: d.prayerPartner && { ...d.prayerPartner, hasRequest: false },
-    // 나눔 도메인은 Phase 3. 자료실은 빈 상태로 보인다.
-    sharings: [],
     members,
   };
 }

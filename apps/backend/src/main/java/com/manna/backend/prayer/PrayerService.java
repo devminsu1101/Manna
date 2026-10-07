@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PrayerService {
 
-    static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    public static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final CommunityMemberRepository members;
     private final SharingRepository sharings;

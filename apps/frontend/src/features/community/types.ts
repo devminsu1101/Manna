@@ -49,15 +49,10 @@ export type PrayerPartner = {
   hasRequest: boolean;
 };
 
-/** 나눔 자료실 한 줄. 목록에서는 제목만 쓴다. */
-export type SharingSummary = {
-  id: number;
-  title: string;
-};
-
 /**
  * 대문 화면(D-1003). 기도짝 · 나눔 자료실 · 멤버 목록 셋이다.
  * 시안의 공지사항·갤러리는 ERD에 테이블이 없어 제외됐다.
+ * 나눔 자료실은 여기 없다 — 페이지가 `features/sharing/api.ts`로 따로 부른다.
  */
 export type CommunityDetail = {
   id: number;
@@ -66,7 +61,6 @@ export type CommunityDetail = {
   inviteCode?: string;
   myRole: MemberRole;
   prayerPartner: PrayerPartner | null;
-  sharings: SharingSummary[];
   /** 승인된 멤버와 `pending` 신청자가 함께 온다. 리더만 후자를 본다. */
   members: CommunityMember[];
 };

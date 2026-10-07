@@ -68,6 +68,11 @@ const nextConfig: NextConfig = {
       },
       { source: "/api/v1/invites/:path*", destination: `${backend}/api/v1/invites/:path*` },
       { source: "/api/v1/pray/:path*", destination: `${backend}/api/v1/pray/:path*` },
+      { source: "/api/v1/sharings", destination: `${backend}/api/v1/sharings` },
+      {
+        source: "/api/v1/sharings/:path*",
+        destination: `${backend}/api/v1/sharings/:path*`,
+      },
     ];
   },
 };

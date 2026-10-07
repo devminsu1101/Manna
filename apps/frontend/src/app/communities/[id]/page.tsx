@@ -7,6 +7,7 @@ import { MemberList } from "@/features/community/components/MemberList";
 import { PrayerPartnerCard } from "@/features/community/components/PrayerPartnerCard";
 import { SharingShelf } from "@/features/community/components/SharingShelf";
 import { MainTopBar } from "@/features/home/MainTopBar";
+import { listSharings } from "@/features/sharing/api";
 
 // Next 16에서 params는 Promise다. 반드시 await 해야 한다.
 type PageProps = { params: Promise<{ id: string }> };
@@ -36,6 +37,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function CommunityPage(props: PageProps) {
   const community = await resolveCommunity(props);
   if (!community) notFound();
+  // 대문을 열 수 있으면 이 방의 active라 목록도 열린다 — null은 그 사이 방에서 빠진 경우뿐.
+  const sharings = (await listSharings(community.id)) ?? [];
 
   return (
     <AppShell
@@ -43,7 +46,7 @@ export default async function CommunityPage(props: PageProps) {
       className="space-y-6"
     >
       <PrayerPartnerCard partner={community.prayerPartner} />
-      <SharingShelf sharings={community.sharings} />
+      <SharingShelf communityId={community.id} sharings={sharings} />
       <MemberList
         communityId={community.id}
         members={community.members}

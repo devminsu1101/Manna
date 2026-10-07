@@ -3,6 +3,7 @@
 import { CircleCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,9 @@ import {
   ROW_CLASS,
 } from "@/features/community/components/CommunitySection";
 import type { CommunitySummary } from "@/features/community/types";
+import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
-
-/** `sharings.type` 중 이 화면이 쓰는 둘. `prayer`는 작성 화면이 따로다(D-2301). */
-type SharingType = "daily" | "scripture";
+import type { SharingType } from "../types";
 
 const TYPES: { value: SharingType; label: string; icon: string }[] = [
   { value: "daily", label: "일상 나눔", icon: "/mascot/together.png" },
@@ -23,7 +23,7 @@ const TYPES: { value: SharingType; label: string; icon: string }[] = [
 ];
 
 /** `/communities/new`의 입력 필드와 같은 테두리·포커스. 프리미티브가 없어 클래스를 옮겨 쓴다. */
-const FIELD_CLASS =
+export const FIELD_CLASS =
   "w-full rounded-xl border border-border bg-white p-4 text-foreground outline-none placeholder:text-foreground/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /**
@@ -36,17 +36,44 @@ const FIELD_CLASS =
  * 4컬럼은 "전부 있거나 전부 없어야 한다" CHECK라 전부 NULL이면 그대로 통과한다. 구절
  * 선택기는 리더의 권/장 시트를 끌어와야 하는 별도 작업이라 타입만 먼저 가른다.
  *
- * ⚠️ **제출은 막혀 있다.** 백엔드에 `POST /sharings`가 아직 없다(나눔은 Phase 3).
- * 붙일 때는 `/communities/new`의 NewCommunityForm처럼 `apiFetch`로 보낸다.
- * 모양은 두고 아직 안 열렸다고 말한다(D-1803).
+ * 제출은 `POST /api/v1/sharings`(apiFetch, NewCommunityForm과 같은 모양). 공동체를 하나도
+ * 고르지 않으면 보낼 수 없다 — 나눔은 방에 거는 글이다(D-3501). 올리면 상세로 간다.
  */
 export function NewSharingForm({ communities }: { communities: CommunitySummary[] }) {
+  const router = useRouter();
   const [type, setType] = useState<SharingType | null>(null);
   const [body, setBody] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = (id: number) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const ready = type !== null && body.trim() !== "" && selected.length > 0;
+
+  async function submit() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/api/v1/sharings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type, body, communityIds: selected }),
+      });
+      if (res.status === 401) return router.push("/login");
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.error?.message ?? "올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      router.push(`/sharings/${json.id}`);
+    } catch {
+      setError("올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <>
@@ -86,6 +113,7 @@ export function NewSharingForm({ communities }: { communities: CommunitySummary[
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={6}
+              maxLength={2000}
               placeholder={
                 type === "daily"
                   ? "요즘 어떻게 지내시는지 들려주세요"
@@ -143,14 +171,19 @@ export function NewSharingForm({ communities }: { communities: CommunitySummary[
         </>
       )}
 
-      {/* TODO(POST /sharings): CSRF 재활성(D-404) + 백엔드 배포 뒤에 잇는다. */}
       <div>
-        <Button className="h-12 w-full rounded-xl" disabled>
-          나눔 공유하기
+        <Button
+          className="h-12 w-full rounded-xl"
+          disabled={!ready || submitting}
+          onClick={submit}
+        >
+          {submitting ? "올리는 중…" : "나눔 공유하기"}
         </Button>
-        <p className="mt-2 text-center text-xs text-foreground/50">
-          나눔 올리기는 백엔드가 연결되면 열립니다
-        </p>
+        {error && (
+          <p role="alert" className="mt-2 text-center text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     </>
   );

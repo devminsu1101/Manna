@@ -16,8 +16,9 @@ import org.hibernate.annotations.CreationTimestamp;
 /**
  * 나눔. init-db.sql의 sharings 테이블. 기도제목은 type='prayer'인 나눔이다(별도 테이블 없음).
  *
- * 지금은 기도제목만 쓴다. 성경 참조 4컬럼과 sharing_communities는 나눔 도메인(Phase 3)이
- * 필요할 때 매핑한다 — validate는 엔티티에 없는 컬럼을 문제 삼지 않는다.
+ * 성경 참조 4컬럼은 구절 선택기가 생길 때 매핑한다 — validate는 엔티티에 없는 컬럼을 문제 삼지
+ * 않고, 전부 NULL이면 CHECK도 통과한다. sharing_communities는 엔티티 없이
+ * SharingRepository의 네이티브 쿼리로만 다룬다.
  * 기도제목은 공동체와 엮지 않는다(D-3401): 그 사람의 것이고, 누가 보는지는 조회 시점의
  * "같은 방 active" 규칙이 정한다.
  */
@@ -25,6 +26,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(name = "sharings")
 public class Sharing {
 
+    public static final String DAILY = "daily";
+    public static final String SCRIPTURE = "scripture";
     public static final String PRAYER = "prayer";
     public static final String PUBLIC = "public";
 
@@ -66,8 +69,17 @@ public class Sharing {
         return author;
     }
 
+    public String getType() {
+        return type;
+    }
+
     public String getBody() {
         return body;
+    }
+
+    /** 수정은 본문만이다 — 타입·공유한 방은 고정(D-3504). */
+    public void updateBody(String body) {
+        this.body = body;
     }
 
     public OffsetDateTime getCreatedAt() {

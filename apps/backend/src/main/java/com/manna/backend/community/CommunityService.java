@@ -263,7 +263,7 @@ public class CommunityService {
      * - pending → 404. 403은 "방이 있긴 하다"를 알려 주는데, 승인 전에는 존재도 노출하지
      *   않는 것이 D-1707의 취지다(명세 공통 규약).
      */
-    CommunityMember requireActiveMember(Integer communityId, Integer userId) {
+    public CommunityMember requireActiveMember(Integer communityId, Integer userId) {
         if (!communities.existsById(communityId)) {
             throw ApiException.notFound("없는 공동체입니다.");
         }
