@@ -50,6 +50,13 @@ export async function getPraySummary(): Promise<PraySummary> {
   return res.json();
 }
 
+/** 스토리 줄 맨 왼쪽 '나'에 쓸 이름 · 사진. 이 화면은 이미 로그인을 요구한다(`backendGet`). */
+export async function getMyProfile(): Promise<{ name: string; profileImageUrl: string | null }> {
+  const res = await backendGet("/me");
+  if (!res.ok) throw new Error(`내 정보를 불러오지 못했습니다 (${res.status})`);
+  return res.json();
+}
+
 /** 내 기도제목 이력. 최신순. */
 export async function getMyPrayerRequests(): Promise<MyPrayerRequest[]> {
   const res = await backendGet("/pray/requests/me");

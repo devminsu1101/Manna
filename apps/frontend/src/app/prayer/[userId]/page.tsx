@@ -7,21 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getPrayPerson } from "@/features/prayer/api";
+import { daysAgoLabel } from "@/features/prayer/days-ago";
 import { PrayButton } from "@/features/prayer/components/PrayButton";
-
-/**
- * "○일 전". 서버가 `daysAgo`를 숫자로 주기로 한 계약(API_SPEC) 덕에 이게 전부다.
- *
- * 날짜 라이브러리도 `lib/date.ts`도 만들지 않는다 — `createdAt`을 화면에서 파싱하는 순간
- * 클라이언트 시계와 타임존이 따라 들어온다. 계약이 숫자인 이유가 그것이다.
- *
- * 카드에서 기도제목을 빼면서(D-1905) 날짜를 쓰는 화면이 여기 하나만 남아 같이 내려왔다.
- */
-function daysAgoLabel(daysAgo: number): string {
-  if (daysAgo === 0) return "오늘";
-  if (daysAgo === 1) return "어제";
-  return `${daysAgo}일 전`;
-}
 
 // Next 16에서 params는 Promise다. 반드시 await 해야 한다.
 type PageProps = { params: Promise<{ userId: string }> };

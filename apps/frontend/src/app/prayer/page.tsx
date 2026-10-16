@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -7,8 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
 import { MainTopBar } from "@/features/home/MainTopBar";
-import { getPrayRoom } from "@/features/prayer/api";
+import { getMyPrayerRequests, getMyProfile, getPrayRoom } from "@/features/prayer/api";
 import { PrayerPersonCard } from "@/features/prayer/components/PrayerPersonCard";
+import { PrayerStories } from "@/features/prayer/components/PrayerStories";
 
 export const metadata: Metadata = { title: "중보기도실 | 만나" };
 
@@ -19,32 +19,40 @@ export const metadata: Metadata = { title: "중보기도실 | 만나" };
  * 되고, `prayer_logs`에 `community_id`가 없는 것과도 대응한다 — 기도는 방 단위가 아니라
  * 사람 단위다. 시안(`Pray Page.png`)의 세 번째 구역(공동체별 목록)이 그래서 사라졌다.
  *
- * 시안의 나머지 두 구역은 그대로다. 순서도 그대로 두는데, **맨 위가 이 화면에서 유일하게
- * "내가 주어"인 자리**이기 때문이다 — 아래는 전부 남을 위한 것이다.
+ * 맨 위는 **인스타 스토리 같은 가로 줄**이다(사용자 결정, 2026-10-16) — 맨 왼쪽이 나(내 기도제목 ·
+ * 새로 작성, 시안의 "기도를 요청하세요" 자리), 그 옆이 기도마니또 → 나머지 순서의 사람들이다.
+ * 누르면 줄 바로 아래에 기도제목과 "기도했어요"가 뜬다. 아래 카드 목록은 그대로 둔다.
  */
 export default async function PrayerPage() {
-  const { partners, members } = await getPrayRoom();
+  const [{ partners, members }, profile, myRequests] = await Promise.all([
+    getPrayRoom(),
+    getMyProfile(),
+    getMyPrayerRequests(),
+  ]);
 
   return (
     <AppShell
       topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" />}
       className="flex flex-col space-y-6"
     >
-      <RequestSection />
+      <PrayerStories
+        me={{ ...profile, request: myRequests[0] ?? null }}
+        people={[...partners, ...members]}
+      />
 
       {/* 리더가 기도마니또를 시작하기 전(D-3602)에는 빈 배열이다. 제목만 덩그러니 남지 않도록
           **구획을 통째로 렌더하지 않는다.** */}
-      {partners.length > 0 && (
+      {/* {partners.length > 0 && (
         <CommunitySection icon="/mascot/warm.png" title="이번주 기도마니또" surface="love">
           {partners.map((person) => (
             <PrayerPersonCard key={person.userId} person={person} />
           ))}
         </CommunitySection>
-      )}
+      )} */}
 
       {/* 짝만 있고 members가 0명이면(둘뿐인 방) "함께 기도해요"는 통째로 빠진다. 의도한 것이다 —
           볼 사람이 이미 위 구획에 다 있다. */}
-      {members.length > 0 ? (
+      {/* {members.length > 0 ? (
         <CommunitySection icon="/mascot/together.png" title="함께 기도해요" surface="love">
           {members.map((person) => (
             <PrayerPersonCard key={person.userId} person={person} />
@@ -52,43 +60,8 @@ export default async function PrayerPage() {
         </CommunitySection>
       ) : (
         partners.length === 0 && <EmptyState />
-      )}
+      )} */}
     </AppShell>
-  );
-}
-
-/**
- * 시안의 첫 구역 "기도를 요청하세요". D-903이 말한 작성 유도의 자리가 여기다.
- *
- * 버튼은 `/prayer/requests/new`로 간다. 백엔드 문턱(CSRF D-404)은 **그 화면의 제출 버튼**이
- * 지고 있다 — 쓰는 동안은 아무것도 안 막히고, 막히는 자리는 실제로 서버에 닿는 한 곳뿐이다.
- *
- * ⚠️ 시안의 `...`(메뉴) 대신 텍스트 링크를 뒀다. 지금 걸 항목이 "이전 기도제목" 하나뿐이고
- * `components/ui/`에 dropdown-menu가 없어 radix 드롭다운을 새로 깔아야 한다. 항목 하나에
- * 메뉴 한 겹은 탭 수만 늘린다. 둘 이상이 되면 그때 드롭다운으로 승격한다.
- */
-function RequestSection() {
-  return (
-    <CommunitySection
-      icon="/mascot/tears.png"
-      title="기도를 요청하세요"
-      surface="cool"
-      action={
-        <Link
-          href="/prayer/requests"
-          className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-foreground/50 transition-colors hover:text-foreground"
-        >
-          이전 기도제목
-          <ChevronRight className="size-4" />
-        </Link>
-      }
-    >
-      {/* 문턱(CSRF D-404)은 작성 화면의 제출 버튼으로 내려갔다. 여기서는 그냥 열린다 —
-          말은 "수정"이 아니라 "업데이트"다, 저장이 append-only라 이력이 쌓인다(D-1706). */}
-      <Button asChild variant="secondary" className="h-12 w-full rounded-xl">
-        <Link href="/prayer/requests/new">기도제목 작성하기</Link>
-      </Button>
-    </CommunitySection>
   );
 }
 
