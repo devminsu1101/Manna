@@ -40,7 +40,7 @@ Manna/
 | Vercel 프론트 배포 | ✅ manna-five-tau.vercel.app |
 | Railway 백엔드 + Postgres | ✅ manna-production-f54d.up.railway.app (Dockerfile 빌드, 2026-09-23) |
 
-> 남은 것: 사용자 디자인 수정 → 첫 공동체에 링크 공유(D-802). 알림 · 댓글/좋아요는 Phase 3.
+> 남은 것: 실사용 전 정비(05_ROADMAP, 영역 38 — 마이페이지 · + 버튼 · 집중 모드) → 첫 공동체에 링크 공유(D-802). 알림 · 댓글/좋아요는 Phase 3.
 
 ## 문서 안내
 
