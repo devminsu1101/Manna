@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 나눔 API의 규칙. 응답 모양은 docs/03_API_SPEC.md의 Sharing 절 그대로다.
  *
  * <p>나눔은 방에 거는 글이다 — 공동체 없이는 올릴 수 없다(D-3501). 기도제목(D-3401)과 반대다.
+ * 여러 방을 고르면 방마다 글이 하나씩 생긴다(D-3507).
  * 보는 규칙은 "이 나눔이 걸린 방 중 하나에라도 내가 active"이고, 작성자는 언제나 자기 글을 본다.
  * type='prayer'는 이 경로에 없는 것으로 친다(404) — 기도제목은 /pray 아래다.
  */
@@ -60,11 +61,18 @@ public class SharingService {
         // 같은 규칙으로 막는다: 없는 방·pending 404, 비멤버 403.
         ids.forEach(id -> communities.requireActiveMember(id, userId));
 
-        Sharing s =
-            sharings.save(
-                new Sharing(users.getReferenceById(userId), type, Sharing.PUBLIC, body.strip()));
-        ids.forEach(id -> sharings.shareTo(s.getId(), id));
-        return new Created(s.getId());
+        // 방마다 글을 따로 만든다(D-3507) — 수정 · 삭제 · 댓글이 그 방 안에서만 일어난다.
+        Integer first = null;
+        for (Integer id : ids) {
+            Sharing s =
+                sharings.save(
+                    new Sharing(users.getReferenceById(userId), type, Sharing.PUBLIC, body.strip()));
+            sharings.shareTo(s.getId(), id);
+            if (first == null) {
+                first = s.getId();
+            }
+        }
+        return new Created(first);
     }
 
     // ── GET /sharings?communityId= ───────────────────────────────────────
@@ -101,7 +109,7 @@ public class SharingService {
 
     @Transactional
     public void delete(Integer userId, Integer sharingId) {
-        // sharing_communities는 ON DELETE CASCADE로 함께 지워진다.
+        // 글은 방 하나에만 걸려 있다(D-3507) — 이 방의 글만 지운다. 연결은 ON DELETE CASCADE.
         sharings.delete(requireMine(userId, sharingId));
     }
 

@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS sharings (
     CONSTRAINT sharings_verse_range CHECK (verse_end IS NULL OR verse_end >= verse_start)
 );
 
--- 나눔↔공동체 다대다. 슬랙 크로스포스트처럼 한 나눔을 작성 시 고른 여러 방에 공유한다.
+-- 나눔↔공동체. 다대다 테이블이지만 글 하나엔 방 하나만 건다 — 여러 방을 고르면 방마다 글을 따로 만든다(D-3507).
 CREATE TABLE IF NOT EXISTS sharing_communities (
     sharing_id INT NOT NULL REFERENCES sharings(id) ON DELETE CASCADE,
     community_id INT NOT NULL REFERENCES communities(id) ON DELETE CASCADE,

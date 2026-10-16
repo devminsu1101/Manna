@@ -13,7 +13,8 @@ export function DeleteSharingButton({ id }: { id: number }) {
   const [failed, setFailed] = useState(false);
 
   async function remove() {
-    if (!confirm("이 나눔을 지울까요? 공유한 모든 공동체에서 사라져요.")) return;
+    // 방마다 따로 올라간 글이라(D-3507) 이 공동체의 글만 지워진다.
+    if (!confirm("이 공동체에서 이 나눔을 지울까요?")) return;
     setBusy(true);
     setFailed(false);
     try {

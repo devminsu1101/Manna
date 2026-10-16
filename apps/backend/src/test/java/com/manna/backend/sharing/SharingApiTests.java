@@ -1,5 +1,6 @@
 package com.manna.backend.sharing;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -175,5 +176,35 @@ class SharingApiTests {
             .andExpect(status().isNoContent());
         mvc.perform(get("/api/v1/sharings/" + id).with(as("a")))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 여러_방에_올리면_방마다_따로_고치고_지운다() throws Exception {
+        User a = user("a");
+        Community ra = room("A방", a);
+        Community rb = room("B방", a);
+        int inA = shareTo("a", "같은 글", ra, rb);
+
+        String listB =
+            mvc.perform(get("/api/v1/sharings").param("communityId", "" + rb.getId()).with(as("a")))
+                .andExpect(jsonPath("$.sharings.length()").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        int inB = JsonPath.read(listB, "$.sharings[0].id");
+        assertNotEquals(inA, inB);
+
+        mvc.perform(patch("/api/v1/sharings/" + inA).with(as("a")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"A만 고침\"}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/sharings/" + inB).with(as("a")))
+            .andExpect(jsonPath("$.body").value("같은 글"));
+
+        mvc.perform(delete("/api/v1/sharings/" + inA).with(as("a")).with(csrf()))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/sharings").param("communityId", "" + ra.getId()).with(as("a")))
+            .andExpect(jsonPath("$.sharings.length()").value(0));
+        mvc.perform(get("/api/v1/sharings").param("communityId", "" + rb.getId()).with(as("a")))
+            .andExpect(jsonPath("$.sharings[0].id").value(inB));
     }
 }
