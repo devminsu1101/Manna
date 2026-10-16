@@ -21,7 +21,7 @@ erDiagram
     users ||--o{ prayer_logs : "기도함(pray_by)"
     users ||--o{ prayer_logs : "기도받음(prayed_for)"
     communities ||--o{ prayer_partners : "주간 매칭"
-    users ||--o{ prayer_partners : "기도짝"
+    users ||--o{ prayer_partners : "기도마니또"
     users ||--o{ notifications : "받음"
 
     users {
@@ -99,7 +99,7 @@ erDiagram
 | `sharings` | 나눔 | type/visibility CHECK, 성경참조 전부-또는-전무 CHECK, 절 범위 CHECK |
 | `sharing_communities` | 나눔↔공동체 (다대다) | 복합 PK |
 | `prayer_logs` | "기도했어요" | `UNIQUE(prayed_for, pray_by, prayed_on)`, 자기참조 금지 |
-| `prayer_partners` | 기도짝 | `UNIQUE(community_id, week_start, user_id)`, 자기참조 금지 |
+| `prayer_partners` | 기도마니또 | `UNIQUE(community_id, week_start, user_id)`, 자기참조 금지 |
 | `notifications` | 알림 | `read_at IS NULL` = 안읽음(부분 인덱스) |
 
 ## 설계 결정과 근거
@@ -149,8 +149,8 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 ### 나눔 타입 3종, 필드 유무가 타입에 달림
 `daily`(일상) / `scripture`(성경) / `prayer`(기도제목). 성경 참조 4컬럼은 scripture에만, 공개/익명은 prayer에만 의미가 있다. `sharings_scripture_ref` CHECK가 "성경 참조는 전부 있거나 전부 없어야 한다"를 강제해 부분 참조를 막는다.
 
-### 기도짝은 방향이 있는 주간 매칭
-`(community_id, week_start, user_id)`가 유니크 — 한 공동체에서 한 주에 한 사람은 기도짝 하나. `user_id → partner_id`는 방향이 있고, 상호 매칭이면 두 행을 넣는다. 스케줄러가 주마다 생성한다(로드맵 Phase 3).
+### 기도마니또는 방향이 있는 주간 매칭
+`(community_id, week_start, user_id)`가 유니크 — 한 공동체에서 한 주에 한 사람은 기도마니또 하나. `user_id → partner_id`는 방향이 있다 — **기도마니또**(D-3601): 섞은 순서로 원형(A→B→C→A)을 만들어 홀수여도 모두가 한 명을 맡고 한 명에게 맡겨진다. 리더가 시작하고(D-3602), 이후 매주 일요일 분은 스케줄러 없이 **읽을 때 만든다**(D-3603). "시작했는가"는 그 방에 행이 하나라도 있는지로 본다 — 컬럼을 따로 두지 않는다.
 
 ## 의도적 제외
 
@@ -173,8 +173,8 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 | `GET /pray/room` | `community_members` + `sharings` + `prayer_logs` (정렬) |
 | `POST /pray/{userId}` | `prayer_logs` |
 | `GET /pray/summary` | `prayer_logs` (어제 집계) |
-| `GET /communities/{id}`의 `prayerPartner`(그 방의 짝) · `GET /pray/summary`의 `partner`(내 짝 중 하나) · `GET /pray/room`의 `partners` 구획 — 셋 다 Phase 3까지 빈다 | `prayer_partners` |
-| `POST /sharings`, `GET /sharings?communityId=` (초안, Phase 3) | `sharings`, `sharing_communities` |
+| `GET /communities/{id}`의 `prayerPartner`(그 방의 짝) · `GET /pray/summary`의 `partner`(내 짝 중 하나) · `GET /pray/room`의 `partners` 구획 — 리더가 시작하기 전에는 빈다(D-3602) | `prayer_partners` |
+| `POST /sharings`, `GET /sharings?communityId=`, `GET /sharings/feed` | `sharings`, `sharing_communities` |
 | (로그인) | `users`, `user_identities` |
 | (알림 배지) | `notifications` |
 

@@ -15,7 +15,7 @@ type PageProps = { params: Promise<{ id: string }> };
 export const metadata: Metadata = { title: "나눔 자료실 | 만나" };
 
 /**
- * 대문 "더보기"의 목적지 — 한 방의 나눔 전부, 최신순. 페이징은 없다(D-3505).
+ * 대문 나눔 자료실의 목록 버튼이 오는 곳 — 한 방의 나눔 전부, 최신순. 페이징은 없다(D-3505).
  * 들어갈 수 없는 방이면 대문과 같이 404다(D-1707).
  */
 export default async function CommunitySharingsPage({ params }: PageProps) {

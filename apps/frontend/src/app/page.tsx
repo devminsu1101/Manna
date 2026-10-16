@@ -11,14 +11,16 @@ import { isInviteCode, PENDING_INVITE_COOKIE } from "@/features/community/invite
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getPraySummary } from "@/features/prayer/api";
 import { PraySummaryRows } from "@/features/prayer/components/PraySummaryRows";
+import { getFeed } from "@/features/sharing/api";
+import { FeedRow } from "@/features/sharing/components/FeedRow";
 
 /**
  * 홈("만나!"). 여러 도메인을 모아 보여주는 대시보드다.
  *
  *  - 기도: Pray API의 요약(features/prayer/api.ts). 비로그인이면 유도 줄만 보인다
  *  - 오늘의 말씀: 우리 성경 데이터(개역개정)에서 직접
+ *  - 지금 공동체에서는: 내 방 사람들의 최근 나눔 · 기도제목 소식(D-3604). 비로그인이면 빈 문구
  *  - 최근 읽은 말씀: 쿠키(이미 구현)
- * 공동체(나눔) 섹션만 아직 "곧 제공" 스텁이다 — 나눔 도메인은 Phase 3다.
  */
 export default async function MainPage() {
   const store = await cookies();
@@ -29,7 +31,7 @@ export default async function MainPage() {
 
   const lastRead = lastReadLocation(store.get(LAST_READ_COOKIE)?.value);
 
-  const praySummary = await getPraySummary();
+  const [praySummary, feed] = await Promise.all([getPraySummary(), getFeed()]);
 
   // 오늘의 말씀은 사 41:10. 하드코딩한 문자열이 아니라 우리 데이터에서 뽑아 번역본(개역개정)을 맞춘다.
   const isaiah = await getChapter("dt", 29);
@@ -43,10 +45,14 @@ export default async function MainPage() {
         <PraySummaryRows summary={praySummary} />
       </section>
 
-      {/* ── 지금 공동체에서는 (나눔) — 스텁 ── */}
+      {/* ── 지금 공동체에서는 — 내 방 사람들의 최근 나눔 · 기도제목 소식(D-3604) ── */}
       <section className="rounded-2xl bg-surface-warm p-4">
         <SectionHeader icon="/mascot/together.png" title="지금 공동체에서는" />
-        <ComingSoon>공동체 나눔은 곧 제공됩니다</ComingSoon>
+        {feed.length > 0 ? (
+          feed.map((item) => <FeedRow key={`${item.kind}-${item.id}`} item={item} />)
+        ) : (
+          <EmptyNote>아직 공동체 소식이 없어요</EmptyNote>
+        )}
       </section>
 
       {/* ── 오늘의 말씀 (실데이터) ── */}
@@ -88,8 +94,8 @@ function SectionHeader({ icon, title }: { icon: string; title: string }) {
   );
 }
 
-/** 아직 해당 도메인이 붙지 않은 섹션. 비어 보이지 않게 의도된 자리표시. */
-function ComingSoon({ children }: { children: React.ReactNode }) {
+/** 보여 줄 것이 없는 섹션. 비로그인 · 공동체 없음 · 아직 아무도 안 올림이 모두 여기다. */
+function EmptyNote({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-3 rounded-xl bg-white/60 px-4 py-6 text-center text-sm text-foreground/50">
       {children}

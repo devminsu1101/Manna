@@ -17,16 +17,23 @@ export const metadata: Metadata = { title: "나눔 작성 | 만나" };
  *
  * 고를 공동체 목록은 `community/api.ts`를 그대로 쓴다. 제출은 폼이 브라우저에서 `apiFetch`로 보낸다.
  */
-export default async function NewSharingPage() {
+export default async function NewSharingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ communityId?: string }>;
+}) {
   // 승인 대기 중인 방에는 나눔을 올릴 수 없다 — pending은 방 내용을 하나도 못 본다(D-1707).
   const communities = (await listMyCommunities()).filter((c) => c.myStatus === "active");
+  // 대문 자료실의 +로 왔으면 그 방을 미리 골라 둔다. 내 active 방이 아니면 무시한다.
+  const from = Number((await searchParams).communityId);
+  const preselected = communities.some((c) => c.id === from) ? [from] : [];
 
   return (
     <AppShell
       topBar={<MainTopBar icon="/mascot/together.png" title="나눔 작성" />}
       className="flex flex-col space-y-6"
     >
-      <NewSharingForm communities={communities} />
+      <NewSharingForm communities={communities} preselected={preselected} />
 
       {/* 탭이 아니라 + 버튼으로 들어오는 화면이다. standalone PWA에는 브라우저 뒤로가기가
           없으므로(D-1505) 돌아갈 길을 화면 안에 둔다 — `/communities/new`와 같은 판단. */}

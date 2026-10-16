@@ -63,6 +63,11 @@ public class SharingController {
         return service.list(currentUser.id(principal), communityId);
     }
 
+    @GetMapping("/feed")                                        // 홈 "지금 공동체에서는"(D-3604)
+    public SharingService.Feed feed(@AuthenticationPrincipal OidcUser principal) {
+        return service.feed(currentUser.id(principal));
+    }
+
     @GetMapping("/{id}")
     public SharingService.Item detail(
             @AuthenticationPrincipal OidcUser principal,

@@ -7,7 +7,7 @@
 - style: 포맷팅
 - refactor: 코드 구조 변경
 
-예: feat(prayer): 기도짝 랜덤 배정 구현
+예: feat(prayer): 기도마니또 랜덤 배정 구현
 
 ## Java 네이밍
 - Class: PascalCase

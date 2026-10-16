@@ -38,9 +38,9 @@ export type CommunityMember = {
 };
 
 /**
- * 이주의 기도짝. 아직 배정 스케줄러가 없어(Phase 3) 배정 전에는 null이 온다.
+ * 이주의 기도마니또 = 이 방에서 내가 맡은 사람(D-3601). 리더가 시작하기 전에는 null이다.
  *
- * `hasRequest`가 필요한 이유: 기도짝이 정해져도 그 사람이 기도제목을 아직 안 썼을 수
+ * `hasRequest`가 필요한 이유: 기도마니또가 정해져도 그 사람이 기도제목을 아직 안 썼을 수
  * 있다. 그때 "기도제목 보기"를 누르면 빈 화면으로 떨어진다.
  */
 export type PrayerPartner = {
@@ -50,7 +50,7 @@ export type PrayerPartner = {
 };
 
 /**
- * 대문 화면(D-1003). 기도짝 · 나눔 자료실 · 멤버 목록 셋이다.
+ * 대문 화면(D-1003). 기도마니또 · 나눔 자료실 · 멤버 목록 셋이다.
  * 시안의 공지사항·갤러리는 ERD에 테이블이 없어 제외됐다.
  * 나눔 자료실은 여기 없다 — 페이지가 `features/sharing/api.ts`로 따로 부른다.
  */
@@ -61,6 +61,8 @@ export type CommunityDetail = {
   inviteCode?: string;
   myRole: MemberRole;
   prayerPartner: PrayerPartner | null;
+  /** 리더가 기도마니또를 시작했는지. 시작했으면 "기도마니또 시작하기" 버튼이 없다(D-3602). */
+  partnersStarted: boolean;
   /** 승인된 멤버와 `pending` 신청자가 함께 온다. 리더만 후자를 본다. */
   members: CommunityMember[];
 };

@@ -41,7 +41,7 @@ export type PrayPerson = {
   /** `users.profile_image_url`. 아직 아무도 값이 없어 마스코트로 떨어진다. */
   profileImageUrl: string | null;
   communities: PrayCommunityRef[];
-  /** 기도짝 구획에만 온다. Phase 3까지 그 구획이 늘 비어 화면은 읽지 않는다. */
+  /** 기도마니또 구획에만 온다 — 어느 방에서 내가 맡은 사람인지. 화면은 아직 읽지 않는다. */
   partnerIn?: PrayCommunityRef[];
   /** **없어도 카드는 만든다** — 조용한 사람이 기도에서 배제되지 않게 (D-903). */
   request: PrayerRequest | null;
@@ -72,10 +72,9 @@ export type PrayRoom = {
 /**
  * 홈 최상단 한 칸.
  *
- * ⚠️ **`partner`와 `partnerTotal`을 한 필드로 합치지 말 것.** 둘은 다른 상태다:
- *   partnerTotal: 0                → 기도짝이 없다 (배정 스케줄러가 Phase 3라 지금은 늘 이것)
- *   partner: null, partnerTotal: 3 → 짝은 있는데 이미 모두를 위해 기도했다
- * 합치면 "짝 없음"과 "다 했음"이 같은 화면이 되는데, 전자는 줄을 숨기고 후자는 칭찬해야 한다.
+ * `partner`가 null이면 기도마니또가 없다(리더가 아직 시작 안 함, D-3602). 오늘 모두를 위해
+ * 기도했어도 서버는 이름을 그대로 준다 — "모두를 위해 기도했어요" 줄은 없앴다(사용자 결정).
+ * `partnerTotal`은 맡은 사람 수다. 화면은 지금 읽지 않는다.
  *
  * `yesterdayCount`가 **어제 기준**인 것이 핵심이다 (D-901). "어제의 기도로 오늘을 산다"는
  * 뜻이고, 오늘 기준으로 바꾸면 아침마다 0에서 시작해 그 의미가 사라진다.

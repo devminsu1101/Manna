@@ -169,8 +169,8 @@ CREATE TABLE IF NOT EXISTS prayer_logs (
     UNIQUE (prayed_for_user_id, pray_by, prayed_on)
 );
 
--- 기도짝: 공동체 내에서 주간 단위로 사람-사람을 잇는다. 스케줄러가 주마다 생성한다.
--- 방향이 있는 관계다(user_id가 partner_id를 위해 기도). 상호 매칭이면 두 행을 넣는다.
+-- 기도마니또(D-3601): 공동체 내 주간, 한 방향 원형. 리더가 시작하고 이후 주는 읽을 때 만든다(D-3603).
+-- 방향이 있는 관계다(user_id가 partner_id를 위해 기도). 받는 사람은 누가 자기를 맡았는지 모른다.
 CREATE TABLE IF NOT EXISTS prayer_partners (
     id SERIAL PRIMARY KEY,
     community_id INT NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS prayer_partners (
     partner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT prayer_partners_not_self CHECK (user_id <> partner_id),
-    -- 한 공동체에서 한 주에 한 사람은 기도짝 하나. 화면의 "이번주 기도짝은 ○○님".
+    -- 한 공동체에서 한 주에 한 사람은 기도마니또 하나. 화면의 "이번주 기도마니또는 ○○님".
     UNIQUE (community_id, week_start, user_id)
 );
 

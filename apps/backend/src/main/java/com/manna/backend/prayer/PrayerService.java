@@ -39,16 +39,19 @@ public class PrayerService {
     private final SharingRepository sharings;
     private final PrayerLogRepository logs;
     private final UserRepository users;
+    private final PrayerPartnerService partners;
 
     public PrayerService(
             CommunityMemberRepository members,
             SharingRepository sharings,
             PrayerLogRepository logs,
-            UserRepository users) {
+            UserRepository users,
+            PrayerPartnerService partners) {
         this.members = members;
         this.sharings = sharings;
         this.logs = logs;
         this.users = users;
+        this.partners = partners;
     }
 
     static LocalDate today() {
@@ -62,7 +65,7 @@ public class PrayerService {
     /** daysAgo는 서버가 KST로 센다 — 화면이 createdAt을 파싱하지 않게(명세). */
     public record Request(String body, OffsetDateTime createdAt, long daysAgo) {}
 
-    /** 중보기도실 카드이자 기도 상세. partnerIn은 기도짝 구획에만 있다(Phase 3). */
+    /** 중보기도실 카드이자 기도 상세. partnerIn은 기도마니또 구획에만 있다. */
     public record Person(
             Integer userId,
             String name,
@@ -85,10 +88,29 @@ public class PrayerService {
 
     // ── GET /pray/room ───────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
+    // 쓰기 트랜잭션: 이번 주 기도마니또가 없으면 여기서 만든다(D-3603).
+    @Transactional
     public Room room(Integer me) {
-        // 기도짝은 스케줄러(Phase 3)가 생기기 전까지 비어 있다.
-        return new Room(List.of(), people(me, members.findSharedWith(me)));
+        List<CommunityMember> rows = members.findSharedWith(me);
+        partners.ensureThisWeek(rows.stream().map(m -> m.getCommunity().getId()).distinct().toList());
+
+        // 내가 맡은 사람 → 어느 방의 짝인지. rows가 active 멤버만이라 주 중간에 나간 사람은 저절로 빠진다.
+        Map<Integer, Integer> mine = partners.myPartners(me);
+        Map<Integer, List<CommunityRef>> partnerIn = new HashMap<>();
+        for (CommunityMember m : rows) {
+            Integer c = m.getCommunity().getId();
+            if (m.getUser().getId().equals(mine.get(c))) {
+                partnerIn
+                    .computeIfAbsent(m.getUser().getId(), k -> new ArrayList<>())
+                    .add(new CommunityRef(c, m.getCommunity().getName()));
+            }
+        }
+
+        // 기도마니또는 members에서 뺀다 — 같은 사람이 두 구획에 나오면 안 된다(명세).
+        List<Person> all = people(me, rows, partnerIn);
+        return new Room(
+            all.stream().filter(p -> p.partnerIn() != null).toList(),
+            all.stream().filter(p -> p.partnerIn() == null).toList());
     }
 
     // ── GET /pray/requests/{userId} ──────────────────────────────────────
@@ -96,7 +118,7 @@ public class PrayerService {
     /** 볼 수 없는 사람은 404 — 존재 자체를 드러내지 않는다(D-1707). 나 자신도 여기 걸린다. */
     @Transactional(readOnly = true)
     public Person person(Integer me, Integer userId) {
-        List<Person> found = people(me, members.findSharedWith(me, userId));
+        List<Person> found = people(me, members.findSharedWith(me, userId), Map.of());
         if (found.isEmpty()) {
             throw ApiException.notFound("볼 수 없는 사람입니다.");
         }
@@ -118,10 +140,23 @@ public class PrayerService {
 
     // ── GET /pray/summary ────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
+    /**
+     * 짝은 기도실 맨 위 구획과 같은 사람들이다. 그 구획의 정렬을 그대로 써서 오늘 아직 기도하지
+     * 않은 첫 사람을 고른다 — 같은 규칙을 두 곳에 두지 않는다(명세). 모두 기도했어도 이름을 그대로
+     * 보여 준다(사용자 결정) — 정렬상 맨 앞 사람이다. partner가 null이면 짝이 없는 것뿐이다.
+     */
+    @Transactional
     public Summary summary(Integer me) {
         long yesterday = logs.countByPrayedFor_IdAndPrayedOn(me, today().minusDays(1));
-        return new Summary(yesterday, null, 0);
+        List<Person> mine = room(me).partners();
+        Partner next =
+            mine.stream()
+                .filter(p -> !p.prayedByMeToday())
+                .findFirst()
+                .or(() -> mine.stream().findFirst())
+                .map(p -> new Partner(p.userId(), p.name(), p.partnerIn().get(0).name()))
+                .orElse(null);
+        return new Summary(yesterday, next, mine.size());
     }
 
     // ── GET·POST /pray/requests/me ───────────────────────────────────────
@@ -154,7 +189,8 @@ public class PrayerService {
      * 정렬: 오늘 내가 안 한 사람 먼저 → 최근 기도제목 올린 사람 먼저(없으면 뒤) → 내가 오래 전에
      * 기도한 사람 먼저(한 번도 안 했으면 맨 앞) → id. 페이징이 없어 메모리에서 정렬한다.
      */
-    private List<Person> people(Integer me, List<CommunityMember> rows) {
+    private List<Person> people(
+            Integer me, List<CommunityMember> rows, Map<Integer, List<CommunityRef>> partnerIn) {
         Map<Integer, User> people = new LinkedHashMap<>();
         Map<Integer, List<CommunityRef>> communities = new HashMap<>();
         for (CommunityMember m : rows) {
@@ -197,7 +233,7 @@ public class PrayerService {
                         u.getName(),
                         u.getProfileImageUrl(),
                         communities.get(id),
-                        null,
+                        partnerIn.get(id),
                         s == null ? null : toRequest(s, today),
                         today.equals(lastPrayed.get(id)));
                 })

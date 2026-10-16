@@ -5,6 +5,18 @@
 /** `sharings.type` 중 나눔이 쓰는 둘. `prayer`는 `/pray` 아래다(D-3401). */
 export type SharingType = "daily" | "scripture";
 
+/** 홈 "지금 공동체에서는" 한 줄(D-3604). 글이 아니라 "누가 무엇을 했는지"다. */
+export type FeedItem = {
+  kind: "sharing" | "prayer";
+  /** 나눔이면 상세(`/sharings/{id}`)로 간다. */
+  id: number;
+  /** 기도제목이면 그 사람 기도 상세(`/prayer/{userId}`)로 간다. */
+  userId: number;
+  name: string;
+  firstLine: string;
+  createdAt: string;
+};
+
 export type Sharing = {
   id: number;
   type: SharingType;
@@ -14,4 +26,6 @@ export type Sharing = {
   createdAt: string;
   /** 내 글이면 수정·삭제를 보여 준다. */
   mine: boolean;
+  /** 이 글이 걸린 방(D-3507: 글 하나 = 방 하나). 상세의 "공동체로"가 간다. 방이 지워졌으면 null. */
+  communityId: number | null;
 };

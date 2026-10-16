@@ -38,13 +38,15 @@ public class SharingService {
 
     public record Author(Integer userId, String name, String profileImageUrl) {}
 
+    /** communityId: 이 글이 걸린 방. 상세의 "공동체로"가 간다. 방이 지워졌으면 null. */
     public record Item(
             Integer id,
             String type,
             String body,
             Author author,
             OffsetDateTime createdAt,
-            boolean mine) {}
+            boolean mine,
+            Integer communityId) {}
 
     public record ListResponse(List<Item> sharings) {}
 
@@ -84,7 +86,36 @@ public class SharingService {
         List<Sharing> found = sharings.findByCommunity(communityId);
         // 작성자를 한 번에 올려 둔다 — 아래 getAuthor()가 줄마다 쿼리하지 않게.
         users.findAllById(found.stream().map(s -> s.getAuthor().getId()).distinct().toList());
-        return new ListResponse(found.stream().map(s -> toItem(s, userId)).toList());
+        return new ListResponse(found.stream().map(s -> toItem(s, userId, communityId)).toList());
+    }
+
+    // ── GET /sharings/feed ───────────────────────────────────────────────
+
+    /** 홈 소식 한 줄. kind가 sharing이면 id로 상세에, prayer면 userId로 기도 상세에 간다. */
+    public record FeedItem(
+            String kind, Integer id, Integer userId, String name, String firstLine, OffsetDateTime createdAt) {}
+
+    public record Feed(List<FeedItem> items) {}
+
+    private static final int FEED_SIZE = 3;
+
+    /** 홈 "지금 공동체에서는"(D-3604). 글 목록이 아니라 "누가 무엇을 했는지"다 — 내 것은 없다. */
+    @Transactional(readOnly = true)
+    public Feed feed(Integer userId) {
+        List<Sharing> found = sharings.findFeed(userId, FEED_SIZE);
+        users.findAllById(found.stream().map(s -> s.getAuthor().getId()).distinct().toList());
+        return new Feed(
+            found.stream()
+                .map(
+                    s ->
+                        new FeedItem(
+                            Sharing.PRAYER.equals(s.getType()) ? "prayer" : "sharing",
+                            s.getId(),
+                            s.getAuthor().getId(),
+                            s.getAuthor().getName(),
+                            s.getBody().split("\n", 2)[0],
+                            s.getCreatedAt().atZoneSameInstant(PrayerService.KST).toOffsetDateTime()))
+                .toList());
     }
 
     // ── GET /sharings/{id} ───────────────────────────────────────────────
@@ -95,7 +126,7 @@ public class SharingService {
         if (!isMine(s, userId) && !sharings.isVisibleTo(sharingId, userId)) {
             throw notFound();
         }
-        return toItem(s, userId);
+        return toItem(s, userId, sharings.findCommunityOf(sharingId, userId));
     }
 
     // ── PATCH /sharings/{id} ─────────────────────────────────────────────
@@ -142,7 +173,7 @@ public class SharingService {
         return ApiException.notFound("없는 나눔입니다.");
     }
 
-    private static Item toItem(Sharing s, Integer userId) {
+    private static Item toItem(Sharing s, Integer userId, Integer communityId) {
         User a = s.getAuthor();
         return new Item(
             s.getId(),
@@ -151,6 +182,7 @@ public class SharingService {
             new Author(a.getId(), a.getName(), a.getProfileImageUrl()),
             // 응답 시각은 +09:00(D-3402) — 화면이 앞 10자를 날짜로 쓴다.
             s.getCreatedAt().atZoneSameInstant(PrayerService.KST).toOffsetDateTime(),
-            isMine(s, userId));
+            isMine(s, userId),
+            communityId);
     }
 }

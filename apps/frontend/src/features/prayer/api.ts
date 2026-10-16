@@ -39,7 +39,7 @@ export async function getPrayPerson(userId: number): Promise<PrayPerson | null> 
 const SIGNED_OUT_SUMMARY: PraySummary = { yesterdayCount: 0, partner: null, partnerTotal: 0 };
 
 /**
- * 홈 최상단 한 칸. 어제 받은 수 + 이번 주 기도짝.
+ * 홈 최상단 한 칸. 어제 받은 수 + 이번 주 기도마니또.
  *
  * 홈은 비로그인도 열리므로 401에 로그인 화면으로 보내지 않는다(`backendGet`을 쓰지 않는 이유).
  */

@@ -3,7 +3,9 @@ package com.manna.backend.community;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.manna.backend.common.ApiException;
 import com.manna.backend.domain.User;
+import com.manna.backend.prayer.PrayerPartnerService;
 import com.manna.backend.repository.UserRepository;
+import com.manna.backend.sharing.SharingRepository;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
@@ -28,19 +30,26 @@ public class CommunityService {
     private final CommunityRepository communities;
     private final CommunityMemberRepository members;
     private final UserRepository users;
+    private final PrayerPartnerService partners;
+    private final SharingRepository sharings;
 
     public CommunityService(
             CommunityRepository communities,
             CommunityMemberRepository members,
-            UserRepository users) {
+            UserRepository users,
+            PrayerPartnerService partners,
+            SharingRepository sharings) {
         this.communities = communities;
         this.members = members;
         this.users = users;
+        this.partners = partners;
+        this.sharings = sharings;
     }
 
     // ── 응답 ─────────────────────────────────────────────────────────────
     // 리더에게만 가는 필드는 NON_NULL로 멤버 응답에서 필드째 뺀다(명세: "필드 자체가 없다").
     // prayerPartner는 null이어도 내보낸다 — 화면이 "아직 배정 전"으로 읽는 값이다.
+    // partnersStarted는 리더의 "기도마니또 시작하기" 버튼을 숨길지 정한다.
 
     public record Created(Integer id, String name, String inviteCode) {}
 
@@ -58,7 +67,8 @@ public class CommunityService {
 
     public record PendingMember(Integer userId, String name) {}
 
-    public record PrayerPartner(Integer userId, String name) {}
+    /** hasRequest: 그 사람이 공개 기도제목을 올렸는지. 없으면 화면이 "기도제목 보기"를 걸지 않는다. */
+    public record PrayerPartner(Integer userId, String name, boolean hasRequest) {}
 
     public record Detail(
             Integer id,
@@ -66,6 +76,7 @@ public class CommunityService {
             String myRole,
             @JsonInclude(JsonInclude.Include.NON_NULL) String inviteCode,
             PrayerPartner prayerPartner,
+            boolean partnersStarted,
             List<Member> members,
             @JsonInclude(JsonInclude.Include.NON_NULL) List<PendingMember> pendingMembers) {}
 
@@ -127,9 +138,11 @@ public class CommunityService {
 
     // ── GET /communities/{id} ────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
+    // 쓰기 트랜잭션: 이번 주 기도마니또가 없으면 여기서 만든다(D-3603).
+    @Transactional
     public Detail detail(Integer userId, Integer communityId) {
         CommunityMember me = requireActiveMember(communityId, userId);
+        partners.ensureThisWeek(List.of(communityId));
         Community c = me.getCommunity();
         boolean leader = me.isLeader();
 
@@ -153,14 +166,38 @@ public class CommunityService {
                     .toList()
                 : null;
 
+        // 내가 이 방에서 맡은 사람. 주 중간에 나간 사람이면 숨긴다(active 목록에 없다).
+        Integer partnerId = partners.myPartners(userId).get(communityId);
+        PrayerPartner partner =
+            active.stream()
+                .filter(m -> m.userId().equals(partnerId))
+                .findFirst()
+                .map(
+                    m ->
+                        new PrayerPartner(
+                            m.userId(),
+                            m.name(),
+                            !sharings.findLatestPublicPrayers(List.of(m.userId())).isEmpty()))
+                .orElse(null);
+
         return new Detail(
             c.getId(),
             c.getName(),
             me.getRole(),
             leader ? c.getInviteCode() : null,
-            null, // 배정 스케줄러가 Phase 3이라 당분간 항상 null(명세)
+            partner,
+            partners.started(communityId),
             active,
             pending);
+    }
+
+    // ── POST /communities/{id}/partners ──────────────────────────────────
+
+    /** 기도마니또 시작(리더, D-3602). 방을 만들고 멤버를 다 받은 뒤 한꺼번에 시작한다. */
+    @Transactional
+    public void startPartners(Integer userId, Integer communityId) {
+        requireLeader(communityId, userId);
+        partners.start(communityId);
     }
 
     // ── GET /invites/{code} ──────────────────────────────────────────────

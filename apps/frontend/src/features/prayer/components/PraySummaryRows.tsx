@@ -18,7 +18,7 @@ const ROW = "mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px
  * 뜰 때 그 자리가 쌓아 둔 신뢰가 깎인다.
  */
 export function PraySummaryRows({ summary }: { summary: PraySummary }) {
-  const { yesterdayCount, partner, partnerTotal } = summary;
+  const { yesterdayCount, partner } = summary;
 
   return (
     <>
@@ -41,26 +41,20 @@ export function PraySummaryRows({ summary }: { summary: PraySummary }) {
         </Link>
       )}
 
-      {/* `partnerTotal === 0`은 **기도짝이 아예 없는 것**이다 — 배정 스케줄러가 Phase 3라
-          지금은 늘 이 경로고, 줄을 통째로 숨긴다.
-          `partner === null`인데 total이 있으면 **짝 모두를 위해 이미 기도한 것**이다.
-          둘은 다른 상태라 한 필드로 합치면 안 된다. */}
-      {partnerTotal > 0 &&
-        (partner ? (
-          <Link href="/prayer" className={ROW}>
-            <span>
-              <span className="block font-bold text-foreground">
-                이번주 기도짝은 <span className="text-secondary">{partner.name}</span>님이에요
-              </span>
-              <span className="block text-sm text-foreground/60">{partner.communityName}</span>
+      {/* partner가 없으면 기도마니또가 아예 없는 것이다 — 리더가 아직 시작하지 않았거나(D-3602)
+          이번 주 중간에 들어왔다. 줄을 통째로 숨긴다. 오늘 이미 기도했어도 이름은 그대로 뜬다. */}
+      {partner && (
+        // 그 사람 기도제목으로 바로 간다 — 기도했어요도 거기서 누른다.
+        <Link href={`/prayer/${partner.userId}`} className={ROW}>
+          <span>
+            <span className="block font-bold text-foreground">
+              이번주 기도마니또는 <span className="text-secondary">{partner.name}</span>님이에요
             </span>
-            <ChevronRight className="size-5 shrink-0 text-foreground/40" />
-          </Link>
-        ) : (
-          <p className={`${ROW} justify-center text-sm text-foreground/60`}>
-            이번주 기도짝 모두를 위해 기도했어요
-          </p>
-        ))}
+            <span className="block text-sm text-foreground/60">{partner.communityName}</span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-foreground/40" />
+        </Link>
+      )}
     </>
   );
 }

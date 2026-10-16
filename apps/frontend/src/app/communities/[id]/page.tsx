@@ -23,7 +23,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 }
 
 /**
- * 공동체 대문 (D-1003). 기도짝 · 나눔 자료실 · 멤버 목록 셋이다.
+ * 공동체 대문 (D-1003). 기도마니또 · 나눔 자료실 · 멤버 목록 셋이다.
  * 시안(`Community Page.png`)의 공지사항·갤러리는 ERD에 테이블이 없어 제외됐다.
  *
  * **목록으로 나가는 버튼을 두지 않는다** (D-1701). 탭을 다시 누르면 목록이고, 그러라고
@@ -52,6 +52,7 @@ export default async function CommunityPage(props: PageProps) {
         members={community.members}
         myRole={community.myRole}
         inviteCode={community.inviteCode}
+        partnersStarted={community.partnersStarted}
       />
     </AppShell>
   );

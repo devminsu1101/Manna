@@ -32,16 +32,18 @@ export default async function PrayerPage() {
     >
       <RequestSection />
 
-      {/* 배정 스케줄러가 Phase 3라 지금은 늘 빈 배열이다. 그때 제목만 덩그러니 남지 않도록
+      {/* 리더가 기도마니또를 시작하기 전(D-3602)에는 빈 배열이다. 제목만 덩그러니 남지 않도록
           **구획을 통째로 렌더하지 않는다.** */}
       {partners.length > 0 && (
-        <CommunitySection icon="/mascot/warm.png" title="이번주 기도짝" surface="love">
+        <CommunitySection icon="/mascot/warm.png" title="이번주 기도마니또" surface="love">
           {partners.map((person) => (
             <PrayerPersonCard key={person.userId} person={person} />
           ))}
         </CommunitySection>
       )}
 
+      {/* 짝만 있고 members가 0명이면(둘뿐인 방) "함께 기도해요"는 통째로 빠진다. 의도한 것이다 —
+          볼 사람이 이미 위 구획에 다 있다. */}
       {members.length > 0 ? (
         <CommunitySection icon="/mascot/together.png" title="함께 기도해요" surface="love">
           {members.map((person) => (

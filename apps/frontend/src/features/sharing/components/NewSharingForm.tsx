@@ -39,11 +39,18 @@ export const FIELD_CLASS =
  * 제출은 `POST /api/v1/sharings`(apiFetch, NewCommunityForm과 같은 모양). 공동체를 하나도
  * 고르지 않으면 보낼 수 없다 — 나눔은 방에 거는 글이다(D-3501). 올리면 상세로 간다.
  */
-export function NewSharingForm({ communities }: { communities: CommunitySummary[] }) {
+export function NewSharingForm({
+  communities,
+  preselected,
+}: {
+  communities: CommunitySummary[];
+  /** 대문 자료실의 +로 들어오면 그 방이 미리 골라져 있다. */
+  preselected: number[];
+}) {
   const router = useRouter();
   const [type, setType] = useState<SharingType | null>(null);
   const [body, setBody] = useState("");
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<number[]>(preselected);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

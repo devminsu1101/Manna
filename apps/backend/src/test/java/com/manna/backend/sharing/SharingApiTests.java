@@ -134,7 +134,8 @@ class SharingApiTests {
 
         mvc.perform(get("/api/v1/sharings/" + first).with(as("a")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.mine").value(true));
+            .andExpect(jsonPath("$.mine").value(true))
+            .andExpect(jsonPath("$.communityId").value(ab.getId()));
         mvc.perform(get("/api/v1/sharings/" + first).with(as("b")))
             .andExpect(status().isOk());
 
@@ -176,6 +177,34 @@ class SharingApiTests {
             .andExpect(status().isNoContent());
         mvc.perform(get("/api/v1/sharings/" + id).with(as("a")))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 홈_소식은_내_방_사람들의_나눔_기도제목이고_내_것은_없다() throws Exception {
+        User a = user("a");
+        User b = user("b");
+        User c = user("c");
+        Community r1 = room("1방", a, b);
+        Community r2 = room("2방", b, a);
+        Community rc = room("C방", c);
+
+        shareTo("b", "두 방에 같은 글", r1, r2);
+        shareTo("a", "내 글", r1);
+        shareTo("c", "다른 방 글", rc);
+        mvc.perform(post("/api/v1/pray/requests/me").with(as("b")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"첫 줄\\n둘째 줄\"}"))
+            .andExpect(status().isCreated());
+
+        // 최신순: b의 기도제목 → b의 나눔(두 방이지만 한 번). 내 글 · 다른 방 글은 없다
+        mvc.perform(get("/api/v1/sharings/feed").with(as("a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(2))
+            .andExpect(jsonPath("$.items[0].kind").value("prayer"))
+            .andExpect(jsonPath("$.items[0].userId").value(b.getId()))
+            .andExpect(jsonPath("$.items[0].firstLine").value("첫 줄"))
+            .andExpect(jsonPath("$.items[1].kind").value("sharing"))
+            .andExpect(jsonPath("$.items[1].name").value("b"))
+            .andExpect(jsonPath("$.items[1].firstLine").value("두 방에 같은 글"));
     }
 
     @Test

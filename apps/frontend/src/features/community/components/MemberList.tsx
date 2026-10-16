@@ -4,6 +4,7 @@ import type { CommunityMember, MemberRole } from "../types";
 import { CommunitySection, ROW_CLASS } from "./CommunitySection";
 import { InviteButton } from "./InviteButton";
 import { PendingActions } from "./PendingActions";
+import { StartPartnersButton } from "./StartPartnersButton";
 
 /**
  * 멤버 목록 (D-1003). 시안의 공지사항 자리에 대신 들어온 구역이다.
@@ -19,12 +20,14 @@ export function MemberList({
   members,
   myRole,
   inviteCode,
+  partnersStarted,
 }: {
   communityId: number;
   members: CommunityMember[];
   myRole: MemberRole;
   /** 리더에게만 온다. 없으면 초대 버튼도 없다 — 초대는 리더의 일이다. */
   inviteCode?: string;
+  partnersStarted: boolean;
 }) {
   const active = members.filter((m) => m.status === "active");
   // 리더가 아니면 신청자가 있는지조차 알 필요가 없다. 승인은 리더만 한다.
@@ -66,6 +69,11 @@ export function MemberList({
           </li>
         ))}
       </ul>
+
+      {/* 리더가 멤버를 다 받은 뒤 한꺼번에 시작한다(D-3602). 혼자인 방은 짝을 지을 수 없다. */}
+      {myRole === "leader" && !partnersStarted && active.length >= 2 && (
+        <StartPartnersButton communityId={communityId} />
+      )}
     </CommunitySection>
   );
 }

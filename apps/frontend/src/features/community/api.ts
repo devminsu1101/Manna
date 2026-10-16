@@ -33,7 +33,8 @@ type DetailResponse = {
   name: string;
   myRole: MemberRole;
   inviteCode?: string; // 리더에게만
-  prayerPartner: { userId: number; name: string } | null;
+  prayerPartner: { userId: number; name: string; hasRequest: boolean } | null;
+  partnersStarted: boolean;
   members: { userId: number; name: string; role: MemberRole }[];
   pendingMembers?: { userId: number; name: string }[]; // 리더에게만
 };
@@ -103,9 +104,9 @@ export async function getCommunity(id: number): Promise<CommunityDetail | null> 
     name: d.name,
     inviteCode: d.inviteCode,
     myRole: d.myRole,
-    // 배정 스케줄러가 Phase 3이라 지금은 항상 null이다. 값이 오기 시작하면 기도 도메인에서
-    // 기도제목 유무를 함께 받아 hasRequest를 채운다 — 그 전까지는 "안 올렸다"로 둔다.
-    prayerPartner: d.prayerPartner && { ...d.prayerPartner, hasRequest: false },
+    // 리더가 시작하기 전(D-3602)이거나 짝이 주 중간에 나갔으면 null이다.
+    prayerPartner: d.prayerPartner,
+    partnersStarted: d.partnersStarted,
     members,
   };
 }

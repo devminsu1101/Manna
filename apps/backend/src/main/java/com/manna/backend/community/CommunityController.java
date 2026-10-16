@@ -66,6 +66,14 @@ public class CommunityController {
         service.approve(currentUser.id(principal), id, userId);
     }
 
+    @PostMapping("/{id}/partners")                              // 기도마니또 시작 (리더, D-3602)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void startPartners(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id) {
+        service.startPartners(currentUser.id(principal), id);
+    }
+
     @DeleteMapping("/{id}/members/{userId}")                    // 거절 · 강퇴 · 나가기
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remove(

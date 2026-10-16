@@ -61,9 +61,11 @@ export default async function SharingPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* 어느 방에서 들어왔는지 모른다(여러 방에 걸릴 수 있다). 목록으로 보낸다. D-1505 */}
+      {/* 이 글이 걸린 방의 대문으로 간다(글 하나 = 방 하나, D-3507). 방이 지워졌으면 목록. D-1505 */}
       <Button asChild variant="ghost" className="mt-2 h-11 w-full rounded-xl">
-        <Link href="/communities">공동체로</Link>
+        <Link href={sharing.communityId ? `/communities/${sharing.communityId}` : "/communities"}>
+          공동체로
+        </Link>
       </Button>
     </AppShell>
   );

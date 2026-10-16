@@ -39,6 +39,43 @@ public interface SharingRepository extends JpaRepository<Sharing, Integer> {
                 + " WHERE sc.community_id = :communityId ORDER BY s.created_at DESC")
     List<Sharing> findByCommunity(Integer communityId);
 
+    /**
+     * 홈 "지금 공동체에서는"(D-3604). 내 방 사람들의 최근 나눔 · 기도제목, 내 것은 뺀다.
+     * - 나눔: 내가 active인 방에 걸린 것
+     * - 기도제목: 나와 active로 같은 방에 있는 사람의 공개 것(중보기도실과 같은 범위, D-3401)
+     * 여러 방에 따로 올라간 같은 글(D-3507)은 작성자 · 종류 · 본문이 같으면 하나로 친다.
+     */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT * FROM ("
+                + " SELECT DISTINCT ON (s.author_id, s.type, s.body) s.* FROM sharings s"
+                + " WHERE s.author_id <> :me AND ("
+                + "  (s.type <> 'prayer' AND EXISTS (SELECT 1 FROM sharing_communities sc"
+                + "    JOIN community_members m ON m.community_id = sc.community_id"
+                + "    WHERE sc.sharing_id = s.id AND m.user_id = :me AND m.status = 'active'))"
+                + "  OR (s.type = 'prayer' AND s.visibility = 'public' AND EXISTS (SELECT 1"
+                + "    FROM community_members a JOIN community_members b ON b.community_id = a.community_id"
+                + "    WHERE a.user_id = :me AND a.status = 'active'"
+                + "    AND b.user_id = s.author_id AND b.status = 'active')))"
+                + " ORDER BY s.author_id, s.type, s.body, s.created_at DESC"
+                + ") t ORDER BY created_at DESC LIMIT :limit")
+    List<Sharing> findFeed(Integer me, int limit);
+
+    /**
+     * 이 나눔이 걸린 방. 글 하나는 방 하나다(D-3507). D-3507 이전에 여러 방에 걸린 글은 내가
+     * active인 방을 먼저 고른다. 방이 지워졌으면 비어 있다.
+     */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT sc.community_id FROM sharing_communities sc"
+                + " LEFT JOIN community_members m ON m.community_id = sc.community_id"
+                + " AND m.user_id = :me AND m.status = 'active'"
+                + " WHERE sc.sharing_id = :sharingId"
+                + " ORDER BY (m.user_id IS NULL), sc.community_id LIMIT 1")
+    Integer findCommunityOf(Integer sharingId, Integer me);
+
     /** 이 나눔이 걸린 방 중 하나에라도 내가 active인지. */
     @Query(
         nativeQuery = true,
