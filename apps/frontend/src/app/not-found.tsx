@@ -39,16 +39,16 @@ export default function NotFound() {
         아직 준비 중인 곳이에요
       </p>
 
-      {/* 로그인 화면과 같은 큰 CTA 리듬(h-14 · rounded-xl · text-base). 상단바 아이콘 버튼과
-          섞이지 않도록 전면 화면의 주 동작은 이 크기로 통일한다. */}
+      {/* 전체 폭 주 버튼은 size="block" 한 가지(D-3617). 글자만 키워 전면 화면의 주 동작으로 보이게 한다. */}
       <div className="mt-10 flex w-full max-w-sm flex-col gap-3">
-        <Button asChild className="h-14 w-full rounded-xl text-base font-bold">
+        <Button asChild variant="warm" size="block" className="text-base font-bold">
           <Link href="/">홈으로 가기</Link>
         </Button>
         <Button
           asChild
           variant="outline"
-          className="h-14 w-full rounded-xl border-2 border-secondary text-base font-bold text-secondary"
+          size="block"
+          className="border-2 border-secondary text-base font-bold text-secondary"
         >
           <Link href="/bible">성경 읽기</Link>
         </Button>

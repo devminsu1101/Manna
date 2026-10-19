@@ -23,7 +23,7 @@ export default async function EditSharingPage({ params }: PageProps) {
       className="flex flex-col space-y-2"
     >
       <EditSharingForm id={sharing.id} initialBody={sharing.body} />
-      <Button asChild variant="ghost" className="h-11 w-full">
+      <Button asChild variant="ghost" size="block">
         <Link href={`/sharings/${sharing.id}`}>취소</Link>
       </Button>
     </AppShell>

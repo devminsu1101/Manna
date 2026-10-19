@@ -55,7 +55,8 @@ export function EditSharingForm({ id, initialBody }: { id: number; initialBody: 
 
       <Button
         type="submit"
-        className="h-12 w-full rounded-xl"
+        variant="warm"
+        size="block"
         disabled={submitting || body.trim() === ""}
       >
         {submitting ? "저장하는 중…" : "저장하기"}

@@ -2126,3 +2126,18 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 **📝 만든 것**
 - 마이페이지 "이전 기도제목" 구역 오른쪽 ＋ → `composeHref({ kind: "prayer" })`. 대문 자료실 ＋와 같은 ghost 아이콘 버튼.
 
+## 2026-10-20 · 버튼 통일 구현 (D-3617) — 4차 끝
+
+**📝 만든 것**
+- `components/ui/button.tsx`에 variant `warm`(bg-primary) · `cool`(bg-secondary) · `love`(bg-accent)와 size `block`
+  (`h-12 w-full rounded-xl`). 색은 기존 토큰 그대로라 globals.css · 집중 모드 변수는 손대지 않았다.
+  shadcn의 default · secondary · destructive는 지우지 않았다(호환용). 새 코드는 쓰지 않는다.
+- **`PrayButton`이 끝난 상태까지 그린다** — `prayedToday` prop. 참이면 같은 `love` · `block` 버튼을 `disabled`로,
+  `bg-accent/20 text-foreground/60`(예전 `<p>`와 같은 색)에 `disabled:opacity-100`. 중보기도실 · `/prayer/{userId}`의
+  `prayedByMeToday ? <p> : <PrayButton>` 삼항이 사라졌다.
+- 중보기도실 '나'의 "새로 작성하기"(임시 destructive) · 기도제목 올리기(bg-accent 덧칠) → `love`.
+- 전체 폭 `<Button>`을 전부 `size="block"`으로: h-11(돌아가기류 ghost · 기도마니또 시작) · h-14(404 · 가입 신청)도 h-12로 접었다
+  (사용자 결정). 404만 `text-base font-bold`를 남겨 전면 화면 주 동작으로 보이게 했다.
+  로그인 · 초대 화면의 h-14 링크는 `<Button>`이 아닌 브랜드 버튼이라 그대로다.
+- 성경 피드의 `variant="secondary"` 2곳 → `cool`.
+- `CommunitySection`의 `surface`(love · warm · cool · 생략)는 이미 같은 이름 체계라 그대로 둔다.

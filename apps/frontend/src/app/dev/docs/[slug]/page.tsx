@@ -52,7 +52,7 @@ export default async function DocPage({ params }: PageProps) {
       </article>
 
       {/* 상단바에서 들어오는 화면이라 돌아갈 길을 화면 안에 둔다(D-1505). */}
-      <Button asChild variant="ghost" className="mt-8 h-11 w-full">
+      <Button asChild variant="ghost" size="block" className="mt-8">
         <Link href="/dev/docs">문서 목록</Link>
       </Button>
     </AppShell>

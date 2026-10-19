@@ -42,7 +42,7 @@ export default async function CommunitiesPage() {
 
           {/* 생성 진입점이 목록에 있다는 것이 D-1701이 자동 진입을 반려한 근거 중 하나다.
               목록은 어차피 탭에서 한 번에 닿아야 한다. */}
-          <Button asChild variant="outline" className="mt-4 h-12 w-full rounded-xl">
+          <Button asChild variant="outline" size="block" className="mt-4">
             <Link href="/communities/new">
               <Plus className="size-5" />
               공동체 만들기

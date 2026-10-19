@@ -37,7 +37,7 @@ export default async function CommunitySharingsPage({ params }: PageProps) {
       </CommunitySection>
 
       {/* standalone PWA엔 브라우저 뒤로가기가 없다(D-1505). */}
-      <Button asChild variant="ghost" className="h-11 w-full">
+      <Button asChild variant="ghost" size="block">
         <Link href={`/communities/${id}`}>대문으로</Link>
       </Button>
     </AppShell>

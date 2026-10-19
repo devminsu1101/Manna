@@ -130,7 +130,7 @@ export function NewSharingForm({
       </CommunitySection>
 
       <div>
-        <Button className="h-12 w-full rounded-xl" disabled={!ready || submitting} onClick={submit}>
+        <Button variant="warm" size="block" disabled={!ready || submitting} onClick={submit}>
           {submitting ? "올리는 중…" : "나눔 공유하기"}
         </Button>
         {error && (

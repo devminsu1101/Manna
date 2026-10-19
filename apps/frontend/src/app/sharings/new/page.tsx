@@ -44,7 +44,7 @@ export default async function ComposePage({
     >
       <ComposeSwitcher initial={kind} communities={communities} preselected={preselected} />
 
-      <Button asChild variant="ghost" className="h-11 w-full">
+      <Button asChild variant="ghost" size="block">
         <Link href={back}>취소</Link>
       </Button>
     </AppShell>

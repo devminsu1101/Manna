@@ -35,7 +35,7 @@ export function StartPartnersButton({ communityId }: { communityId: number }) {
   }
 
   return (
-    <Button className="h-11 w-full rounded-xl" disabled={busy} onClick={start}>
+    <Button variant="warm" size="block" disabled={busy} onClick={start}>
       {failed ? "다시 시도" : "기도마니또 시작하기"}
     </Button>
   );

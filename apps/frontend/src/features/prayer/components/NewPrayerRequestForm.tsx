@@ -122,7 +122,8 @@ export function NewPrayerRequestForm() {
       <div>
         <Button
           type="submit"
-          className="h-12 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/80"
+          variant="love"
+          size="block"
           disabled={submitting || body.trim() === ""}
         >
           {submitting ? "올리는 중…" : "기도제목 올리기"}

@@ -10,10 +10,13 @@ import { apiFetch } from "@/lib/api";
  * "기도했어요". `POST /api/v1/pray/{userId}` → 204.
  *
  * 멱등이라 두 번 눌러도 하나고, 응답에 카운트가 없다 — 어제 기준이라 돌려줄 새 숫자가 없다.
- * 끝나면 서버 컴포넌트를 다시 그려 "오늘 이미 기도했어요"로 바뀐다. **로컬 상태로 눌린 척하지
- * 않는다** — 기도했다는 기록이 이 앱의 신뢰 그 자체라 거기서 거짓말을 하면 안 된다.
+ * 끝나면 서버 컴포넌트를 다시 그려 `prayedToday`가 참으로 와서 "오늘 이미 기도했어요"로 바뀐다.
+ * **로컬 상태로 눌린 척하지 않는다** — 기도했다는 기록이 이 앱의 신뢰 그 자체라 거기서 거짓말을 하면 안 된다.
+ *
+ * 끝난 상태는 같은 모양의 연한 버튼이다(D-3617). 서버가 준 진짜 상태고, 하루 하나라
+ * (`UNIQUE (prayed_for_user_id, pray_by, prayed_on)`) 더 눌러도 변하지 않으니 누를 수 없게 둔다.
  */
-export function PrayButton({ userId }: { userId: number }) {
+export function PrayButton({ userId, prayedToday }: { userId: number; prayedToday: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -33,10 +36,25 @@ export function PrayButton({ userId }: { userId: number }) {
     }
   }
 
+  if (prayedToday) {
+    return (
+      <Button
+        variant="love"
+        size="block"
+        className="mt-4 bg-accent/20 font-bold text-foreground/60 disabled:opacity-100"
+        disabled
+      >
+        오늘 이미 기도했어요
+      </Button>
+    );
+  }
+
   return (
     <>
       <Button
-        className="mt-4 h-12 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/80"
+        variant="love"
+        size="block"
+        className="mt-4"
         disabled={busy}
         onClick={pray}
       >

@@ -121,7 +121,7 @@ function SignedOut() {
       <p className="mt-1 text-sm text-foreground/60">
         로그인하면 기도제목을 올리고 공동체에 참여할 수 있어요
       </p>
-      <Button asChild className="mt-4 h-12 w-full rounded-xl">
+      <Button asChild variant="warm" size="block" className="mt-4">
         <Link href="/login">로그인하러 가기</Link>
       </Button>
     </section>

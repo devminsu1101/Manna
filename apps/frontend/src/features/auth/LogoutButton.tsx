@@ -42,9 +42,10 @@ export function LogoutButton() {
       <Button
         type="button"
         variant="ghost"
+        size="block"
         onClick={logout}
         disabled={loggingOut}
-        className="h-12 w-full justify-center rounded-xl text-foreground/70"
+        className="text-foreground/70"
       >
         <LogOut className="size-5" />
         로그아웃

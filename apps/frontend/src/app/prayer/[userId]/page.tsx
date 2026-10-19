@@ -80,20 +80,12 @@ export default async function PrayerPersonPage(props: PageProps) {
         </div>
       </section>
 
-      {prayedByMeToday ? (
-        // 서버가 준 진짜 상태다. 하루 하나라
-        // (`UNIQUE (prayed_for_user_id, pray_by, prayed_on)`) 더 눌러도 변하지 않는다.
-        <p className="mt-4 rounded-xl bg-accent/20 px-4 py-4 text-center text-sm font-bold text-foreground/60">
-          오늘 이미 기도했어요
-        </p>
-      ) : (
-        <PrayButton userId={person.userId} />
-      )}
+      <PrayButton userId={person.userId} prayedToday={prayedByMeToday} />
 
       {/* 시안의 "취소하기". 되돌릴 기록이 없어 **그냥 뒤로 가기**다 — `POST /pray/{userId}`에
           대응하는 DELETE가 없다(API_SPEC). standalone PWA엔 브라우저 뒤로가기가 없어
           화면 안에 둔다(D-1505). */}
-      <Button asChild variant="ghost" className="mt-2 h-11 w-full rounded-xl">
+      <Button asChild variant="ghost" size="block" className="mt-2">
         <Link href="/prayer">돌아가기</Link>
       </Button>
     </AppShell>

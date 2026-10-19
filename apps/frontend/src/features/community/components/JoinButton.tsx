@@ -53,7 +53,8 @@ export function JoinButton({ code }: { code: string }) {
   return (
     <div className="w-full max-w-sm">
       <Button
-        className="h-14 w-full rounded-xl text-base"
+        variant="warm"
+        size="block"
         disabled={loading || submitting}
         onClick={me ? join : login}
       >

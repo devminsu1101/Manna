@@ -545,7 +545,7 @@ function BookEndNotice({ bookName, nextBook }: { bookName: string; nextBook: Boo
     <div className="flex flex-col items-center gap-4 px-4 py-10">
       <p className="text-center text-sm text-muted-foreground">{bookName}의 마지막 장입니다.</p>
       {nextBook && (
-        <Button asChild variant="secondary">
+        <Button asChild variant="cool">
           <Link href={`/bible/${nextBook.abbrev}/1`}>{nextBook.name} 읽기 →</Link>
         </Button>
       )}
@@ -559,7 +559,7 @@ function BookStartNotice({ bookName, prevBook }: { bookName: string; prevBook: B
     <div className="flex flex-col items-center gap-4 px-4 py-10">
       <p className="text-center text-sm text-muted-foreground">{bookName}의 첫 장입니다.</p>
       {prevBook && (
-        <Button asChild variant="secondary">
+        <Button asChild variant="cool">
           <Link href={`/bible/${prevBook.abbrev}/${prevBook.totalChapters}`}>
             ← {prevBook.name} 읽기
           </Link>

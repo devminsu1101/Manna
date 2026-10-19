@@ -69,7 +69,9 @@ export function NewCommunityForm() {
 
       <Button
         type="submit"
-        className="mt-4 h-12 w-full rounded-xl"
+        variant="warm"
+        size="block"
+        className="mt-4"
         disabled={submitting || name.trim() === ""}
       >
         {submitting ? "만드는 중…" : "만들기"}
