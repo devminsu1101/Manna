@@ -1,11 +1,19 @@
 package com.manna.backend.auth;
 
+import com.manna.backend.common.ApiException;
 import com.manna.backend.domain.User;
+import com.manna.backend.prayer.PrayerService;
 import com.manna.backend.repository.UserIdentityRepository;
+import com.manna.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -17,13 +25,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MeController {
 
-    private final UserIdentityRepository identities;
+    /** `users.name VARCHAR(50)`. */
+    private static final int NAME_MAX = 50;
 
-    public MeController(UserIdentityRepository identities) {
+    private final UserIdentityRepository identities;
+    private final UserRepository users;
+    private final CurrentUser currentUser;
+    private final PrayerService prayer;
+
+    public MeController(
+            UserIdentityRepository identities,
+            UserRepository users,
+            CurrentUser currentUser,
+            PrayerService prayer) {
         this.identities = identities;
+        this.users = users;
+        this.currentUser = currentUser;
+        this.prayer = prayer;
     }
 
     public record MeResponse(Integer id, String name, String profileImageUrl) {}
+
+    public record RenameRequest(String name) {}
 
     @GetMapping("/api/v1/me")
     public ResponseEntity<MeResponse> me(@AuthenticationPrincipal OidcUser principal) {
@@ -40,5 +63,33 @@ public class MeController {
                         new MeResponse(u.getId(), u.getName(), u.getProfileImageUrl()));
                 })
             .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
+    /**
+     * 이름 고치기(D-3608). 로그인 때 Google 이름으로 덮어쓰지 않으므로(OAuthUserService) 고친 이름이 남는다.
+     * 사진은 저장소를 정하기 전까지 Google을 따라간다.
+     */
+    @PatchMapping("/api/v1/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rename(@AuthenticationPrincipal OidcUser principal, @RequestBody RenameRequest req) {
+        String name = req.name() == null ? "" : req.name().strip();
+        if (name.isEmpty()) {
+            throw ApiException.badRequest("이름을 입력해 주세요.");
+        }
+        if (name.length() > NAME_MAX) {
+            throw ApiException.badRequest("이름은 " + NAME_MAX + "자까지예요.");
+        }
+        User u = users.findById(currentUser.id(principal)).orElseThrow(ApiException::unauthorized);
+        u.setName(name);
+        users.save(u);
+    }
+
+    /** 마이페이지 숫자. `period` = today · week · month · days(+ `days`). 명세는 03_API_SPEC. */
+    @GetMapping("/api/v1/me/stats")
+    public PrayerService.Stats stats(
+            @AuthenticationPrincipal OidcUser principal,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) Integer days) {
+        return prayer.stats(currentUser.id(principal), period, days);
     }
 }

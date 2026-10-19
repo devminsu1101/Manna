@@ -30,4 +30,13 @@ public interface PrayerLogRepository extends JpaRepository<PrayerLog, Integer> {
             + " where l.prayBy.id = :prayBy and l.prayedFor.id in :prayedForIds"
             + " group by l.prayedFor.id")
     List<Object[]> lastPrayedBy(Integer prayBy, Collection<Integer> prayedForIds);
+
+    /** 그 날부터 내가 기도한 사람 수(같은 사람 여러 날 = 1). 마이페이지 숫자(`GET /me/stats`). */
+    @Query(
+        "select count(distinct l.prayedFor.id) from PrayerLog l"
+            + " where l.prayBy.id = :prayBy and l.prayedOn >= :from")
+    long countPeoplePrayedSince(Integer prayBy, LocalDate from);
+
+    /** 그 날부터 "기도했어요"를 누른 횟수(사람 × 날). */
+    long countByPrayBy_IdAndPrayedOnGreaterThanEqual(Integer prayById, LocalDate from);
 }

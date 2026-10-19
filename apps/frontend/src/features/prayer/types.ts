@@ -97,5 +97,26 @@ export type PraySummary = {
 export type MyPrayerRequest = {
   id: number;
   body: string;
+  /** 화면은 태그로만 보여 준다(D-3609). 비공개 작성이 막혀 있어(D-3403) 당분간 모두 `public`. */
+  visibility: "public" | "anonymous";
   createdAt: string;
+};
+
+/** `GET /me/stats`의 기간. `days`는 `days=N`과 함께 쓴다(오늘 포함 최근 N일). */
+export type StatsPeriod = "today" | "week" | "month" | { days: number };
+
+/**
+ * 마이페이지 숫자. 기간은 늘 오늘(KST)까지이고, 서버가 센다.
+ *
+ * `prayer_logs`에는 어느 기도제목을 보고 눌렀는지가 없어(D-303) "기도한 제목 수"는 없다 —
+ * `prayedPeople`(사람 수, 같은 사람 여러 날 = 1)이나 `prayedCount`(누른 횟수)로 대신한다.
+ * `sharings`는 여러 방에 따로 올라간 같은 글을 1개로 센다(D-3507).
+ */
+export type MyStats = {
+  period: string;
+  from: string;
+  to: string;
+  prayedPeople: number;
+  prayedCount: number;
+  sharings: number;
 };

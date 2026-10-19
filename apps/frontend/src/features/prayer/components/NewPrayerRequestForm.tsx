@@ -36,13 +36,13 @@ const OPTIONS: { value: Visibility; label: string; desc: string; icon: string }[
  * 없는 것과 같은 방향이다 — 기도는 방 단위가 아니라 사람 단위다.
  *
  * 저장은 append-only라 **화면의 말은 "수정"이 아니라 "업데이트"다**(D-1706). 남들에게 보이는
- * 것은 언제나 최신 한 건이고, 이전 것들은 `/prayer/requests`에 이력으로 쌓인다.
+ * 것은 언제나 최신 한 건이고, 이전 것들은 마이페이지에 이력으로 쌓인다(D-3609).
  *
  * **비공개는 막아 뒀다**(D-3403). 익명 기도제목을 보여 주는 구역(중보기도실 맨 아래, D-906)이
  * Phase 3라, 지금 열면 아무도 못 보는 글이 된다. 선택지는 보여 주되 누르지 못하게 하고,
  * API도 visibility를 받지 않는다(항상 public). 그 구역이 생기는 날 둘을 함께 연다.
  *
- * 올리면 `/prayer/requests`로 간다 — 이력 맨 위에서 방금 올린 것을 눈으로 확인한다.
+ * 올리면 마이페이지로 간다 — 이력 맨 위에 방금 올린 것이 "지금"으로 보인다.
  */
 export function NewPrayerRequestForm() {
   const router = useRouter();
@@ -70,7 +70,7 @@ export function NewPrayerRequestForm() {
         setError(data?.error?.message ?? "올리지 못했어요. 잠시 후 다시 시도해 주세요.");
         return;
       }
-      router.push("/prayer/requests");
+      router.push("/mypage");
     } catch {
       setError("올리지 못했어요. 잠시 후 다시 시도해 주세요.");
     } finally {

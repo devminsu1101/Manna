@@ -28,3 +28,32 @@ export async function GET(req: NextRequest) {
     return new Response(null, { status: 401 });
   }
 }
+
+/**
+ * PATCH /api/v1/me — 이름 고치기(D-3608). 이 경로는 위 GET 때문에 라우트 핸들러가 잡고 있어
+ * rewrite가 닿지 않는다(라우트 핸들러가 먼저 매칭된다). 그래서 쓰기도 여기서 중계한다.
+ *
+ * CSRF 헤더(`X-XSRF-TOKEN`)와 쿠키를 그대로 넘긴다 — 검사는 백엔드가 한다(`lib/api.ts`).
+ * 백엔드가 죽어 있으면 GET과 달리 조용히 넘기지 않고 502로 알린다. 저장이 안 됐기 때문이다.
+ */
+export async function PATCH(req: NextRequest) {
+  try {
+    const res = await fetch(`${BACKEND}/api/v1/me`, {
+      method: "PATCH",
+      headers: {
+        cookie: req.headers.get("cookie") ?? "",
+        "content-type": req.headers.get("content-type") ?? "application/json",
+        "x-xsrf-token": req.headers.get("x-xsrf-token") ?? "",
+      },
+      body: await req.text(),
+      redirect: "manual",
+      cache: "no-store",
+    });
+    return new Response(res.body, {
+      status: res.status,
+      headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+    });
+  } catch {
+    return new Response(null, { status: 502 });
+  }
+}

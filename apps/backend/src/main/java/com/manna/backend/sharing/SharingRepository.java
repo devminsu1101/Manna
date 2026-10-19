@@ -1,5 +1,6 @@
 package com.manna.backend.sharing;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -84,4 +85,15 @@ public interface SharingRepository extends JpaRepository<Sharing, Integer> {
                 + " JOIN community_members m ON m.community_id = sc.community_id"
                 + " WHERE sc.sharing_id = :sharingId AND m.user_id = :userId AND m.status = 'active')")
     boolean isVisibleTo(Integer sharingId, Integer userId);
+
+    /**
+     * 그 시각부터 내가 올린 나눔 수. 여러 방에 따로 올라간 같은 글(D-3507)은 종류 · 본문이 같으면
+     * 하나로 친다 — 홈 소식(D-3604)과 같은 셈법. 기도제목은 나눔이 아니다.
+     */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT count(*) FROM (SELECT DISTINCT type, body FROM sharings"
+                + " WHERE author_id = :authorId AND type <> 'prayer' AND created_at >= :from) t")
+    long countMySharingsSince(Integer authorId, OffsetDateTime from);
 }

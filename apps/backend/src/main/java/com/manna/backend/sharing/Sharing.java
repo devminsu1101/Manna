@@ -73,6 +73,10 @@ public class Sharing {
         return type;
     }
 
+    public String getVisibility() {
+        return visibility;
+    }
+
     public String getBody() {
         return body;
     }

@@ -45,9 +45,10 @@ public class OAuthUserService extends OidcUserService {
             .findByProviderAndProviderUid(provider, sub)
             .ifPresentOrElse(
                 identity -> {
-                    // 프로필이 바뀌었을 수 있으니 최신으로 갱신.
+                    // 이름은 처음 가입할 때만 Google 값을 쓴다 — 마이페이지에서 고친 이름이
+                    // 다음 로그인에 되돌아가면 안 된다(D-3608). 사진은 업로드 저장소를 정하기
+                    // 전까지 Google을 따라간다.
                     User u = identity.getUser();
-                    u.setName(name);
                     u.setProfileImageUrl(picture);
                     identity.setEmail(email);
                 },

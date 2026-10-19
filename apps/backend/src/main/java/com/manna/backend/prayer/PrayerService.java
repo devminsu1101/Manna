@@ -82,7 +82,7 @@ public class PrayerService {
     /** partner는 null이어도 내보낸다 — 화면이 partnerTotal과 함께 세 상태로 읽는다(명세). */
     public record Summary(long yesterdayCount, Partner partner, int partnerTotal) {}
 
-    public record MyRequest(Integer id, String body, OffsetDateTime createdAt) {}
+    public record MyRequest(Integer id, String body, String visibility, OffsetDateTime createdAt) {}
 
     public record MyRequests(List<MyRequest> requests) {}
 
@@ -181,6 +181,44 @@ public class PrayerService {
         return toMyRequest(s);
     }
 
+    // ── GET /me/stats ────────────────────────────────────────────────────
+
+    /** 마이페이지 숫자. 기간은 늘 오늘(KST)까지다. */
+    public record Stats(
+        String period, LocalDate from, LocalDate to, long prayedPeople, long prayedCount, long sharings) {}
+
+    /**
+     * 기간을 받아 그 기간의 숫자를 한 번에 준다. 화면이 "이번 주 기도 · 이번 달 나눔"처럼 기간을
+     * 섞어 쓰면 두 번 부른다 — 숫자마다 기간 파라미터를 따로 두면 조합이 늘기만 한다.
+     *
+     * <p>`prayer_logs`에는 어느 기도제목을 보고 눌렀는지가 없다(사람 기준, D-303). 그래서 "기도한 제목 수"는
+     * 사람 수(`prayedPeople`)나 누른 횟수(`prayedCount`)로 대신한다.
+     */
+    @Transactional(readOnly = true)
+    public Stats stats(Integer me, String period, Integer days) {
+        LocalDate to = today();
+        LocalDate from =
+            switch (period == null ? "" : period) {
+                case "today" -> to;
+                case "week" -> PrayerPartnerService.weekStart(to);
+                case "month" -> to.withDayOfMonth(1);
+                case "days" -> {
+                    if (days == null || days < 1 || days > 365) {
+                        throw ApiException.badRequest("days는 1~365입니다.");
+                    }
+                    yield to.minusDays(days - 1);
+                }
+                default -> throw ApiException.badRequest("period는 today · week · month · days 중 하나입니다.");
+            };
+        return new Stats(
+            period,
+            from,
+            to,
+            logs.countPeoplePrayedSince(me, from),
+            logs.countByPrayBy_IdAndPrayedOnGreaterThanEqual(me, from),
+            sharings.countMySharingsSince(me, from.atStartOfDay(KST).toOffsetDateTime()));
+    }
+
     // ── 사람 카드 만들기 ─────────────────────────────────────────────────
 
     /**
@@ -246,7 +284,7 @@ public class PrayerService {
     }
 
     private static MyRequest toMyRequest(Sharing s) {
-        return new MyRequest(s.getId(), s.getBody(), kst(s.getCreatedAt()));
+        return new MyRequest(s.getId(), s.getBody(), s.getVisibility(), kst(s.getCreatedAt()));
     }
 
     /**

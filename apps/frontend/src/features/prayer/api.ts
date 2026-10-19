@@ -1,7 +1,14 @@
 import "server-only";
 
 import { backendFetch, backendGet } from "@/lib/backend";
-import type { MyPrayerRequest, PrayPerson, PrayRoom, PraySummary } from "./types";
+import type {
+  MyPrayerRequest,
+  MyStats,
+  PrayPerson,
+  PrayRoom,
+  PraySummary,
+  StatsPeriod,
+} from "./types";
 
 /**
  * 기도 데이터 접근 계층. 백엔드 Pray API(docs/03_API_SPEC.md의 `/pray/*`)를 부른다.
@@ -63,4 +70,12 @@ export async function getMyPrayerRequests(): Promise<MyPrayerRequest[]> {
   if (!res.ok) throw new Error(`기도제목 이력을 불러오지 못했습니다 (${res.status})`);
   const body: { requests: MyPrayerRequest[] } = await res.json();
   return body.requests;
+}
+
+/** 마이페이지 숫자. 화면이 기간을 섞어 쓰면(이번 주 기도 · 이번 달 나눔) 기간마다 한 번씩 부른다. */
+export async function getMyStats(period: StatsPeriod): Promise<MyStats> {
+  const query = typeof period === "string" ? `period=${period}` : `period=days&days=${period.days}`;
+  const res = await backendGet(`/me/stats?${query}`);
+  if (!res.ok) throw new Error(`내 기록을 불러오지 못했습니다 (${res.status})`);
+  return res.json();
 }

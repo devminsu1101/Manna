@@ -151,7 +151,7 @@ function MyPanel({ request }: { request: MyPrayerRequest | null }) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">내 기도제목</h2>
         <Link
-          href="/prayer/requests"
+          href="/mypage"
           className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-foreground/50 transition-colors hover:text-foreground"
         >
           이전 기도제목
