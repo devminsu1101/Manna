@@ -2141,3 +2141,23 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
   로그인 · 초대 화면의 h-14 링크는 `<Button>`이 아닌 브랜드 버튼이라 그대로다.
 - 성경 피드의 `variant="secondary"` 2곳 → `cool`.
 - `CommunitySection`의 `surface`(love · warm · cool · 생략)는 이미 같은 이름 체계라 그대로 둔다.
+
+## 2026-10-20 · 프로필 사진 바꾸기 (D-3618)
+
+**✅ D-3618. 프로필 사진은 Vercel Blob Public 스토어에, 주소만 DB에** (사용자 결정)
+- 저장소 후보(Supabase Storage · Vercel Blob · Cloudinary, D-3608) 중 **Vercel Blob**. 프론트가 이미 Vercel이라 계정 ·
+  결제가 늘지 않는다. Hobby 무료 한도(저장 1GB · 업로드 2,000회/월 · 전송 10GB/월)는 400px 사진(~40KB) 기준
+  약 2만 5천 장 · 25만 회 조회다. 넘으면 **청구되지 않고** 30일간 Blob이 막힌다.
+- **Public** 스토어다. 처음엔 Private로 만들었다가 다시 만들었다 — Private는 사진 한 장마다 우리 서버가 꺼내 전달해야
+  해서 화면마다 사진이 여러 장 뜨는 이 앱에선 느리고 전송이 이중으로 든다. Google 프로필 사진도 원래 공개 주소이고,
+  파일 이름에 무작위 꼬리가 붙어 주소를 모르면 찾을 수 없다. 지역은 ICN1(서울).
+- **서버가 올리고 서버가 저장한다** — 브라우저 직접 업로드(client upload)는 주소를 브라우저가 백엔드에 알려 주는 구조라
+  아무 주소나 저장하게 만들 수 있다. 그래서 Next 라우트 핸들러 `POST /api/v1/me/photo`가 로그인 확인 → Blob 업로드 →
+  백엔드 `PATCH /me` → 예전 사진 삭제까지 한다. 백엔드도 Blob 주소만 받는다(`ProfilePhoto.isUploaded`).
+- 브라우저가 가운데 정사각형을 잘라 400px JPEG로 줄여 보낸다(`features/auth/ProfileHeader.tsx`). 휴대폰 원본(수 MB)을
+  올리지 않는다 — 서버 업로드 한도 4.5MB와도 멀다.
+- **로그인 때 사진**: 저장된 주소가 Blob이면 그대로, 아니면 지금처럼 Google 사진을 따라간다(`OAuthUserService`).
+  올린 적 없는 사람은 Google 사진이 계속 갱신된다.
+- 스토어는 하나라 로컬 · 프리뷰에서 올린 사진은 `dev/` 아래에 둔다(`VERCEL_ENV`). 로컬 토큰은
+  `apps/frontend/.env.local`의 `BLOB_READ_WRITE_TOKEN`.
+- `PATCH /me`는 **보낸 칸만** 바꾸도록 바뀌었다(`{ name }` · `{ profileImageUrl }`, 둘 다 없으면 400).

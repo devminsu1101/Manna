@@ -26,9 +26,13 @@ const nextConfig: NextConfig = {
    *
    * `users.profile_image_url`에 그대로 저장되는 값이라 **로그인 provider가 늘면 여기도 는다**
    * (카카오는 `k.kakaocdn.net`, D-1702). 프로필 이미지가 기본 아이콘으로만 나오면 이 목록부터 본다.
+   * 직접 올린 사진은 Vercel Blob Public 스토어 주소다(D-3618, `app/api/v1/me/photo`).
    */
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "lh3.googleusercontent.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+    ],
   },
 
   /**

@@ -165,6 +165,60 @@ class MeApiTests {
             .andExpect(status().isForbidden());
     }
 
+    private static final String BLOB_PHOTO =
+        "https://abc123.public.blob.vercel-storage.com/profiles/1-x.jpg";
+
+    @Test
+    void 올린_사진을_저장하고_이름만_보내면_사진은_그대로() throws Exception {
+        User me = user("me");
+        mvc.perform(
+                patch("/api/v1/me")
+                    .with(as("me"))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"profileImageUrl\":\"" + BLOB_PHOTO + "\"}"))
+            .andExpect(status().isNoContent());
+        assertThat(users.findById(me.getId()).orElseThrow().getProfileImageUrl()).isEqualTo(BLOB_PHOTO);
+
+        mvc.perform(
+                patch("/api/v1/me")
+                    .with(as("me"))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":\"새 이름\"}"))
+            .andExpect(status().isNoContent());
+        User after = users.findById(me.getId()).orElseThrow();
+        assertThat(after.getName()).isEqualTo("새 이름");
+        assertThat(after.getProfileImageUrl()).isEqualTo(BLOB_PHOTO);
+    }
+
+    @Test
+    void Blob이_아닌_사진_주소와_빈_요청은_400() throws Exception {
+        user("me");
+        for (String body : new String[] {
+            "{}",
+            "{\"profileImageUrl\":\"https://evil.example.com/a.jpg\"}",
+            "{\"profileImageUrl\":\"http://abc.public.blob.vercel-storage.com/a.jpg\"}",
+            "{\"profileImageUrl\":\"https://public.blob.vercel-storage.com.evil.com/a.jpg\"}",
+        }) {
+            mvc.perform(
+                    patch("/api/v1/me")
+                        .with(as("me"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void 사진을_올렸는지_가린다() {
+        assertThat(ProfilePhoto.isUploaded(BLOB_PHOTO)).isTrue();
+        assertThat(ProfilePhoto.isUploaded("https://lh3.googleusercontent.com/a/xyz")).isFalse();
+        assertThat(ProfilePhoto.isUploaded(null)).isFalse();
+        assertThat(ProfilePhoto.isUploaded("not a url")).isFalse();
+    }
+
     @Test
     void 기도제목_이력에_공개_여부가_온다() throws Exception {
         user("me");

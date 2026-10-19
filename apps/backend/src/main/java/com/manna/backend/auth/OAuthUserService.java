@@ -46,10 +46,12 @@ public class OAuthUserService extends OidcUserService {
             .ifPresentOrElse(
                 identity -> {
                     // 이름은 처음 가입할 때만 Google 값을 쓴다 — 마이페이지에서 고친 이름이
-                    // 다음 로그인에 되돌아가면 안 된다(D-3608). 사진은 업로드 저장소를 정하기
-                    // 전까지 Google을 따라간다.
+                    // 다음 로그인에 되돌아가면 안 된다(D-3608). 사진은 직접 올린 적이 없을 때만
+                    // Google을 따라간다(D-3618).
                     User u = identity.getUser();
-                    u.setProfileImageUrl(picture);
+                    if (!ProfilePhoto.isUploaded(u.getProfileImageUrl())) {
+                        u.setProfileImageUrl(picture);
+                    }
                     identity.setEmail(email);
                 },
                 () -> {

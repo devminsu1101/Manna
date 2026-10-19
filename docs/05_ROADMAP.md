@@ -187,7 +187,9 @@
 - [ ] 조사 · 오늘의 말씀 365일 구절 목록 (D-3612) — 인스타 연동은 안 함. 목록을 누가 고를지 정하기.
       개역개정 이용 조건 확인
 - [ ] 조사 · 신앙고백서 · 요리문답 번역본 확보 (D-3613) — 확보 후 `/creeds/{doc}/{part}`
-- [ ] 조사 · 프로필 사진 저장소 (D-3608) — Supabase Storage / Vercel Blob / Cloudinary 중 선택 후 업로드
+- [x] 프로필 사진 바꾸기 (D-3608 · D-3618) — 2026-10-20. **Vercel Blob(Public, ICN1)**. 마이페이지 사진을 누르면
+      브라우저가 400px로 줄여 `POST /api/v1/me/photo` → Blob 업로드 → `PATCH /me { profileImageUrl }`.
+      로그인 때 직접 올린 사진은 Google 사진으로 덮어쓰지 않는다
 
 ## Phase 3: 나눔 확장 + 알림
 - [~] Sharing 작성/조회 API — `sharings`, `sharing_communities` (타입 3종, 여러 방에 올리면 방마다 글이 따로 생긴다 — D-3507).

@@ -46,7 +46,8 @@ public class MeController {
 
     public record MeResponse(Integer id, String name, String profileImageUrl) {}
 
-    public record RenameRequest(String name) {}
+    /** 보낸 칸만 바꾼다. 둘 다 없으면 400. */
+    public record UpdateMeRequest(String name, String profileImageUrl) {}
 
     @GetMapping("/api/v1/me")
     public ResponseEntity<MeResponse> me(@AuthenticationPrincipal OidcUser principal) {
@@ -66,21 +67,32 @@ public class MeController {
     }
 
     /**
-     * 이름 고치기(D-3608). 로그인 때 Google 이름으로 덮어쓰지 않으므로(OAuthUserService) 고친 이름이 남는다.
-     * 사진은 저장소를 정하기 전까지 Google을 따라간다.
+     * 이름 · 사진 고치기(D-3608 · D-3618). 로그인 때 Google 값으로 덮어쓰지 않으므로(OAuthUserService) 고친 값이 남는다.
+     * 사진은 프론트 `POST /api/v1/me/photo`가 Vercel Blob에 올린 뒤 그 주소로 부른다 — Blob 주소만 받는다(ProfilePhoto).
      */
     @PatchMapping("/api/v1/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void rename(@AuthenticationPrincipal OidcUser principal, @RequestBody RenameRequest req) {
-        String name = req.name() == null ? "" : req.name().strip();
-        if (name.isEmpty()) {
-            throw ApiException.badRequest("이름을 입력해 주세요.");
-        }
-        if (name.length() > NAME_MAX) {
-            throw ApiException.badRequest("이름은 " + NAME_MAX + "자까지예요.");
+    public void update(@AuthenticationPrincipal OidcUser principal, @RequestBody UpdateMeRequest req) {
+        if (req.name() == null && req.profileImageUrl() == null) {
+            throw ApiException.badRequest("바꿀 값이 없어요.");
         }
         User u = users.findById(currentUser.id(principal)).orElseThrow(ApiException::unauthorized);
-        u.setName(name);
+        if (req.name() != null) {
+            String name = req.name().strip();
+            if (name.isEmpty()) {
+                throw ApiException.badRequest("이름을 입력해 주세요.");
+            }
+            if (name.length() > NAME_MAX) {
+                throw ApiException.badRequest("이름은 " + NAME_MAX + "자까지예요.");
+            }
+            u.setName(name);
+        }
+        if (req.profileImageUrl() != null) {
+            if (!ProfilePhoto.isUploaded(req.profileImageUrl())) {
+                throw ApiException.badRequest("올린 사진 주소가 아니에요.");
+            }
+            u.setProfileImageUrl(req.profileImageUrl());
+        }
         users.save(u);
     }
 

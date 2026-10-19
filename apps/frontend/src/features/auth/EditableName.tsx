@@ -16,8 +16,10 @@ const NAME_MAX = 50;
  * 저장은 `PATCH /api/v1/me` — 이 경로는 라우트 핸들러가 중계한다(`app/api/v1/me/route.ts`).
  * 저장 뒤 `router.refresh()`로 서버 컴포넌트를 다시 그린다. 상단바 프로필(`useMe`)은
  * 다음 화면 이동 때 새 이름을 읽는다.
+ *
+ * `trailing`은 연필 오른쪽에 붙는 버튼 자리다 — 사진 바꾸기 카메라(ProfileHeader). 고치는 중엔 숨긴다.
  */
-export function EditableName({ name }: { name: string }) {
+export function EditableName({ name, trailing }: { name: string; trailing?: React.ReactNode }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(name);
@@ -54,18 +56,21 @@ export function EditableName({ name }: { name: string }) {
 
   if (!editing) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          setValue(name);
-          setEditing(true);
-        }}
-        className="flex max-w-full items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-white/60"
-        aria-label="이름 고치기"
-      >
-        <span className="truncate text-lg font-bold text-foreground">{name}</span>
-        <Pencil className="size-4 shrink-0 text-foreground/40" />
-      </button>
+      <div className="flex max-w-full items-center">
+        <button
+          type="button"
+          onClick={() => {
+            setValue(name);
+            setEditing(true);
+          }}
+          className="flex min-w-0 items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-white/60"
+          aria-label="이름 고치기"
+        >
+          <span className="truncate text-lg font-bold text-foreground">{name}</span>
+          <Pencil className="size-4 shrink-0 text-foreground/40" />
+        </button>
+        {trailing}
+      </div>
     );
   }
 

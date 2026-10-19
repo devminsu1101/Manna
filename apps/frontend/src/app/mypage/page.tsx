@@ -1,13 +1,12 @@
-import { Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { getMe } from "@/features/auth/api";
-import { EditableName } from "@/features/auth/EditableName";
 import { LogoutButton } from "@/features/auth/LogoutButton";
+import { ProfileHeader } from "@/features/auth/ProfileHeader";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
 import { composeHref } from "@/features/compose/href";
 import { MainTopBar } from "@/features/home/MainTopBar";
@@ -20,7 +19,7 @@ export const metadata: Metadata = { title: "마이페이지 | 만나" };
  * 마이페이지 = **내 것 모아 보기**(D-3609). 상단바의 프로필 이미지로 들어온다.
  *
  * 처음엔 로그아웃을 둘 곳으로 생겼다(사용자 결정, 2026-09-19). 지금은 위에서부터
- * 프로필(이름 고치기, D-3608) · 숫자 두 개 · 이전 기도제목 · 로그아웃.
+ * 프로필(사진 바꾸기 D-3618 · 이름 고치기 D-3608) · 숫자 두 개 · 이전 기도제목 · 로그아웃.
  *
  * - 숫자는 기간이 서로 다르다 — 기도는 **이번 주**(일요일부터 KST), 나눔은 **이번 달**. `/me/stats`가
  *   기간 하나씩 받으므로 두 번 부른다. 명단은 두지 않는다.
@@ -49,20 +48,7 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
   return (
     <>
       <section className="flex flex-col items-center gap-2 rounded-2xl bg-surface-warm p-6">
-        {me.profileImageUrl ? (
-          <Image
-            src={me.profileImageUrl}
-            alt=""
-            width={80}
-            height={80}
-            className="size-20 rounded-full object-cover"
-          />
-        ) : (
-          <span className="flex size-20 items-center justify-center rounded-full bg-white">
-            <User className="size-10 text-foreground/40" />
-          </span>
-        )}
-        <EditableName name={me.name} />
+        <ProfileHeader name={me.name} photoUrl={me.profileImageUrl} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">

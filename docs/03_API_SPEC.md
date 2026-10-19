@@ -31,24 +31,44 @@
 | GET | `/bible/{book}/{chapter}` | **구현됨** — 아래 스키마 |
 | GET | `/bible/search?q=` | 초안 |
 
-### Me — 마이페이지 (D-3608 · D-3609)
+### Me — 마이페이지 (D-3608 · D-3609 · D-3618)
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
 | GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl }` — **구현됨** |
-| PATCH | `/me` | 이름 고치기 — **구현됨** |
+| PATCH | `/me` | 이름 · 사진 주소 고치기 — **구현됨** |
+| POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
 | GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔) — **구현됨** |
 
-#### PATCH /me — 이름 고치기
+#### PATCH /me — 이름 · 사진 주소 고치기
 
 ```json
-{ "name": "김민수" }   // 204
+{ "name": "김민수" }                                   // 204
+{ "profileImageUrl": "https://….public.blob.vercel-storage.com/profiles/12-….jpg" }   // 204
 ```
 
-- 앞뒤 공백은 자른다. 공백뿐 `400`, 50자 초과 `400`(`users.name VARCHAR(50)`).
-- **로그인할 때 Google 이름으로 덮어쓰지 않는다**(D-3608) — 이름은 처음 가입할 때만 Google 값을 쓴다.
-  사진은 업로드 저장소를 정하기 전까지 Google을 따라간다(로그인마다 갱신).
+- **보낸 칸만 바꾼다.** 둘 다 없으면 `400`.
+- `name`: 앞뒤 공백은 자른다. 공백뿐 `400`, 50자 초과 `400`(`users.name VARCHAR(50)`).
+- `profileImageUrl`: `https://*.public.blob.vercel-storage.com/…`(우리 Blob 스토어)만 받는다. 그 밖은 `400`.
+  보통 직접 부르지 않고 아래 `POST /me/photo`가 부른다.
+- **로그인할 때 Google 값으로 덮어쓰지 않는다** — 이름은 처음 가입할 때만 Google 값을 쓴다(D-3608).
+  사진은 **직접 올린 적이 없을 때만** Google을 따라간다(로그인마다 갱신, D-3618).
 - 프론트에서 `/api/v1/me`는 Next 라우트 핸들러(`app/api/v1/me/route.ts`)가 잡고 있어 rewrite가 닿지 않는다.
   PATCH도 그 핸들러가 쿠키 · `X-XSRF-TOKEN`을 실어 중계한다.
+
+#### POST /me/photo — 프로필 사진 올리기 (Next 라우트 핸들러)
+
+`multipart/form-data`의 `photo` 한 장(JPEG · PNG · WEBP, 1MB 이하). 브라우저가 미리 가운데를 잘라 400px JPEG로 줄여 보낸다.
+`X-XSRF-TOKEN` 헤더가 `XSRF-TOKEN` 쿠키와 같아야 한다(`apiFetch`가 붙인다).
+
+```json
+{ "url": "https://….public.blob.vercel-storage.com/profiles/12-….jpg" }   // 200
+```
+
+- 로그인 확인(백엔드 `GET /me`) → Vercel Blob(Public 스토어)에 업로드 → 백엔드 `PATCH /me { profileImageUrl }` →
+  예전에 직접 올린 사진 삭제. PATCH가 실패하면 방금 올린 파일을 지운다.
+- 로컬 · 프리뷰는 `dev/profiles/…`, 운영은 `profiles/…`(`VERCEL_ENV`). 스토어는 하나다.
+- 오류: CSRF 불일치 `403`, 미로그인 `401`, 파일 없음 · 형식 · 크기 `400`, Blob · 백엔드 실패 `502`.
+  본문은 공통 규약과 같은 `{ "error": { "message" } }`.
 
 #### GET /me/stats — 기간별 숫자
 
