@@ -8,6 +8,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { composeHref } from "@/features/compose/href";
+
 import { daysAgoLabel } from "../days-ago";
 import type { MyPrayerRequest, PrayPerson } from "../types";
 import { PrayButton } from "./PrayButton";
@@ -169,7 +171,7 @@ function MyPanel({ request }: { request: MyPrayerRequest | null }) {
       )}
 
       <Button asChild variant="secondary" className="mt-4 h-12 w-full rounded-xl">
-        <Link href="/prayer/requests/new">{request ? "새로 작성하기" : "기도제목 작성하기"}</Link>
+        <Link href={composeHref({ kind: "prayer" })}>{request ? "새로 작성하기" : "기도제목 작성하기"}</Link>
       </Button>
     </>
   );

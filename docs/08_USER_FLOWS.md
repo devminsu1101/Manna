@@ -94,7 +94,7 @@ flowchart LR
         PERSON["/prayer/&#123;userId&#125;<br/>한 사람"]
         DONE{"오늘 이미<br/>기도했나?"}
         REQS["/prayer/requests<br/>이전 기도제목"]
-        RNEW["/prayer/requests/new<br/>기도제목 작성"]
+        RNEW["/sharings/new?kind=prayer<br/>기도제목 작성 (+ 화면)"]
         PRAY --> PERSON
         PERSON --> DONE
         DONE -->|"아니오"| PRAYED["기도했어요"]
@@ -183,9 +183,8 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 | 화면 | 버튼 | 돌아가는 곳 |
 |---|---|---|
 | `/prayer/{userId}` | 돌아가기 | `/prayer` |
-| `/prayer/requests/new` | 취소하기 | `/prayer` |
 | `/communities/new` | 취소 | `/communities` |
-| `/sharings/new` | 취소 | **`/` 홈** — 탭이 아니라 ＋로 들어오는 화면이라 |
+| `/sharings/new` | 취소 | **들어온 곳** — 하단 ＋면 `/` 홈 · 대문 ＋면 그 대문 · 기도제목(`?kind=prayer`)이면 `/prayer` |
 | `/sharings/{id}` | 공동체로 | `/communities` — 홈 · 대문 · 작성 어디서 왔는지 모른다. 삭제해도 여기로 |
 | `/sharings/{id}/edit` | 취소 | `/sharings/{id}` |
 | `/communities/{id}/sharings` | 대문으로 | `/communities/{id}` |
@@ -353,23 +352,22 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 
 ## F-6. 기도제목 쓰기
 
-> 탭 "기도하기" → `/prayer` 첫 구역 → "기도제목 작성하기" → `/prayer/requests/new`
-> → 본문 + 공개/비공개 → 올리기 → `/prayer/requests`
+> 탭 "기도하기" → `/prayer` 스토리 줄 맨 왼쪽 '나' → "새로 작성하기" → `/sharings/new?kind=prayer`
+> → 본문 + 공개/비공개 → 올리기 → `/mypage`
 
-**진입**: 하단 탭 "기도하기" → 첫 구역 "기도를 요청하세요"
-(이 화면에서 **유일하게 "내가 주어"인 자리**라 맨 위다, D-1901)
+**진입**: 중보기도실 스토리 줄의 '나'(D-3607) — 또는 하단 ＋ 화면에서 "기도제목"을 고른다(D-3610).
+옛 `/prayer/requests/new`는 `/sharings/new?kind=prayer`로 보낸다.
 
-1. `/prayer` → "기도제목 작성하기" → `/prayer/requests/new`
+1. `/prayer` → '나' → "새로 작성하기" → + 화면, **기도제목이 먼저 골라진 채로**
 2. 본문 + **공개/비공개**. ⚠️ **공동체를 고르지 않는다**(D-2301) — 기도제목은 내 카드 하나고,
    정하는 것은 어느 방에 걸지가 아니라 남들에게 보일지 말지다. 저장에도 공동체가 엮이지 않는다(D-3401)
-3. **올리기** → `/prayer/requests`. 맨 위에 방금 올린 것이 "현재 기도제목"으로 보인다 (2026-10-04)
-4. 이전 것들은 `/prayer/requests`에 이력으로 쌓인다 — 저장이 append-only라 **화면의 말은
+3. **올리기** → `/mypage`. 이전 기도제목 맨 위에 방금 올린 것이 "지금"으로 보인다 (D-3609)
+4. 이전 것들은 마이페이지에 이력으로 쌓인다 — 저장이 append-only라 **화면의 말은
    "수정"이 아니라 "업데이트"다**(D-1706). 맨 위 한 건에 "현재 기도제목" 배지가 붙는다,
    남들에게 보이는 건 그것뿐이라는 사실을 화면이 직접 말하지 않으면 아래 것들도 보이는 줄 안다
 
 **빈 상태**: 이력 0건 → "아직 올린 기도제목이 없어요".
-⚠️ **거기서 작성으로 가는 링크가 없다** — `/prayer`를 한 번 거쳐야 한다.
-**취소**: `/prayer/requests/new` → `/prayer`
+**취소**: 기도제목으로 들어왔으면 `/prayer`
 
 **비공개는 막아 뒀다**(D-3403). 익명 기도제목 열람 구역은 중보기도실 맨 아래에 따로
 생기고 그게 Phase 3다(D-906). 그때까지 "비공개"는 보이되 눌리지 않고, API도 받지 않는다.
@@ -414,12 +412,13 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 
 ## F-8. 나눔 쓰기
 
-> 하단 ＋ → (**❓ 시안은 2지선다 팝업**) → `/sharings/new` → 타입 → 본문 → 공동체 선택
+> 하단 ＋ → `/sharings/new` 맨 위 **"공동체 나눔 / 기도제목"** → 본문 → 공동체 선택
 > → 공유하기 → `/sharings/{id}` 상세
 
-1. 하단 네비 가운데 **+** → `/sharings/new`. 대문 자료실의 **＋**로 오면
-   `/sharings/new?communityId={id}` — **그 방을 미리 골라 둔 채로** 열린다
-2. 타입(일상 / 성경) → 본문 → 공동체 **다중 선택**(슬랙 크로스포스트처럼)
+1. 하단 네비 가운데 **+** → `/sharings/new`. 맨 위 2지선다(D-3610)에서 **공동체 나눔이 먼저 골라져** 있다.
+   대문 자료실의 **＋**로 오면 `/sharings/new?communityId={id}` — **그 방까지 미리 골라 둔 채로** 열린다.
+   링크는 전부 `composeHref`(`features/compose/href.ts`)가 만든다 — 팝업이 아니라 한 화면이다
+2. 본문 → 공동체 **다중 선택**. 일상 / 성경 구분은 없앴다 — 저장 `type`은 `daily` 고정(D-3610)
 3. **공유하기** → `/sharings/{id}` 상세
 4. 내 글이면 상세에 **수정 · 삭제**. 수정 → `/sharings/{id}/edit` → 저장하면 상세로, 삭제하면 `/communities`로
 
@@ -509,7 +508,7 @@ iOS standalone이 상태바 색을 문서 로드 때만 읽기 때문(D-2203). �
 | `Pray Page - Focus.png` | (없음) | ❌ Phase 3 | 전체 다크. 상단바·하단 네비까지 사라진다 |
 | `나눔1 - 일상.png` | `/sharings/new` | 구현됨 | 타입 고르기 전 상태 |
 | `나눔1 - 일상Detail.png` | 〃 | 구현됨 | 고른 뒤. 구절 참조 입력은 안 붙였다 |
-| `나눔2 - 기도제목.png` | `/prayer/requests/new` | 일부 | ⚠️ **공동체 다중 선택 삭제**(D-2301). 공개/비공개만 |
+| `나눔2 - 기도제목.png` | `/sharings/new?kind=prayer` | 일부 | ⚠️ **공동체 다중 선택 삭제**(D-2301). 공개/비공개만 |
 | `나눔2 - 기도제목Detail.png` | 〃 | 일부 | 〃 |
 
 **시안이 없는 화면**: `/communities`(목록) · `/communities/new` · `/prayer/requests`(이력) ·

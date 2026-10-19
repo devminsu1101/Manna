@@ -2073,3 +2073,16 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
   `/api/v1/me` 라우트 핸들러에 PATCH 중계. `/prayer/requests` → `/mypage` 리다이렉트,
   스토리 '나'의 "이전 기도제목"과 기도제목 작성 후 이동도 `/mypage`로.
 
+## 2026-10-20 · 실사용 전 정비 2차 — + 버튼
+
+**✅ D-3615. 어느 쪽이 먼저 골라질지는 API가 아니라 주소로 넘긴다** (사용자 질문에 대한 결정)
+- 사용자가 "API 전달할 때 기본값을 설정하게 만들어야 할까"를 물었다. 서버가 알 필요가 없는 **화면 상태**라
+  백엔드 API는 손대지 않고 `/sharings/new?kind=prayer` · `?communityId=` 쿼리로 넘긴다.
+- 진입점마다 쿼리를 손으로 쓰면 어긋나므로 `features/compose/href.ts`의 `composeHref({ kind, communityId })`
+  하나로만 만든다. 하단 + → 공동체 나눔 · 대문 자료실 ＋ → 공동체 나눔 + 그 방 · 스토리 '나' → 기도제목.
+- 화면 안에서 바꿔도 주소는 그대로 둔다 — 새로고침하면 들어온 곳의 기본값으로 돌아간다. 취소도 들어온 곳으로 간다.
+
+**📝 만든 것**
+- `ComposeSwitcher`(2지선다 + 기존 두 폼 재사용), `NewSharingForm`에서 일상/성경 선택 제거(`type: "daily"` 고정).
+- `/sharings/new` 제목 "작성하기". 옛 `/prayer/requests/new` → `/sharings/new?kind=prayer` 리다이렉트.
+

@@ -2,6 +2,8 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { composeHref } from "@/features/compose/href";
+
 /**
  * 하단 탭 네비게이션. 로드맵 Phase 1~3의 네 도메인 + 가운데 작성 버튼.
  * 아이콘은 마스코트 일러스트라 lucide로 대체할 수 없다. public/mascot/의 PNG를 쓴다.
@@ -31,9 +33,9 @@ export function BottomNav() {
         <NavTab key={tab.href} {...tab} />
       ))}
 
-      {/* TODO: 작성 시트 열기 (로드맵 Phase 2 나눔) */}
+      {/* 공동체 나눔이 먼저 골라진 + 화면. 기도제목은 그 화면 위쪽에서 바꾼다(D-3610). */}
       <Link
-        href="/sharings/new"
+        href={composeHref()}
         aria-label="새로 작성하기"
         className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-tone text-tone"
       >

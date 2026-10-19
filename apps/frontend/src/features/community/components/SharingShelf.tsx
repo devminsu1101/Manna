@@ -2,6 +2,7 @@ import { List, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { composeHref } from "@/features/compose/href";
 import { SharingRow } from "@/features/sharing/components/SharingRow";
 import type { Sharing } from "@/features/sharing/types";
 import { CommunitySection, EmptyRow } from "./CommunitySection";
@@ -34,7 +35,7 @@ export function SharingShelf({
         <span className="flex shrink-0 items-center">
           {/* 이 방을 미리 골라 둔 채로 연다. */}
           <Button asChild variant="ghost" size="icon" aria-label="나눔 쓰기">
-            <Link href={`/sharings/new?communityId=${communityId}`}>
+            <Link href={composeHref({ kind: "sharing", communityId })}>
               <Plus className="size-5" />
             </Link>
           </Button>
