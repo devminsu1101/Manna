@@ -20,7 +20,7 @@ export function CommunitySection({
 }: {
   icon: string;
   title: string;
-  surface: "love" | "warm" | "cool";
+  surface?: "love" | "warm" | "cool";
   /** 헤더 오른쪽 버튼. 없으면 제목만 놓인다. */
   action?: React.ReactNode;
   children: React.ReactNode;

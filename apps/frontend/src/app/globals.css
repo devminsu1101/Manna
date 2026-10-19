@@ -91,15 +91,23 @@
 
 /* 중보기도실 집중 모드(D-3611). 기도회 · 새벽에 밝은 화면이 옆 사람에게 민폐가 되지 않게 화면 전체를
    어둡게 한다. `.dark` 토큰을 따로 만들지 않고 이 범위에서만 시맨틱 토큰을 바꿔 입힌다 —
-   마커는 app/prayer/page.tsx가 심는다. --background는 lib/brand.ts의 FOCUS_COLOR(상태바)와 짝이다.
-   --color-white까지 바꾸는 이유: 스토리 칸 · 사진 테두리가 bg-white/border-white로 그려져 있다. */
-:root:has([data-focus]) {
+   마커는 app/prayer/page.tsx의 `<AppShell focus>`가 심는다. --background는 lib/brand.ts의 FOCUS_COLOR(상태바)와 짝이다.
+   --color-white까지 바꾸는 이유: 스토리 칸 · 사진 테두리가 bg-white/border-white로 그려져 있다.
+
+   ⚠️ 마커는 **셸 박스 자신**(`AppShell focus` → `[data-app-shell][data-focus]`)이다. `:root:has([data-focus])`도,
+   바깥 `display: contents` 래퍼에 변수를 거는 것도 Mac Safari에서 적용되지 않았다(Chrome은 됨, 2026-10-20).
+   셸은 화면 전체를 덮는 실제 박스(fixed inset-0)라 변수가 그 안으로 그대로 상속된다. body는 셸 바깥이라
+   밝은 채로 남으므로 셸이 배경을 직접 칠하고, 글자색도 준다 — body의 글자색은 밝은 테마 값으로 계산된 채
+   상속되기 때문이다. */
+[data-focus] {
   --background: #141216;
   --foreground: #ece8ee;
   --border: color-mix(in srgb, #ece8ee 20%, transparent);
   --surface-love: #221d24;
   --tone-surface: #221d24;
   --color-white: #2c2630;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @theme inline {

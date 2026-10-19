@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { getMe } from "@/features/auth/api";
 import { EditableName } from "@/features/auth/EditableName";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
+import { composeHref } from "@/features/compose/href";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getMyPrayerRequests, getMyStats } from "@/features/prayer/api";
 import { MyPrayerHistory } from "@/features/prayer/components/MyPrayerHistory";
@@ -69,7 +70,19 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         <Stat surface="warm" label="이번 달 나눔" value={month.sharings} unit="개" />
       </div>
 
-      <CommunitySection icon="/mascot/tears.png" title="이전 기도제목" surface="love">
+      <CommunitySection
+        icon="/mascot/tears.png"
+        title="이전 기도제목"
+        surface="love"
+        action={
+          // 새로 쓰면 그게 맨 위 "지금"이 된다. 대문 자료실의 ＋와 같은 모양 — 기도제목이 골라진 + 화면으로.
+          <Button asChild variant="ghost" size="icon" aria-label="새 기도제목 쓰기">
+            <Link href={composeHref({ kind: "prayer" })}>
+              <Plus className="size-5" />
+            </Link>
+          </Button>
+        }
+      >
         <MyPrayerHistory requests={requests} />
       </CommunitySection>
 

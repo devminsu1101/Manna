@@ -2101,3 +2101,28 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - 상태바: 페이지 `generateViewport`가 `searchParams`를 보고 `FOCUS_COLOR`(lib/brand.ts). 스위치는 `<a>` 문서 이동(D-2203).
 - "기도했어요"는 `PrayButton`의 `router.refresh()`가 쿼리를 유지해 집중 모드 그대로 링이 회색이 된다.
 
+## 2026-10-20 · 남은 정비 정리 — 다음 작업으로 넘긴다
+
+**⚠️ 집중 모드가 Mac Safari에서 어두워지지 않는다** (사용자 확인)
+- 빌드된 CSS에 `:root:has([data-focus])` 규칙은 그대로 있다. Safari가 그 페이지에서 이 규칙을 적용하지 않는 것으로 보인다
+  (`:has()` · `display: contents` 마커 조합 의심). 재현 환경이 없어 원인은 확정하지 못했다.
+- 주소는 `/prayer?focus=1`로 바뀌고(집중 모드 화면은 그려진다) Chrome에서는 어두워진다 — Safari의 CSS 적용 문제다.
+- 첫 시도: `display: contents` 래퍼(`<div data-focus className="contents">`) 안쪽에만 변수를 걸었다 → **Safari에서 여전히 안 됨.**
+  두 방식 모두 박스 없는(`contents`) 마커에 기대고 있었다.
+- **고침**: 마커를 **셸 박스 자신**에 단다 — `AppShell`의 `focus` prop이 `[data-app-shell]`에 `data-focus`를 붙이고,
+  `[data-focus] { --background … ; background-color; color }`. 셸은 화면 전체를 덮는 실제 박스(fixed inset-0)다.
+  `body`의 글자색은 밝은 값으로 계산된 채 상속되므로 `color`도 준다.
+
+**✅ D-3617. 버튼 색은 역할 이름이 아니라 `warm` · `cool` · `love`로 고른다** (사용자 결정)
+- 지금 버튼은 shadcn 역할 이름(default · secondary · destructive)에 고정 색이 박혀 있어, 기도 화면에서 핑크가 필요하면
+  `destructive`를 빌리거나 `className`으로 `bg-accent`를 덧칠했다. 같은 중보기도실 안에서도 "새로 작성하기" ·
+  "기도했어요" · "오늘 이미 기도했어요"(버튼이 아닌 `<p>`)의 모양 · 색 · 높이가 다 다르다.
+- "색은 화면 톤, 버튼은 역할" 안(`--tone`을 따르는 default)도 검토했지만, 화면마다 메인 색이 달라 **사용자가 색을 직접 고르는 쪽**을 택했다 —
+  `variant="warm" | "cool" | "love"`.
+- 함께 할 것: 전체 폭 버튼 크기 하나로 맞추기(`h-11` · `h-12` · `h-14` 혼재), "오늘 이미 기도했어요"를 `PrayButton`의 끝난 상태로 합치기.
+- 통일 전 임시로 둔 것: 중보기도실 '나'의 "새로 작성하기"를 `variant="destructive"`(핑크 계열)로, `CommunitySection`의 `surface`를
+  선택값으로(생략하면 배경 없음 — + 화면 "무엇을 올릴까요?"). 버튼 통일 때 함께 정리한다.
+
+**📝 만든 것**
+- 마이페이지 "이전 기도제목" 구역 오른쪽 ＋ → `composeHref({ kind: "prayer" })`. 대문 자료실 ＋와 같은 ghost 아이콘 버튼.
+

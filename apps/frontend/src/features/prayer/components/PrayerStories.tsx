@@ -181,7 +181,7 @@ function MyPanel({ request }: { request: MyPrayerRequest | null }) {
         <p className="mt-3 text-sm text-foreground/60">아직 올린 기도제목이 없어요</p>
       )}
 
-      <Button asChild variant="secondary" className="mt-4 h-12 w-full rounded-xl">
+      <Button asChild variant="destructive" className="mt-4 h-12 w-full rounded-xl">
         <Link href={composeHref({ kind: "prayer" })}>{request ? "새로 작성하기" : "기도제목 작성하기"}</Link>
       </Button>
     </>

@@ -36,7 +36,7 @@ export function ComposeSwitcher({
 
   return (
     <>
-      <CommunitySection icon="/mascot/hi.png" title="무엇을 올릴까요?" surface="warm">
+      <CommunitySection icon="/mascot/hi.png" title="무엇을 올릴까요?">
         <div className="grid grid-cols-2 gap-2">
           {KINDS.map((k) => (
             <button

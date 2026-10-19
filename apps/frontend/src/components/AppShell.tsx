@@ -27,10 +27,16 @@ export function AppShell({
   topBar,
   /** `<main>`에 얹을 클래스. cn(tailwind-merge)을 거치므로 기본 여백도 덮어쓸 수 있다. */
   className,
+  /**
+   * 중보기도실 집중 모드(D-3611). 셸 자신에 `data-focus`를 달아 globals.css가 이 박스 안의 토큰을
+   * 어둡게 바꾼다. 바깥 `display: contents` 래퍼나 `:root:has()`로 걸면 Mac Safari에서 적용되지 않았다.
+   */
+  focus = false,
   children,
 }: {
   topBar?: React.ReactNode;
   className?: string;
+  focus?: boolean;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -59,7 +65,7 @@ export function AppShell({
   return (
     // fixed inset-0이라 :has()를 모르는 구형 Safari에서도 레이아웃은 정상이다(거기서는
     // 문서 잠금만 안 걸려 오늘처럼 튕긴다). h-full로 두면 :has()가 안 먹는 순간 셸이 무너진다.
-    <div data-app-shell className="fixed inset-0 flex flex-col">
+    <div data-app-shell data-focus={focus || undefined} className="fixed inset-0 flex flex-col">
       {topBar}
 
       {/* min-h-0이 핵심이다. flex 컬럼에서 이게 없으면 flex-1 자식이 콘텐츠 높이만큼

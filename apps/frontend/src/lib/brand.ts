@@ -31,7 +31,7 @@ export const SURFACE_COLOR = {
 export type Tone = keyof typeof SURFACE_COLOR;
 
 /**
- * 중보기도실 집중 모드(D-3611)의 상태바 색. globals.css `:root:has([data-focus])`의 `--background`와 같아야 한다.
+ * 중보기도실 집중 모드(D-3611)의 상태바 색. globals.css `[data-focus]`의 `--background`와 같아야 한다.
  * 어두운 배경이라 iOS가 상태바 글자를 흰색으로 바꾼다 — 이 모드에서는 그게 맞다.
  */
 export const FOCUS_COLOR = "#141216";

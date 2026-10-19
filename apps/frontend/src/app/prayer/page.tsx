@@ -89,18 +89,16 @@ export default async function PrayerPage({ searchParams }: Props) {
 
 /**
  * 집중 모드 화면. `topBar`가 없으면 `AppShell`이 하단 네비도 붙이지 않는다.
- * `data-focus` 마커가 globals.css `:root:has([data-focus])`로 이 화면의 토큰을 어둡게 바꾼다.
+ * `focus`가 셸 자신에 `data-focus`를 달고, globals.css `[data-focus]`가 그 안의 토큰을 어둡게 바꾼다.
  */
 async function FocusRoom() {
   const { partners, members } = await getPrayRoom();
 
   return (
-    <div data-focus className="contents">
-      <AppShell className="flex flex-col space-y-6">
-        <FocusToggle on />
-        <PrayerStories people={[...partners, ...members]} />
-      </AppShell>
-    </div>
+    <AppShell focus className="flex flex-col space-y-6">
+      <FocusToggle on />
+      <PrayerStories people={[...partners, ...members]} />
+    </AppShell>
   );
 }
 
