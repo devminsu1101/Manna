@@ -11,7 +11,7 @@ import { LoginButtons } from "@/features/auth/LoginButtons";
  */
 export default function LoginPage() {
   return (
-    <AppShell className="flex flex-col items-center bg-muted px-8 py-0 pb-16">
+    <AppShell className="flex flex-col items-center bg-muted px-8 py-8 pb-16 gap-8">
       {/* 마스코트를 화면 가운데 위쪽에 크게. 로그인 버튼은 아래 3분의 1 지점. */}
       <div className="flex flex-1 flex-col items-center justify-center">
         <Image
@@ -20,18 +20,18 @@ export default function LoginPage() {
           width={220}
           height={220}
           priority
-          className="size-56 object-contain"
+          className="size-32 object-contain"
         />
+        <p className="mt-10 text-center text-base leading-relaxed font-medium text-foreground/80">
+          새 계명을 너희에게 주노니 서로 사랑하라
+          <br />
+          내가 너희를 사랑한 것 같이 너희도 서로 사랑하라
+        </p>
+        <p className="mt-2 text-sm text-foreground/50">(요 13:34)</p>
       </div>
 
       <LoginButtons />
 
-      <p className="mt-10 text-center text-base leading-relaxed font-medium text-foreground/80">
-        서로 사랑하는 공동체로 모이기로 순종한
-        <br />
-        여러분 모두를 환영합니다
-      </p>
-      <p className="mt-2 text-sm text-foreground/50">(창 00:00)</p>
     </AppShell>
   );
 }
