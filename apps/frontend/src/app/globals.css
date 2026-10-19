@@ -89,6 +89,19 @@
   --tone-surface: var(--manna-third-light);
 }
 
+/* 중보기도실 집중 모드(D-3611). 기도회 · 새벽에 밝은 화면이 옆 사람에게 민폐가 되지 않게 화면 전체를
+   어둡게 한다. `.dark` 토큰을 따로 만들지 않고 이 범위에서만 시맨틱 토큰을 바꿔 입힌다 —
+   마커는 app/prayer/page.tsx가 심는다. --background는 lib/brand.ts의 FOCUS_COLOR(상태바)와 짝이다.
+   --color-white까지 바꾸는 이유: 스토리 칸 · 사진 테두리가 bg-white/border-white로 그려져 있다. */
+:root:has([data-focus]) {
+  --background: #141216;
+  --foreground: #ece8ee;
+  --border: color-mix(in srgb, #ece8ee 20%, transparent);
+  --surface-love: #221d24;
+  --tone-surface: #221d24;
+  --color-white: #2c2630;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

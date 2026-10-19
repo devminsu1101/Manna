@@ -26,23 +26,34 @@ const ME = "me";
  * - 링: 오늘 아직 기도 안 함 = 핑크, 기도함 = 회색. 기도는 하루 단위라 매일 0시(KST)에 다시 핑크.
  * - 누르면 **이 줄 바로 아래 칸**에 그 사람 기도제목과 "기도했어요"가 뜬다. 기도하면 `PrayButton`이
  *   서버를 다시 그려 링이 회색이 된다 — 로컬 상태로 눌린 척하지 않는다. 그냥 다른 사람을 누르면 그대로다.
+ * - 집중 모드(D-3611)에서는 `me`를 넘기지 않는다 — 내 칸은 숨기고 다른 사람들만 남는다.
  */
-export function PrayerStories({ me, people }: { me: Me; people: PrayPerson[] }) {
+export function PrayerStories({ me, people }: { me?: Me; people: PrayPerson[] }) {
   // 처음엔 아직 기도 안 한 첫 사람. 다 했으면 첫 사람, 아무도 없으면 나.
   const first = people.find((p) => !p.prayedByMeToday) ?? people[0];
   const [selected, setSelected] = useState<number | typeof ME>(first?.userId ?? ME);
   const person = selected === ME ? null : people.find((p) => p.userId === selected);
 
+  if (!me && people.length === 0) {
+    return (
+      <p className="rounded-2xl bg-surface-love px-4 py-10 text-center text-sm text-foreground/60">
+        아직 함께 기도할 사람이 없어요
+      </p>
+    );
+  }
+
   return (
     <section className="rounded-2xl bg-surface-love p-4">
       <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-        <Story
-          name="내 기도제목"
-          image={me.profileImageUrl}
-          ring="none"
-          active={selected === ME}
-          onClick={() => setSelected(ME)}
-        />
+        {me && (
+          <Story
+            name="내 기도제목"
+            image={me.profileImageUrl}
+            ring="none"
+            active={selected === ME}
+            onClick={() => setSelected(ME)}
+          />
+        )}
         {people.map((p) => (
           <Story
             key={p.userId}
@@ -56,7 +67,7 @@ export function PrayerStories({ me, people }: { me: Me; people: PrayPerson[] }) 
       </ul>
 
       <div className="mt-3 rounded-xl bg-white px-4 py-5">
-        {person ? <PersonPanel person={person} /> : <MyPanel request={me.request} />}
+        {person ? <PersonPanel person={person} /> : me && <MyPanel request={me.request} />}
       </div>
     </section>
   );

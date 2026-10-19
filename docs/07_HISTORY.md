@@ -2086,3 +2086,18 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - `ComposeSwitcher`(2지선다 + 기존 두 폼 재사용), `NewSharingForm`에서 일상/성경 선택 제거(`type: "daily"` 고정).
 - `/sharings/new` 제목 "작성하기". 옛 `/prayer/requests/new` → `/sharings/new?kind=prayer` 리다이렉트.
 
+## 2026-10-20 · 실사용 전 정비 3차 — 집중 모드
+
+**✅ D-3616. 스위치는 중보기도실 상단바 바로 아래 한 줄** (사용자 결정)
+- 사용자가 "네비게이션 바에서 해도 되고 그 아래 Y/N 토글"이라 했다. 상단바 오른쪽은 프로필 자리라
+  비좁아 **상단바 바로 아래 스위치 한 줄**로 했다. 켜면 상단바가 사라지므로 화면 맨 위에 같은 스위치가 남아
+  끈다 — 켜고 끄는 자리가 같다.
+
+**📝 만든 것**
+- `/prayer?focus=1` — `FocusRoom`이 `AppShell`을 `topBar` 없이 써서 상단바 · 하단 네비가 함께 빠지고,
+  `PrayerStories`를 `me` 없이(내 칸 숨김) 그린다. 데이터는 `GET /pray/room` 그대로(D-1704 "새 쿼리 없음").
+- 어두운 색: `data-focus` 마커 + globals.css `:root:has([data-focus])`에서 `--background` · `--foreground` ·
+  `--surface-love` · `--color-white` 등을 바꿔 입힌다. `.dark` 토큰은 여전히 비어 있다.
+- 상태바: 페이지 `generateViewport`가 `searchParams`를 보고 `FOCUS_COLOR`(lib/brand.ts). 스위치는 `<a>` 문서 이동(D-2203).
+- "기도했어요"는 `PrayButton`의 `router.refresh()`가 쿼리를 유지해 집중 모드 그대로 링이 회색이 된다.
+
