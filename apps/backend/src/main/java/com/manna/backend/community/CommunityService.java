@@ -65,7 +65,7 @@ public class CommunityService {
 
     public record Member(Integer userId, String name, String profileImageUrl, String role) {}
 
-    public record PendingMember(Integer userId, String name) {}
+    public record PendingMember(Integer userId, String name, String profileImageUrl) {}
 
     /** hasRequest: 그 사람이 공개 기도제목을 올렸는지. 없으면 화면이 "기도제목 보기"를 걸지 않는다. */
     public record PrayerPartner(Integer userId, String name, boolean hasRequest) {}
@@ -162,7 +162,12 @@ public class CommunityService {
             leader
                 ? all.stream()
                     .filter(m -> !m.isActive())
-                    .map(m -> new PendingMember(m.getUser().getId(), m.getUser().getName()))
+                    .map(
+                        m ->
+                            new PendingMember(
+                                m.getUser().getId(),
+                                m.getUser().getName(),
+                                m.getUser().getProfileImageUrl()))
                     .toList()
                 : null;
 

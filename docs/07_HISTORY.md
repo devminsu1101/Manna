@@ -2161,3 +2161,22 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - 스토어는 하나라 로컬 · 프리뷰에서 올린 사진은 `dev/` 아래에 둔다(`VERCEL_ENV`). 로컬 토큰은
   `apps/frontend/.env.local`의 `BLOB_READ_WRITE_TOKEN`.
 - `PATCH /me`는 **보낸 칸만** 바꾸도록 바뀌었다(`{ name }` · `{ profileImageUrl }`, 둘 다 없으면 400).
+
+## 2026-10-21 · 멤버 사진 · 홈 소식 정리 · 로그인 1년 유지 (D-3619 · D-3620)
+
+- 공동체 대문 멤버 목록(승인 대기 포함)이 마스코트 대신 **각자의 프로필 사진**을 보인다. 사진이 없으면 마스코트.
+  백엔드는 active 멤버 사진을 이미 주고 있었고, 프론트가 버리고 있었다. `PendingMember`에도 `profileImageUrl`.
+
+**✅ D-3619. 홈 "지금 공동체에서는"에서 기도제목을 뺀다** (사용자 결정)
+- 기도제목은 사람마다 **최신 하나만** 쓰는데(D-1706), 소식은 (작성자 · 종류 · 본문)으로 묶어 새로 올릴 때마다 줄이
+  늘었다 — 한 사람이 3줄을 다 차지했다. 기도제목은 홈 위쪽 기도 요약 · 중보기도실이 보여 준다.
+- 응답에서 `kind`가 빠졌다(전부 나눔). `FeedRow`는 늘 `/sharings/{id}`로 간다.
+
+**✅ D-3620. 로그인을 1년 유지한다 — 세션을 Postgres에** (사용자 결정)
+- 금방 풀린 건 웹이라서가 아니다. ① 세션이 메모리라 Railway 재배포마다 전원 로그아웃 ② 30분 무활동 만료
+  ③ JSESSIONID가 세션 쿠키(Max-Age 없음)라 브라우저를 닫으면 끝.
+- `spring-boot-starter-session-jdbc` + `init-db.sql`의 `spring_session` · `spring_session_attributes`(라이브러리의
+  `schema-postgresql.sql` 그대로). `server.servlet.session.timeout=365d`, `cookie.max-age=365d`.
+- 서버 만료는 접속마다 연장되지만 쿠키는 로그인 때만 써진다 → 실제로는 **로그인한 날부터 최대 1년**.
+- **배포 전에** 프로덕션 DB에 두 테이블을 먼저 만든다(`09_DEPLOYMENT.md` 스키마 적용). `init-db.sql` 전체를 다시 부으면
+  기존 인덱스(`IF NOT EXISTS` 없음)에서 멈추므로 **세션 블록만** 실행한다. 배포 직후 한 번은 모두 다시 로그인한다.

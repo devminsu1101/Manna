@@ -19,7 +19,7 @@ export async function listSharings(communityId: number): Promise<Sharing[] | nul
 }
 
 /**
- * 홈 "지금 공동체에서는"(D-3604). 내 방 사람들의 최근 나눔 · 기도제목, 내 것은 빠진다.
+ * 홈 "지금 공동체에서는"(D-3604). 내 방 사람들의 최근 나눔, 내 것은 빠진다.
  * 홈은 비로그인도 열리므로 401은 빈 목록이다(`getPraySummary`와 같은 이유).
  */
 export async function getFeed(): Promise<FeedItem[]> {

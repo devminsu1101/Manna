@@ -91,9 +91,9 @@ public class SharingService {
 
     // ── GET /sharings/feed ───────────────────────────────────────────────
 
-    /** 홈 소식 한 줄. kind가 sharing이면 id로 상세에, prayer면 userId로 기도 상세에 간다. */
+    /** 홈 소식 한 줄. id로 나눔 상세에 간다. */
     public record FeedItem(
-            String kind, Integer id, Integer userId, String name, String firstLine, OffsetDateTime createdAt) {}
+            Integer id, Integer userId, String name, String firstLine, OffsetDateTime createdAt) {}
 
     public record Feed(List<FeedItem> items) {}
 
@@ -109,7 +109,6 @@ public class SharingService {
                 .map(
                     s ->
                         new FeedItem(
-                            Sharing.PRAYER.equals(s.getType()) ? "prayer" : "sharing",
                             s.getId(),
                             s.getAuthor().getId(),
                             s.getAuthor().getName(),

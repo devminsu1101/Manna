@@ -33,6 +33,8 @@ export type CommunitySummary = {
 export type CommunityMember = {
   userId: number;
   name: string;
+  /** 없으면 마스코트로 대신한다. */
+  profileImageUrl: string | null;
   role: MemberRole;
   status: MemberStatus;
 };

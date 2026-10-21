@@ -49,7 +49,7 @@ export function MemberList({
           <ul className="mt-2 space-y-2">
             {pending.map((member) => (
               <li key={member.userId} className={ROW_CLASS}>
-                <MemberName name={member.name} />
+                <MemberName name={member.name} photoUrl={member.profileImageUrl} />
                 <PendingActions communityId={communityId} userId={member.userId} />
               </li>
             ))}
@@ -60,7 +60,7 @@ export function MemberList({
       <ul className="space-y-2">
         {active.map((member) => (
           <li key={member.userId} className={ROW_CLASS}>
-            <MemberName name={member.name} />
+            <MemberName name={member.name} photoUrl={member.profileImageUrl} />
             {member.role === "leader" && (
               <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground">
                 리더
@@ -78,16 +78,16 @@ export function MemberList({
   );
 }
 
-/** 프로필 사진은 아직 없다. `users`에 컬럼이 없어 기본 마스코트를 모두가 함께 쓴다. */
-function MemberName({ name }: { name: string }) {
+/** 프로필 사진이 없으면(provider가 안 줬거나 아직 안 올렸으면) 기본 마스코트다. */
+function MemberName({ name, photoUrl }: { name: string; photoUrl: string | null }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       <Image
-        src="/mascot/default.png"
+        src={photoUrl ?? "/mascot/default.png"}
         alt=""
         width={32}
         height={32}
-        className="size-8 shrink-0 rounded-full object-contain"
+        className={`size-8 shrink-0 rounded-full ${photoUrl ? "object-cover" : "object-contain"}`}
       />
       <span className="truncate text-foreground">{name}</span>
     </span>

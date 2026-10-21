@@ -5,12 +5,13 @@
 /** `sharings.type` 중 나눔이 쓰는 둘. `prayer`는 `/pray` 아래다(D-3401). */
 export type SharingType = "daily" | "scripture";
 
-/** 홈 "지금 공동체에서는" 한 줄(D-3604). 글이 아니라 "누가 무엇을 했는지"다. */
+/**
+ * 홈 "지금 공동체에서는" 한 줄(D-3604). 글이 아니라 "누가 무엇을 했는지"다.
+ * 나눔만 온다 — 기도제목은 사람마다 최신 하나라 소식으로 쌓이지 않는다.
+ */
 export type FeedItem = {
-  kind: "sharing" | "prayer";
-  /** 나눔이면 상세(`/sharings/{id}`)로 간다. */
+  /** 나눔 상세(`/sharings/{id}`)로 간다. */
   id: number;
-  /** 기도제목이면 그 사람 기도 상세(`/prayer/{userId}`)로 간다. */
   userId: number;
   name: string;
   firstLine: string;

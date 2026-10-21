@@ -23,6 +23,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // OAuth2 로그인. starter-security만으로는 oauth2Login이 없다 — 이 스타터가 빠져 있었다.
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // 로그인 세션을 Postgres에 둔다 — 메모리면 재배포마다 전원 로그아웃이다(D-3620).
+    implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'

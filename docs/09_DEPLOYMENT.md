@@ -139,6 +139,7 @@ psql "DATABASE_PUBLIC_URL값" -c "\dt"
 | Railway 빌드 로그 "Railpack could not determine how to build", 분석 대상이 `apps/`, `docs/` | Root Directory 비어 있음 | `apps/backend` 저장 + Apply |
 | Deploy Logs에 `JdbcEnvironmentInitiator` 스택트레이스 | DB 환경변수 없음 → `localhost:5432` 시도 | `SPRING_DATASOURCE_*` 3개 |
 | `Schema-validation: missing table` | 프로덕션 DB에 스키마 없음/옛 스키마 | 스키마 적용 절 |
+| 기동 후 `relation "spring_session" does not exist` | 세션 테이블(D-3620) 미적용 | `init-db.sql`의 "로그인 세션" 블록만 실행 |
 | 로그인 후 `localhost:3000`으로 이동 | `FRONTEND_ORIGIN` 없음 | 백엔드 Variables에 추가 → Apply |
 | `redirect_uri`가 Railway 주소 | 옛 코드(헤더 추측) 또는 `FRONTEND_ORIGIN` 오타 | 07_HISTORY D-2903 |
 | Google `redirect_uri_mismatch` | Console에 Vercel 주소 미등록 / 클라이언트가 Desktop 타입 | Web application 타입 + URI 등록(반영 수 분~수 시간) |

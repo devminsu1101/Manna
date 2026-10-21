@@ -19,7 +19,7 @@ import { FeedRow } from "@/features/sharing/components/FeedRow";
  *
  *  - 기도: Pray API의 요약(features/prayer/api.ts). 비로그인이면 유도 줄만 보인다
  *  - 오늘의 말씀: 우리 성경 데이터(개역개정)에서 직접
- *  - 지금 공동체에서는: 내 방 사람들의 최근 나눔 · 기도제목 소식(D-3604). 비로그인이면 빈 문구
+ *  - 지금 공동체에서는: 내 방 사람들의 최근 나눔 소식(D-3604). 비로그인이면 빈 문구
  *  - 최근 읽은 말씀: 쿠키(이미 구현)
  */
 export default async function MainPage() {
@@ -45,11 +45,11 @@ export default async function MainPage() {
         <PraySummaryRows summary={praySummary} />
       </section>
 
-      {/* ── 지금 공동체에서는 — 내 방 사람들의 최근 나눔 · 기도제목 소식(D-3604) ── */}
+      {/* ── 지금 공동체에서는 — 내 방 사람들의 최근 나눔 소식(D-3604) ── */}
       <section className="rounded-2xl bg-surface-warm p-4">
         <SectionHeader icon="/mascot/together.png" title="지금 공동체에서는" />
         {feed.length > 0 ? (
-          feed.map((item) => <FeedRow key={`${item.kind}-${item.id}`} item={item} />)
+          feed.map((item) => <FeedRow key={item.id} item={item} />)
         ) : (
           <EmptyNote>아직 공동체 소식이 없어요</EmptyNote>
         )}
