@@ -74,6 +74,14 @@ public class CommunityController {
         service.startPartners(currentUser.id(principal), id);
     }
 
+    @DeleteMapping("/{id}")                                     // 공동체 삭제 (리더, D-3621)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id) {
+        service.delete(currentUser.id(principal), id);
+    }
+
     @DeleteMapping("/{id}/members/{userId}")                    // 거절 · 강퇴 · 나가기
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remove(

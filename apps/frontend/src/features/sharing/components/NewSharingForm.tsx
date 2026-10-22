@@ -60,12 +60,12 @@ export function NewSharingForm({
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         setError(json?.error?.message ?? "올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setSubmitting(false);
         return;
       }
       router.push(`/sharings/${json.id}`);
     } catch {
       setError("올리지 못했어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
       setSubmitting(false);
     }
   }

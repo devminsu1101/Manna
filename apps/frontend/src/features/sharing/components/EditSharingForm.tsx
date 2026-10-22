@@ -30,13 +30,13 @@ export function EditSharingForm({ id, initialBody }: { id: number; initialBody: 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         setError(json?.error?.message ?? "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setSubmitting(false);
         return;
       }
       router.push(`/sharings/${id}`);
       router.refresh();
     } catch {
       setError("저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
       setSubmitting(false);
     }
   }

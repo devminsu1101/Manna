@@ -32,6 +32,17 @@ public interface SharingRepository extends JpaRepository<Sharing, Integer> {
         value = "INSERT INTO sharing_communities (sharing_id, community_id) VALUES (:sharingId, :communityId)")
     void shareTo(Integer sharingId, Integer communityId);
 
+    /** 이 방에만 걸린 나눔을 지운다(공동체 삭제). D-3507 이전에 다른 방에도 걸린 글은 남긴다. */
+    @Modifying
+    @Query(
+        nativeQuery = true,
+        value =
+            "DELETE FROM sharings s USING sharing_communities sc"
+                + " WHERE sc.sharing_id = s.id AND sc.community_id = :communityId"
+                + " AND NOT EXISTS (SELECT 1 FROM sharing_communities o"
+                + "  WHERE o.sharing_id = s.id AND o.community_id <> :communityId)")
+    void deleteOnlyIn(Integer communityId);
+
     /** 한 방의 나눔, 최신이 맨 위. 기도제목은 방에 걸리지 않으므로(D-3401) 여기 섞이지 않는다. */
     @Query(
         nativeQuery = true,

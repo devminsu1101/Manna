@@ -223,4 +223,75 @@ class CommunityApiTests {
         mvc.perform(delete(base + leader.getId()).with(as("leader")).with(csrf()))
             .andExpect(status().isConflict());
     }
+
+    private int share(String sub, int communityId, String body) throws Exception {
+        String res =
+            mvc.perform(
+                    post("/api/v1/sharings")
+                        .with(as(sub))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            "{\"type\":\"daily\",\"body\":\"" + body
+                                + "\",\"communityIds\":[" + communityId + "]}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(res, "$.id");
+    }
+
+    @Test
+    void 강퇴된_사람은_대문을_못_보고_나눔은_남는다() throws Exception {
+        user("leader");
+        User a = user("a");
+        int id = create("leader", "만나 개발팀");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(new CommunityMember(c, a, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+        int sharingId = share("a", id, "a의 나눔");
+
+        mvc.perform(delete("/api/v1/communities/" + id + "/members/" + a.getId())
+                .with(as("leader")).with(csrf()))
+            .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/v1/communities/" + id).with(as("a")))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/sharings/" + sharingId).with(as("leader")))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void 공동체_삭제는_리더만_방의_나눔도_함께_기도제목은_남는다() throws Exception {
+        User leader = user("leader");
+        User a = user("a");
+        int id = create("leader", "테스트 방");
+        int other = create("leader", "남는 방");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(new CommunityMember(c, a, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+        int gone = share("a", id, "지워질 나눔");
+        int kept = share("leader", other, "남는 방 나눔");
+        mvc.perform(post("/api/v1/pray/requests/me").with(as("a")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"기도제목\"}"))
+            .andExpect(status().isCreated());
+
+        mvc.perform(delete("/api/v1/communities/" + id).with(as("a")).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(delete("/api/v1/communities/999999").with(as("leader")).with(csrf()))
+            .andExpect(status().isNotFound());
+        mvc.perform(delete("/api/v1/communities/" + id).with(as("leader")).with(csrf()))
+            .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/v1/communities/" + id).with(as("leader")))
+            .andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/communities").with(as("a")))
+            .andExpect(jsonPath("$.communities.length()").value(0));
+        mvc.perform(get("/api/v1/sharings/" + gone).with(as("leader")))
+            .andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/sharings/" + kept).with(as("leader")))
+            .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/pray/requests/me").with(as("a")))
+            .andExpect(jsonPath("$.requests.length()").value(1));
+        mvc.perform(get("/api/v1/communities/" + other).with(as("leader")))
+            .andExpect(jsonPath("$.myUserId").value(leader.getId()));
+    }
 }

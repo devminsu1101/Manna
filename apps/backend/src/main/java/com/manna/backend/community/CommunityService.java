@@ -73,6 +73,7 @@ public class CommunityService {
     public record Detail(
             Integer id,
             String name,
+            Integer myUserId,
             String myRole,
             @JsonInclude(JsonInclude.Include.NON_NULL) String inviteCode,
             PrayerPartner prayerPartner,
@@ -188,6 +189,7 @@ public class CommunityService {
         return new Detail(
             c.getId(),
             c.getName(),
+            userId,
             me.getRole(),
             leader ? c.getInviteCode() : null,
             partner,
@@ -203,6 +205,20 @@ public class CommunityService {
     public void startPartners(Integer userId, Integer communityId) {
         requireLeader(communityId, userId);
         partners.start(communityId);
+    }
+
+    // ── DELETE /communities/{id} ─────────────────────────────────────────
+
+    /**
+     * 공동체 삭제(리더). 리더에게는 나가기가 없고 이것이 방을 떠나는 길이다(D-3621).
+     * 멤버 · 기도마니또 · 나눔 링크는 CASCADE로 따라가지만 나눔 행은 남으므로 먼저 지운다 —
+     * 방마다 글이 따로라(D-3507) 이 방의 글은 이 방에만 걸려 있다. 기도제목은 방과 엮이지 않는다(D-3401).
+     */
+    @Transactional
+    public void delete(Integer userId, Integer communityId) {
+        requireLeader(communityId, userId);
+        sharings.deleteOnlyIn(communityId);
+        communities.deleteWithCascade(communityId);
     }
 
     // ── GET /invites/{code} ──────────────────────────────────────────────

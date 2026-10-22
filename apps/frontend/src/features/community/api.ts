@@ -31,6 +31,7 @@ type ListResponse = {
 type DetailResponse = {
   id: number;
   name: string;
+  myUserId: number;
   myRole: MemberRole;
   inviteCode?: string; // 리더에게만
   prayerPartner: { userId: number; name: string; hasRequest: boolean } | null;
@@ -102,6 +103,7 @@ export async function getCommunity(id: number): Promise<CommunityDetail | null> 
   return {
     id: d.id,
     name: d.name,
+    myUserId: d.myUserId,
     inviteCode: d.inviteCode,
     myRole: d.myRole,
     // 리더가 시작하기 전(D-3602)이거나 짝이 주 중간에 나갔으면 null이다.

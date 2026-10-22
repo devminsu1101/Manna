@@ -68,12 +68,12 @@ export function NewPrayerRequestForm() {
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         setError(data?.error?.message ?? "올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setSubmitting(false);
         return;
       }
       router.push("/mypage");
     } catch {
       setError("올리지 못했어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
       setSubmitting(false);
     }
   }

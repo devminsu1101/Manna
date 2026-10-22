@@ -22,9 +22,9 @@ export function DeleteSharingButton({ id }: { id: number }) {
       // 404는 이미 지워진 것 — 결과가 같다.
       if (res.ok || res.status === 404) return router.push("/communities");
       setFailed(true);
+      setBusy(false);
     } catch {
       setFailed(true);
-    } finally {
       setBusy(false);
     }
   }

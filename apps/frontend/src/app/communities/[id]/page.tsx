@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { getCommunity } from "@/features/community/api";
+import { LeaveOrDeleteButton } from "@/features/community/components/LeaveOrDeleteButton";
 import { MemberList } from "@/features/community/components/MemberList";
 import { PrayerPartnerCard } from "@/features/community/components/PrayerPartnerCard";
 import { SharingShelf } from "@/features/community/components/SharingShelf";
@@ -53,6 +54,12 @@ export default async function CommunityPage(props: PageProps) {
         myRole={community.myRole}
         inviteCode={community.inviteCode}
         partnersStarted={community.partnersStarted}
+      />
+      <LeaveOrDeleteButton
+        communityId={community.id}
+        communityName={community.name}
+        myUserId={community.myUserId}
+        leader={community.myRole === "leader"}
       />
     </AppShell>
   );

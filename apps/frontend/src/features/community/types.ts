@@ -59,6 +59,8 @@ export type PrayerPartner = {
 export type CommunityDetail = {
   id: number;
   name: string;
+  /** 나가기 버튼이 지울 내 행 — `DELETE .../members/{myUserId}`. */
+  myUserId: number;
   /** 초대 링크에 쓰는 회전 가능한 코드. `id`와 별개 컬럼이다 (D-1708). 리더에게만 온다. */
   inviteCode?: string;
   myRole: MemberRole;

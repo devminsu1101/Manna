@@ -36,12 +36,13 @@ export function NewCommunityForm() {
       const body = await res.json().catch(() => null);
       if (!res.ok) {
         setError(body?.error?.message ?? "만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setSubmitting(false);
         return;
       }
+      // 성공하면 잠금을 풀지 않는다 — 넘어가는 사이 한 번 더 눌리면 방이 둘 생긴다.
       router.push(`/communities/${body.id}`);
     } catch {
       setError("만들지 못했어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
       setSubmitting(false);
     }
   }

@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { CommunityMember, MemberRole } from "../types";
 import { CommunitySection, ROW_CLASS } from "./CommunitySection";
 import { InviteButton } from "./InviteButton";
+import { MemberActions } from "./MemberActions";
 import { PendingActions } from "./PendingActions";
 import { StartPartnersButton } from "./StartPartnersButton";
 
@@ -38,8 +39,7 @@ export function MemberList({
       icon="/mascot/together.png"
       title={`멤버 ${active.length}명`}
       surface="cool"
-      // TODO(D-1003): `...`(관리 — 이름 변경 · 코드 재발급 · 강퇴)는 전부 쓰기 API가
-      // 필요해 아직 두지 않았다. 지금 놓으면 눌러도 아무 일도 없는 버튼이 된다.
+      // TODO(D-1003): 이름 변경 · 코드 재발급은 아직 API가 없다. 강퇴는 줄마다 붙는다.
       action={inviteCode && <InviteButton inviteCode={inviteCode} />}
     >
       {pending.length > 0 && (
@@ -61,10 +61,14 @@ export function MemberList({
         {active.map((member) => (
           <li key={member.userId} className={ROW_CLASS}>
             <MemberName name={member.name} photoUrl={member.profileImageUrl} />
-            {member.role === "leader" && (
+            {member.role === "leader" ? (
               <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground">
                 리더
               </span>
+            ) : (
+              myRole === "leader" && (
+                <MemberActions communityId={communityId} userId={member.userId} name={member.name} />
+              )
             )}
           </li>
         ))}
