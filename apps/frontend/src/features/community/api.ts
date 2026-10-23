@@ -34,7 +34,7 @@ type DetailResponse = {
   myUserId: number;
   myRole: MemberRole;
   inviteCode?: string; // 리더에게만
-  prayerPartner: { userId: number; name: string; hasRequest: boolean } | null;
+  prayerPartner: { userId: number; name: string; profileImageUrl: string | null } | null;
   partnersStarted: boolean;
   members: { userId: number; name: string; profileImageUrl: string | null; role: MemberRole }[];
   pendingMembers?: { userId: number; name: string; profileImageUrl: string | null }[]; // 리더에게만

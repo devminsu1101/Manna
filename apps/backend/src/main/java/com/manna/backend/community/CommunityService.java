@@ -67,8 +67,11 @@ public class CommunityService {
 
     public record PendingMember(Integer userId, String name, String profileImageUrl) {}
 
-    /** hasRequest: 그 사람이 공개 기도제목을 올렸는지. 없으면 화면이 "기도제목 보기"를 걸지 않는다. */
-    public record PrayerPartner(Integer userId, String name, boolean hasRequest) {}
+    /**
+     * 카드는 사진 · 이름을 보여 주고 누르면 기도실로 간다(D-3622). 기도제목이 없어도 기도실에서 기도할 수
+     * 있으므로(D-903) 예전의 hasRequest는 뺐다.
+     */
+    public record PrayerPartner(Integer userId, String name, String profileImageUrl) {}
 
     public record Detail(
             Integer id,
@@ -178,12 +181,7 @@ public class CommunityService {
             active.stream()
                 .filter(m -> m.userId().equals(partnerId))
                 .findFirst()
-                .map(
-                    m ->
-                        new PrayerPartner(
-                            m.userId(),
-                            m.name(),
-                            !sharings.findLatestPublicPrayers(List.of(m.userId())).isEmpty()))
+                .map(m -> new PrayerPartner(m.userId(), m.name(), m.profileImageUrl()))
                 .orElse(null);
 
         return new Detail(

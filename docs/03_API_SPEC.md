@@ -305,7 +305,7 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
   "myUserId": 5,
   "myRole": "leader",
   "inviteCode": "k7mQ2xR9tB",
-  "prayerPartner": { "userId": 12, "name": "김현정", "hasRequest": true },
+  "prayerPartner": { "userId": 12, "name": "김현정", "profileImageUrl": null },
   "partnersStarted": true,
   "members": [
     { "userId": 12, "name": "김현정", "profileImageUrl": null, "role": "member" }
@@ -322,7 +322,8 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
   중 하나라 값이 다르다 — 같은 것으로 보고 한쪽을 지우면 안 된다.
   **이 방에서 내가 맡은 사람**이다(D-3601). 리더가 시작하기 전, 이번 주 중간에 들어온 경우,
   맡은 사람이 주 중간에 나간 경우에는 `null`이고, 화면은 그 상태를 감당해야 한다.
-  `hasRequest`는 그 사람이 공개 기도제목을 올렸는지 — 없으면 화면이 "기도제목 보기"를 걸지 않는다.
+  카드는 사진 · 이름이고 누르면 `/prayer?u={userId}`로 간다(D-3622). 기도제목이 없어도 기도실에서
+  기도할 수 있으므로 예전의 `hasRequest`는 뺐다.
 - `partnersStarted`: 리더가 기도마니또를 시작했는지. 리더 화면의 "기도마니또 시작하기" 버튼을 숨기는 데 쓴다.
 - **읽을 때 이번 주 기도마니또를 만든다**(D-3603). 시작한 방에 이번 주 행이 없으면 이 호출 ·
   `GET /pray/room` · `GET /pray/summary` 중 처음 오는 쪽이 만든다. 그래서 GET이지만 쓰기 트랜잭션이다.

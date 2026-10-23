@@ -47,7 +47,7 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
 
   return (
     <>
-      <section className="flex flex-col items-center gap-2 rounded-2xl bg-surface-warm p-6">
+      <section className="flex flex-col items-center gap-2 rounded-2xl p-6">
         <ProfileHeader name={me.name} photoUrl={me.profileImageUrl} />
       </section>
 

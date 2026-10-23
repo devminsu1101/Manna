@@ -42,13 +42,12 @@ export type CommunityMember = {
 /**
  * 이주의 기도마니또 = 이 방에서 내가 맡은 사람(D-3601). 리더가 시작하기 전에는 null이다.
  *
- * `hasRequest`가 필요한 이유: 기도마니또가 정해져도 그 사람이 기도제목을 아직 안 썼을 수
- * 있다. 그때 "기도제목 보기"를 누르면 빈 화면으로 떨어진다.
+ * 카드는 사진 · 이름이고 누르면 기도실에서 그 사람이 골라진 채로 열린다(D-3622).
  */
 export type PrayerPartner = {
   userId: number;
   name: string;
-  hasRequest: boolean;
+  profileImageUrl: string | null;
 };
 
 /**
