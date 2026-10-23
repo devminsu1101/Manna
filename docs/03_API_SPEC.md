@@ -270,6 +270,7 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 {
   "communities": [
     { "id": 3, "name": "2026-2기 수요 새가족반", "status": "active",
+      "color": "mint", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg",
       "memberCount": 12, "role": "leader", "pendingCount": 2 },
     { "id": 7, "name": "푸른교회 수도권지부", "status": "pending" }
   ]
@@ -281,12 +282,14 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
   `pending`은 아무것도 못 본다(D-1707). 이름은 이미 초대 페이지에서 본 것이라 무방하다.
 - `memberCount`는 **`active` 멤버만** 센다.
 - `role` · `pendingCount`는 리더에게만 나간다. 멤버에게는 필드 자체가 없다.
+- `color` · `coverImageUrl`(카드 꾸미기, D-3624)은 `active`에게만. `color`는
+  `yellow | mint | pink | green | blue | purple`, `coverImageUrl`은 올리기 전엔 `null`.
 
 #### POST /communities — 생성
 
 ```json
-// 요청
-{ "name": "만나 개발팀" }
+// 요청. color는 선택 — 없으면 yellow (D-3624)
+{ "name": "만나 개발팀", "color": "mint" }
 
 // 201
 { "id": 12, "name": "만나 개발팀", "inviteCode": "k7mQ2xR9tB" }
@@ -302,6 +305,8 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 {
   "id": 3,
   "name": "2026-2기 수요 새가족반",
+  "color": "mint",
+  "coverImageUrl": null,
   "myUserId": 5,
   "myRole": "leader",
   "inviteCode": "k7mQ2xR9tB",
@@ -343,13 +348,20 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 - 주 중간에 들어온 사람은 다음 일요일부터 배정된다.
 - 2명이면 서로 맡는다. 홀수여도 모두가 정확히 한 명을 맡고 한 명에게 맡겨진다.
 
-#### PATCH /communities/{id} — 이름 변경 (리더)
+#### PATCH /communities/{id} — 카드 꾸미기 (리더) ✅ D-3624
 
 ```json
-{ "name": "2026-3기 수요 새가족반" }
+{ "color": "green", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg" }
 ```
 
-계층은 이름 문자열로만 표현한다 — `parent_id`가 없다(`06_ERD.md`).
+- **보낸 칸만 바꾼다**(`PATCH /me`와 같은 규칙). 둘 다 없으면 `400`. `204`.
+- `color`는 프리셋 6개만(DB CHECK와 같다), 아니면 `400`. 리더가 아니면 `403`.
+- `coverImageUrl`은 **우리 Vercel Blob 주소만** 받는다(`ProfilePhoto.isUploaded`) — 아무 주소나 받으면 멤버
+  화면에 임의 이미지를 띄울 수 있다. 실제 업로드는 프론트 `POST /api/v1/community-cover`(multipart
+  `communityId` + `photo`)가 한다: 리더 확인 → Blob 업로드 → 이 PATCH → 예전 사진 삭제.
+  ⚠️ 그 라우트가 `/communities/{id}/cover`가 아닌 이유: `/api/v1/communities/:path*` rewrite가 동적 라우트보다
+  먼저 걸려 백엔드로 가 버린다.
+- 이름 변경(`name`)은 아직 없다. 붙일 때 같은 PATCH에 칸을 더한다. 계층은 이름 문자열로만 표현한다(`06_ERD.md`).
 
 #### POST /communities/{id}/invite-code — 재발급 (리더)
 

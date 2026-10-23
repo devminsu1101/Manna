@@ -130,6 +130,23 @@ psql "DATABASE_PUBLIC_URL값" -c "\dt"
 이미 데이터가 있는 DB에 스키마 **변경**을 적용할 때는 `init-db.sql` 전체가 아니라 바뀐 부분의
 `ALTER` 문만 같은 방법으로 넣는다. 프로덕션 DB를 들여다볼 때도 같은 방법(켜고 → 보고 → 끈다).
 
+⚠️ **순서: ALTER 먼저, push는 그다음.** `ddl-auto=validate`라 컬럼이 없는 DB에 새 백엔드가 뜨면 기동이 실패한다.
+
+### 스키마 변경 이력 (프로덕션에 손으로 넣은 것)
+
+| 날짜 | 결정 | 넣은 SQL |
+|---|---|---|
+| 2026-10-21 | D-3620 로그인 유지 | `init-db.sql`의 `SPRING_SESSION` 블록 |
+| 2026-10-23 | D-3624 공동체 카드 꾸미기 | 아래 |
+
+```sql
+-- D-3624
+ALTER TABLE communities
+    ADD COLUMN IF NOT EXISTS color VARCHAR(16) NOT NULL DEFAULT 'yellow'
+        CHECK (color IN ('yellow', 'mint', 'pink', 'green', 'blue', 'purple')),
+    ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+```
+
 ⚠️ 프로덕션은 **Postgres 18**, 로컬 도커는 15다. 지금은 차이가 드러나지 않았다.
 
 ## 장애 대응

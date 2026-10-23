@@ -19,6 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -293,5 +295,55 @@ class CommunityApiTests {
             .andExpect(jsonPath("$.requests.length()").value(1));
         mvc.perform(get("/api/v1/communities/" + other).with(as("leader")))
             .andExpect(jsonPath("$.myUserId").value(leader.getId()));
+    }
+
+    @Test
+    void 꾸미기는_리더만_색은_프리셋만_사진은_Blob_주소만() throws Exception {
+        user("leader");
+        User member = user("member");
+        int id = create("leader", "만나 개발팀");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(
+            new CommunityMember(c, member, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+        String cover = "https://abc.public.blob.vercel-storage.com/communities/1-x.jpg";
+
+        // 고르지 않고 만들면 yellow, 사진은 없다.
+        mvc.perform(get("/api/v1/communities/" + id).with(as("leader")))
+            .andExpect(jsonPath("$.color").value("yellow"))
+            .andExpect(jsonPath("$.coverImageUrl").isEmpty());
+
+        mvc.perform(patch(id, "member", "{\"color\":\"mint\"}")).andExpect(status().isForbidden());
+        mvc.perform(patch(id, "leader", "{\"color\":\"red\"}")).andExpect(status().isBadRequest());
+        mvc.perform(patch(id, "leader", "{\"coverImageUrl\":\"https://evil.example/x.jpg\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(patch(id, "leader", "{}")).andExpect(status().isBadRequest());
+
+        mvc.perform(patch(id, "leader", "{\"color\":\"mint\",\"coverImageUrl\":\"" + cover + "\"}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities").with(as("member")))
+            .andExpect(jsonPath("$.communities[0].color").value("mint"))
+            .andExpect(jsonPath("$.communities[0].coverImageUrl").value(cover));
+    }
+
+    @Test
+    void 만들_때_색을_고를_수_있다() throws Exception {
+        user("leader");
+        mvc.perform(
+                post("/api/v1/communities")
+                    .with(as("leader"))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":\"초록방\",\"color\":\"green\"}"))
+            .andExpect(status().isCreated());
+        mvc.perform(get("/api/v1/communities").with(as("leader")))
+            .andExpect(jsonPath("$.communities[0].color").value("green"));
+    }
+
+    private MockHttpServletRequestBuilder patch(int id, String sub, String json) {
+        return MockMvcRequestBuilders.patch("/api/v1/communities/" + id)
+            .with(as(sub))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json);
     }
 }

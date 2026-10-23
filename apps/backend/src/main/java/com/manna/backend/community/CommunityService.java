@@ -1,6 +1,7 @@
 package com.manna.backend.community;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.manna.backend.auth.ProfilePhoto;
 import com.manna.backend.common.ApiException;
 import com.manna.backend.domain.User;
 import com.manna.backend.prayer.PrayerPartnerService;
@@ -53,10 +54,13 @@ public class CommunityService {
 
     public record Created(Integer id, String name, String inviteCode) {}
 
+    /** color · coverImageUrl은 active에게만 — pending은 방 이름 말고 아무것도 못 본다(D-1707). */
     public record Summary(
             Integer id,
             String name,
             String status,
+            @JsonInclude(JsonInclude.Include.NON_NULL) String color,
+            @JsonInclude(JsonInclude.Include.NON_NULL) String coverImageUrl,
             @JsonInclude(JsonInclude.Include.NON_NULL) Long memberCount,
             @JsonInclude(JsonInclude.Include.NON_NULL) String role,
             @JsonInclude(JsonInclude.Include.NON_NULL) Long pendingCount) {}
@@ -76,6 +80,8 @@ public class CommunityService {
     public record Detail(
             Integer id,
             String name,
+            String color,
+            String coverImageUrl,
             Integer myUserId,
             String myRole,
             @JsonInclude(JsonInclude.Include.NON_NULL) String inviteCode,
@@ -86,10 +92,13 @@ public class CommunityService {
 
     // ── POST /communities ────────────────────────────────────────────────
 
+    /** color는 고르지 않았으면 null — 기본 yellow(DB DEFAULT와 같다). */
     @Transactional
-    public Created create(Integer userId, String name) {
+    public Created create(Integer userId, String name, String color) {
         User me = users.getReferenceById(userId);
-        Community c = communities.save(new Community(name.strip(), me, newInviteCode()));
+        Community c = new Community(name.strip(), me, newInviteCode());
+        if (color != null) c.setColor(requireColor(color));
+        communities.save(c);
         // ⚠️ status DEFAULT가 'pending'이라 명시하지 않으면 생성자가 자기 방에 승인 대기로 갇힌다.
         members.save(
             new CommunityMember(c, me, CommunityMember.LEADER, CommunityMember.ACTIVE));
@@ -120,18 +129,27 @@ public class CommunityService {
                         // pending은 방 이름 말고는 아무것도 못 본다 — 인원 수도 방의 내용이다(D-1707).
                         if (!m.isActive()) {
                             return new Summary(
-                                c.getId(), c.getName(), m.getStatus(), null, null, null);
+                                c.getId(), c.getName(), m.getStatus(), null, null, null, null, null);
                         }
                         Map<String, Long> byStatus = counts.getOrDefault(c.getId(), Map.of());
                         long active = byStatus.getOrDefault(CommunityMember.ACTIVE, 0L);
                         if (!m.isLeader()) {
                             return new Summary(
-                                c.getId(), c.getName(), m.getStatus(), active, null, null);
+                                c.getId(),
+                                c.getName(),
+                                m.getStatus(),
+                                c.getColor(),
+                                c.getCoverImageUrl(),
+                                active,
+                                null,
+                                null);
                         }
                         return new Summary(
                             c.getId(),
                             c.getName(),
                             m.getStatus(),
+                            c.getColor(),
+                            c.getCoverImageUrl(),
                             active,
                             m.getRole(),
                             byStatus.getOrDefault(CommunityMember.PENDING, 0L));
@@ -187,6 +205,8 @@ public class CommunityService {
         return new Detail(
             c.getId(),
             c.getName(),
+            c.getColor(),
+            c.getCoverImageUrl(),
             userId,
             me.getRole(),
             leader ? c.getInviteCode() : null,
@@ -194,6 +214,38 @@ public class CommunityService {
             partners.started(communityId),
             active,
             pending);
+    }
+
+    // ── PATCH /communities/{id} ──────────────────────────────────────────
+
+    /**
+     * 목록 카드 꾸미기(리더, D-3624). 보낸 칸만 바꾼다 — `PATCH /me`와 같은 규칙.
+     * 커버는 프론트 `POST /api/v1/community-cover`가 Blob에 올린 뒤 그 주소로 부른다. Blob 주소만 받는다.
+     */
+    @Transactional
+    public void update(Integer userId, Integer communityId, String color, String coverImageUrl) {
+        if (color == null && coverImageUrl == null) {
+            throw ApiException.badRequest("바꿀 값이 없어요.");
+        }
+        CommunityMember me = requireActiveMember(communityId, userId);
+        if (!me.isLeader()) {
+            throw ApiException.forbidden("리더만 할 수 있습니다.");
+        }
+        Community c = me.getCommunity();
+        if (color != null) c.setColor(requireColor(color));
+        if (coverImageUrl != null) {
+            if (!ProfilePhoto.isUploaded(coverImageUrl)) {
+                throw ApiException.badRequest("올린 사진 주소가 아니에요.");
+            }
+            c.setCoverImageUrl(coverImageUrl);
+        }
+    }
+
+    private static String requireColor(String color) {
+        if (!Community.COLORS.contains(color)) {
+            throw ApiException.badRequest("고를 수 없는 색이에요.");
+        }
+        return color;
     }
 
     // ── POST /communities/{id}/partners ──────────────────────────────────

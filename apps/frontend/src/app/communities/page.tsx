@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { ChevronRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { listMyCommunities } from "@/features/community/api";
+import { CommunityCard } from "@/features/community/components/CommunityCard";
 import type { CommunitySummary } from "@/features/community/types";
 import { MainTopBar } from "@/features/home/MainTopBar";
 
@@ -32,7 +33,7 @@ export default async function CommunitiesPage() {
         <EmptyState />
       ) : (
         <>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {communities.map((community) => (
               <li key={community.id}>
                 <CommunityRow community={community} />
@@ -55,7 +56,7 @@ export default async function CommunitiesPage() {
 }
 
 /**
- * 한 줄에 담는 것은 **이름과 인원 수뿐**이다 (D-1002).
+ * 정보로 담는 것은 **이름과 인원 수뿐**이다 (D-1002). 대신 색 · 사진으로 방마다 다르게 보인다(D-3624).
  * "새 나눔 3건" 같은 지표는 데이터가 쌓이기 전엔 전부 0이라 지금 붙이면 거짓말이 된다.
  */
 function CommunityRow({ community }: { community: CommunitySummary }) {
@@ -76,16 +77,13 @@ function CommunityRow({ community }: { community: CommunitySummary }) {
   }
 
   return (
-    <Link
+    <CommunityCard
+      name={name}
+      memberCount={memberCount}
+      color={community.color ?? "yellow"}
+      coverImageUrl={community.coverImageUrl ?? null}
       href={`/communities/${community.id}`}
-      className="flex items-center justify-between rounded-xl bg-surface-warm px-4 py-4 transition-colors hover:bg-surface-warm/60"
-    >
-      <span className="min-w-0">
-        <span className="block truncate font-bold text-foreground">{name}</span>
-        <span className="block text-sm text-foreground/60">{memberCount}명</span>
-      </span>
-      <ChevronRight className="ml-3 size-5 shrink-0 text-foreground/40" />
-    </Link>
+    />
   );
 }
 

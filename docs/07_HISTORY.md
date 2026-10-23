@@ -2235,3 +2235,27 @@ API 작업(목데이터 제거) 계획을 세우며 문서를 계속 봐야 했�
 - 마이페이지 로그아웃 위에 "Manna 이용후기 남기기"(outline). 새 탭으로 구글폼을 연다.
 - 앱 안에 후기 폼 · 테이블을 만들지 않는다 — 받는 쪽은 응답 시트로 보는 게 편하고, 질문을 바꿀 때 배포가 필요 없다.
 - 회원 탈퇴는 리더가 탈퇴할 때 방을 어떻게 할지 정할 게 있어(`communities.created_by` FK에 ON DELETE 없음) 따로 한다.
+
+---
+## 2026-10-23 · 공동체 카드 꾸미기 — 색 · 사진 (D-3624)
+
+실사용 피드백: `/communities`가 "심심해도 너무 심심하다". 대부분은 공동체를 1~2개만 쓰니 목록이 길어질 걱정은 없다.
+
+**✅ D-3624. 카드 왼쪽 60%는 리더가 고른 색 위에 정보, 오른쪽 40%는 리더가 올린 사진** (사용자 결정)
+- 색은 프리셋 6개(노랑 · 민트 · 핑크 · 초록 · 파랑 · 보라). 자유 색은 글자가 안 읽히는 색이 나올 수 있어 뺐다.
+  DB CHECK · `Community.COLORS` · 프론트 `features/community/colors.ts` 세 곳이 같은 목록이다.
+- 사진 칸은 4:3. 카드 높이는 사진 칸 비율이 정한다. 사진이 없으면 그 색 위에 `together.png`.
+  더 세로로 길게 하려면 `CommunityCard`의 `aspect-[4/3]` 하나만 바꾸면 된다.
+- 정보는 여전히 이름 · 인원뿐이다(D-1002). 색 · 사진이 방을 구분하는 몫을 한다.
+- 색 · 사진은 `pending`에게 주지 않는다 — 방의 내용이다(D-1707).
+
+**📝 만든 것**
+- DB: `communities.color`(기본 yellow) · `cover_image_url`. 프로덕션은 09_DEPLOYMENT의 ALTER를 **배포 전에**.
+- 백엔드: `POST /communities`에 선택 `color`, 새 `PATCH /communities/{id}`(리더, 보낸 칸만). 커버는 Blob 주소만
+  받는다 — `ProfilePhoto.isUploaded`를 public으로 열어 같이 쓴다.
+- 프론트: 만들기 폼에 색 고르기, 대문 맨 아래 "카드 꾸미기"(리더만 — 미리보기 · 색 · 사진 바꾸기).
+  업로드는 `POST /api/v1/community-cover`. 사진 업로드 공통부를 `lib/blob.ts`로, 브라우저 축소를 `lib/image.ts`로 뺐다.
+- ⚠️ 업로드 라우트를 `app/api/v1/communities/[id]/cover`로 두면 안 된다. next.config의 `/api/v1/communities/:path*`
+  rewrite(afterFiles)가 **동적 라우트보다 먼저** 걸려 백엔드로 가 버린다(Next 문서 rewrites.md의 순서 표).
+  그래서 정적 경로 `/api/v1/community-cover`에 `communityId`를 폼으로 받는다.
+- 업로드 라우트의 `catch`마다 `console.error`를 남긴다 — 10/23 "사진을 저장하지 못했어요"를 볼 때 Vercel 로그에 원인이 없었다.
