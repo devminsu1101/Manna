@@ -192,6 +192,10 @@
 - [x] 프로필 사진 바꾸기 (D-3608 · D-3618) — 2026-10-20. **Vercel Blob(Public, ICN1)**. 마이페이지 사진을 누르면
       브라우저가 400px로 줄여 `POST /api/v1/me/photo` → Blob 업로드 → `PATCH /me { profileImageUrl }`.
       로그인 때 직접 올린 사진은 Google 사진으로 덮어쓰지 않는다
+- [x] 이용후기 버튼 (D-3623) — 2026-10-23. 마이페이지 로그아웃 위, 구글폼 새 탭
+- [x] 읽기 전용 관리자 (D-3625) — 2026-10-23. `users.is_admin`(DB에서 손으로), `/admin` · `/api/v1/admin/**`
+- [ ] 회원 탈퇴 — `communities.created_by` FK에 ON DELETE가 없어 리더 탈퇴 시 방 처리를 먼저 정한다
+- [ ] 개인정보처리방침 · 이용약관 — Google OAuth 게시에 필요. 관리자가 익명 기도제목도 본다는 것 명시
 
 ## Phase 3: 나눔 확장 + 알림
 - [~] Sharing 작성/조회 API — `sharings`, `sharing_communities` (타입 3종, 여러 방에 올리면 방마다 글이 따로 생긴다 — D-3507).

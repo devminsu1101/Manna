@@ -34,10 +34,24 @@
 ### Me — 마이페이지 (D-3608 · D-3609 · D-3618)
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
-| GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl }` — **구현됨** |
+| GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl, isAdmin }` — **구현됨** |
 | PATCH | `/me` | 이름 · 사진 주소 고치기 — **구현됨** |
 | POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
 | GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔) — **구현됨** |
+
+### Admin — 읽기 전용 관리자 (D-3625) — **구현됨**
+`users.is_admin`인 사람만. 아니면 `403`(화면은 404로 보인다). 방에 속하지 않아도 전부 본다. 쓰기는 없다.
+`is_admin`을 켜는 API · 화면은 없다 — DB에서 손으로 켠다(09_DEPLOYMENT).
+
+| 메서드 | 경로 | 하는 일 |
+|---|---|---|
+| GET | `/admin/communities` | 전체 공동체 `[{ id, name, color, leaderName, memberCount, pendingCount, createdAt }]`, 최신순 |
+| GET | `/admin/communities/{id}` | `{ id, name, color, members[{ userId, name, profileImageUrl, role, status }], sharings[{ id, type, authorName, body, createdAt }] }` |
+| GET | `/admin/users` | 전체 사용자 `[{ id, name, profileImageUrl, communities[], latestRequest, createdAt }]`, 가입 최신순 |
+| GET | `/admin/users/{id}` | `{ user, communities[], requests[{ id, body, visibility, createdAt }] }` — **익명 기도제목도 준다** |
+
+- 기존 API의 권한 확인은 건드리지 않고 따로 둔다 — 기존 응답은 "나" 기준(내 역할 · 오늘 기도했는지)이라 관리자에게 맞지 않는다.
+- `communities[]`의 승인 대기 방은 이름 뒤에 ` (대기)`가 붙는다.
 
 #### PATCH /me — 이름 · 사진 주소 고치기
 

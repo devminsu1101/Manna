@@ -68,7 +68,9 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     profile_image_url TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- 읽기 전용 관리자(D-3625). 켜는 화면은 없다 — DB에서 손으로 켠다.
+    is_admin BOOLEAN NOT NULL DEFAULT false
 );
 
 -- 소셜 로그인(Google/Kakao/Naver). 한 사용자가 여러 provider를 연결할 수 있어

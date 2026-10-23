@@ -1,4 +1,4 @@
-import { MessageSquareHeart, Plus } from "lucide-react";
+import { MessageSquareHeart, Plus, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -76,6 +76,15 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
 
       {/* 이용후기는 구글폼으로 받는다(D-3623). 앱 안에 폼을 만들지 않는다 — 받는 쪽이 시트로 보기 편하다. */}
       <div className="space-y-2">
+        {/* 읽기 전용 관리자(D-3625). DB에서 is_admin을 켠 사람에게만 보인다. */}
+        {me.isAdmin && (
+          <Button asChild variant="outline" size="block">
+            <Link href="/admin">
+              <ShieldCheck className="size-5" />
+              관리자
+            </Link>
+          </Button>
+        )}
         <Button asChild variant="outline" size="block">
           <a href={REVIEW_FORM_URL} target="_blank" rel="noreferrer">
             <MessageSquareHeart className="size-5" />

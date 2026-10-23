@@ -69,6 +69,10 @@ public class Community {
         return inviteCode;
     }
 
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public String getColor() {
         return color;
     }

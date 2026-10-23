@@ -138,6 +138,7 @@ psql "DATABASE_PUBLIC_URL값" -c "\dt"
 |---|---|---|
 | 2026-10-21 | D-3620 로그인 유지 | `init-db.sql`의 `SPRING_SESSION` 블록 |
 | 2026-10-23 | D-3624 공동체 카드 꾸미기 | 아래 |
+| 2026-10-23 | D-3625 읽기 전용 관리자 | 아래 |
 
 ```sql
 -- D-3624
@@ -145,6 +146,16 @@ ALTER TABLE communities
     ADD COLUMN IF NOT EXISTS color VARCHAR(16) NOT NULL DEFAULT 'yellow'
         CHECK (color IN ('yellow', 'mint', 'pink', 'green', 'blue', 'purple')),
     ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+
+-- D-3625
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+```
+
+**관리자 켜기 · 끄기** (앱에 화면이 없다, 같은 TCP Proxy 방법으로):
+
+```sql
+SELECT id, name, created_at FROM users ORDER BY created_at;   -- 내 id 찾기
+UPDATE users SET is_admin = true WHERE id = <id>;
 ```
 
 ⚠️ 프로덕션은 **Postgres 18**, 로컬 도커는 15다. 지금은 차이가 드러나지 않았다.
