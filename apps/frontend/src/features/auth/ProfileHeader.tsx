@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
+import { shrinkImage } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 import { EditableName } from "./EditableName";
@@ -34,7 +35,7 @@ export function ProfileHeader({ name, photoUrl }: { name: string; photoUrl: stri
     setError(null);
     try {
       const form = new FormData();
-      form.append("photo", await shrink(file), "photo.jpg");
+      form.append("photo", await shrinkImage(file, SIZE, SIZE), "photo.jpg");
       const res = await apiFetch("/api/v1/me/photo", { method: "POST", body: form });
       if (res.status === 401) return router.push("/login");
       if (res.ok) return router.refresh();
@@ -105,21 +106,5 @@ export function ProfileHeader({ name, photoUrl }: { name: string; photoUrl: stri
         </p>
       )}
     </>
-  );
-}
-
-/** 가운데 정사각형을 잘라 SIZE px JPEG로. 브라우저가 못 읽는 형식이면 createImageBitmap이 던진다. */
-async function shrink(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const side = Math.min(bitmap.width, bitmap.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = SIZE;
-  canvas.height = SIZE;
-  canvas
-    .getContext("2d")!
-    .drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, SIZE, SIZE);
-  bitmap.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob"))), "image/jpeg", 0.85),
   );
 }

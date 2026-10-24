@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,11 +31,15 @@ public class CommunityController {
         this.currentUser = currentUser;
     }
 
-    // 100자: communities.name VARCHAR(100)
+    // 100자: communities.name VARCHAR(100). color는 선택 — 없으면 yellow(D-3624).
     public record CreateRequest(
             @NotBlank(message = "이름을 입력해 주세요.")
                 @Size(max = 100, message = "이름은 100자까지입니다.")
-                String name) {}
+                String name,
+            String color) {}
+
+    /** 보낸 칸만 바꾼다. 둘 다 없으면 400. */
+    public record UpdateRequest(String color, String coverImageUrl) {}
 
 @PostMapping                                                // 'POST' /api/v1/communities 가 오면 이 메서드를 실행한다. 
     @ResponseStatus(HttpStatus.CREATED)                     // 성공 시 기본 응답은 200인데, 해당 응답 성공 시 response status 를 '201 CREATED' 로 바꾼다. 
@@ -42,7 +47,16 @@ public class CommunityController {
             @AuthenticationPrincipal OidcUser principal,    // 누가 호출했는지 알기 위해 로그인한 사람 정보를 principal 안에 넣는다. 
             @Valid                                          // 그 정보가 잘못되지 않았는지 Validation Check를 한다 
             @RequestBody CreateRequest req) {               // CREATE 로 바꿔야 하니까 요청 본문 JSON(Body JSON)을 CreateRequest로 바꾼다.  
-        return service.create(currentUser.id(principal), req.name()); 
+        return service.create(currentUser.id(principal), req.name(), req.color());
+    }
+
+    @PatchMapping("/{id}")                                      // 목록 카드 꾸미기 — 색 · 커버 사진 (리더, D-3624)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void update(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id,
+            @RequestBody UpdateRequest req) {
+        service.update(currentUser.id(principal), id, req.color(), req.coverImageUrl());
     }
 
     @GetMapping                         // GET /api/v1/communities 가 오면 이 메서드를 실행한다. 

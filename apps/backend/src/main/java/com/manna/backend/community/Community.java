@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.Set;
 import org.hibernate.annotations.CreationTimestamp;
 
 /** 공동체(소그룹). init-db.sql의 communities 테이블. */
@@ -37,6 +38,17 @@ public class Community {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    /** 목록 카드 색(D-3624). 허용 값은 {@link #COLORS} — DB CHECK와 같다. */
+    @Column(nullable = false, length = 16)
+    private String color = "yellow";
+
+    /** 목록 카드 오른쪽 사진. 리더가 올린 Vercel Blob 주소만(ProfilePhoto.isUploaded). */
+    @Column(name = "cover_image_url")
+    private String coverImageUrl;
+
+    public static final Set<String> COLORS =
+        Set.of("yellow", "mint", "pink", "green", "blue", "purple");
+
     protected Community() {} // JPA
 
     public Community(String name, User createdBy, String inviteCode) {
@@ -55,5 +67,25 @@ public class Community {
 
     public String getInviteCode() {
         return inviteCode;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
     }
 }

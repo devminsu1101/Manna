@@ -34,10 +34,24 @@
 ### Me — 마이페이지 (D-3608 · D-3609 · D-3618)
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
-| GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl }` — **구현됨** |
+| GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl, isAdmin }` — **구현됨** |
 | PATCH | `/me` | 이름 · 사진 주소 고치기 — **구현됨** |
 | POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
 | GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔). period = today · week · month · all · days — **구현됨** |
+
+### Admin — 읽기 전용 관리자 (D-3625) — **구현됨**
+`users.is_admin`인 사람만. 아니면 `403`(화면은 404로 보인다). 방에 속하지 않아도 전부 본다. 쓰기는 없다.
+`is_admin`을 켜는 API · 화면은 없다 — DB에서 손으로 켠다(09_DEPLOYMENT).
+
+| 메서드 | 경로 | 하는 일 |
+|---|---|---|
+| GET | `/admin/communities` | 전체 공동체 `[{ id, name, color, leaderName, memberCount, pendingCount, createdAt }]`, 최신순 |
+| GET | `/admin/communities/{id}` | `{ id, name, color, members[{ userId, name, profileImageUrl, role, status }], sharings[{ id, type, authorName, body, createdAt }] }` |
+| GET | `/admin/users` | 전체 사용자 `[{ id, name, profileImageUrl, communities[], latestRequest, createdAt }]`, 가입 최신순 |
+| GET | `/admin/users/{id}` | `{ user, communities[], requests[{ id, body, visibility, createdAt }] }` — **익명 기도제목도 준다** |
+
+- 기존 API의 권한 확인은 건드리지 않고 따로 둔다 — 기존 응답은 "나" 기준(내 역할 · 오늘 기도했는지)이라 관리자에게 맞지 않는다.
+- `communities[]`의 승인 대기 방은 이름 뒤에 ` (대기)`가 붙는다.
 
 #### PATCH /me — 이름 · 사진 주소 고치기
 
@@ -270,6 +284,7 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 {
   "communities": [
     { "id": 3, "name": "2026-2기 수요 새가족반", "status": "active",
+      "color": "mint", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg",
       "memberCount": 12, "role": "leader", "pendingCount": 2 },
     { "id": 7, "name": "푸른교회 수도권지부", "status": "pending" }
   ]
@@ -281,12 +296,14 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
   `pending`은 아무것도 못 본다(D-1707). 이름은 이미 초대 페이지에서 본 것이라 무방하다.
 - `memberCount`는 **`active` 멤버만** 센다.
 - `role` · `pendingCount`는 리더에게만 나간다. 멤버에게는 필드 자체가 없다.
+- `color` · `coverImageUrl`(카드 꾸미기, D-3624)은 `active`에게만. `color`는
+  `yellow | mint | pink | green | blue | purple`, `coverImageUrl`은 올리기 전엔 `null`.
 
 #### POST /communities — 생성
 
 ```json
-// 요청
-{ "name": "만나 개발팀" }
+// 요청. color는 선택 — 없으면 yellow (D-3624)
+{ "name": "만나 개발팀", "color": "mint" }
 
 // 201
 { "id": 12, "name": "만나 개발팀", "inviteCode": "k7mQ2xR9tB" }
@@ -302,10 +319,12 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 {
   "id": 3,
   "name": "2026-2기 수요 새가족반",
+  "color": "mint",
+  "coverImageUrl": null,
   "myUserId": 5,
   "myRole": "leader",
   "inviteCode": "k7mQ2xR9tB",
-  "prayerPartner": { "userId": 12, "name": "김현정", "hasRequest": true },
+  "prayerPartner": { "userId": 12, "name": "김현정", "profileImageUrl": null },
   "partnersStarted": true,
   "members": [
     { "userId": 12, "name": "김현정", "profileImageUrl": null, "role": "member" }
@@ -322,7 +341,8 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
   중 하나라 값이 다르다 — 같은 것으로 보고 한쪽을 지우면 안 된다.
   **이 방에서 내가 맡은 사람**이다(D-3601). 리더가 시작하기 전, 이번 주 중간에 들어온 경우,
   맡은 사람이 주 중간에 나간 경우에는 `null`이고, 화면은 그 상태를 감당해야 한다.
-  `hasRequest`는 그 사람이 공개 기도제목을 올렸는지 — 없으면 화면이 "기도제목 보기"를 걸지 않는다.
+  카드는 사진 · 이름이고 누르면 `/prayer?u={userId}`로 간다(D-3622). 기도제목이 없어도 기도실에서
+  기도할 수 있으므로 예전의 `hasRequest`는 뺐다.
 - `partnersStarted`: 리더가 기도마니또를 시작했는지. 리더 화면의 "기도마니또 시작하기" 버튼을 숨기는 데 쓴다.
 - **읽을 때 이번 주 기도마니또를 만든다**(D-3603). 시작한 방에 이번 주 행이 없으면 이 호출 ·
   `GET /pray/room` · `GET /pray/summary` 중 처음 오는 쪽이 만든다. 그래서 GET이지만 쓰기 트랜잭션이다.
@@ -342,13 +362,20 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 - 주 중간에 들어온 사람은 다음 일요일부터 배정된다.
 - 2명이면 서로 맡는다. 홀수여도 모두가 정확히 한 명을 맡고 한 명에게 맡겨진다.
 
-#### PATCH /communities/{id} — 이름 변경 (리더)
+#### PATCH /communities/{id} — 카드 꾸미기 (리더) ✅ D-3624
 
 ```json
-{ "name": "2026-3기 수요 새가족반" }
+{ "color": "green", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg" }
 ```
 
-계층은 이름 문자열로만 표현한다 — `parent_id`가 없다(`06_ERD.md`).
+- **보낸 칸만 바꾼다**(`PATCH /me`와 같은 규칙). 둘 다 없으면 `400`. `204`.
+- `color`는 프리셋 6개만(DB CHECK와 같다), 아니면 `400`. 리더가 아니면 `403`.
+- `coverImageUrl`은 **우리 Vercel Blob 주소만** 받는다(`ProfilePhoto.isUploaded`) — 아무 주소나 받으면 멤버
+  화면에 임의 이미지를 띄울 수 있다. 실제 업로드는 프론트 `POST /api/v1/community-cover`(multipart
+  `communityId` + `photo`)가 한다: 리더 확인 → Blob 업로드 → 이 PATCH → 예전 사진 삭제.
+  ⚠️ 그 라우트가 `/communities/{id}/cover`가 아닌 이유: `/api/v1/communities/:path*` rewrite가 동적 라우트보다
+  먼저 걸려 백엔드로 가 버린다.
+- 이름 변경(`name`)은 아직 없다. 붙일 때 같은 PATCH에 칸을 더한다. 계층은 이름 문자열로만 표현한다(`06_ERD.md`).
 
 #### POST /communities/{id}/invite-code — 재발급 (리더)
 

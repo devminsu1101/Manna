@@ -1,4 +1,4 @@
-import { List, Plus } from "lucide-react";
+import { List, MessageSquareHeart, Plus, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -19,12 +19,14 @@ const PREVIEW_COUNT = 3;
 
 export const metadata: Metadata = { title: "마이페이지 | 만나" };
 
+const REVIEW_FORM_URL = "https://forms.gle/YfU2xP4xQodmVS7c6";
+
 /**
  * 마이페이지 = **내 것 모아 보기**(D-3609). 하단 탭 "마이"와 상단바 프로필 이미지로 들어온다.
  *
  * 처음엔 로그아웃을 둘 곳으로 생겼다(사용자 결정, 2026-09-19). 지금은 위에서부터
  * 날 위한 기도(홈에서 옮김, 2026-10-24) · 프로필(사진 바꾸기 D-3618 · 이름 고치기 D-3608) ·
- * 숫자 두 개 · 이전 기도제목(앞 몇 개, 전부는 `/mypage/prayers`) · 로그아웃.
+ * 숫자 두 개 · 이전 기도제목(앞 몇 개, 전부는 `/mypage/prayers`) · 이용후기(D-3623) · 로그아웃.
  *
  * - 숫자는 기간이 서로 다르다 — 기도는 **이번 주**(일요일부터 KST), 나눔은 **기간 없이 전부**.
  *   `/me/stats`가 기간 하나씩 받으므로 두 번 부른다. 명단은 두지 않는다.
@@ -55,7 +57,7 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
     <>
       <PrayedForMe yesterdayCount={summary.yesterdayCount} />
 
-      <section className="flex flex-col items-center gap-2 rounded-2xl bg-surface-warm p-6">
+      <section className="flex flex-col items-center gap-2 rounded-2xl p-6">
         <ProfileHeader name={me.name} photoUrl={me.profileImageUrl} />
       </section>
 
@@ -87,7 +89,25 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         <MyPrayerHistory requests={requests.slice(0, PREVIEW_COUNT)} />
       </CommunitySection>
 
-      <LogoutButton />
+      {/* 이용후기는 구글폼으로 받는다(D-3623). 앱 안에 폼을 만들지 않는다 — 받는 쪽이 시트로 보기 편하다. */}
+      <div className="space-y-2">
+        {/* 읽기 전용 관리자(D-3625). DB에서 is_admin을 켠 사람에게만 보인다. */}
+        {me.isAdmin && (
+          <Button asChild variant="outline" size="block">
+            <Link href="/admin">
+              <ShieldCheck className="size-5" />
+              관리자
+            </Link>
+          </Button>
+        )}
+        <Button asChild variant="outline" size="block">
+          <a href={REVIEW_FORM_URL} target="_blank" rel="noreferrer">
+            <MessageSquareHeart className="size-5" />
+            Manna 이용후기 남기기
+          </a>
+        </Button>
+        <LogoutButton />
+      </div>
     </>
   );
 }

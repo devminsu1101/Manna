@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-export type Me = { id: number; name: string; profileImageUrl: string | null };
+/** isAdmin: 읽기 전용 관리자(D-3625). 마이페이지에 '관리자' 링크가 생긴다. */
+export type Me = { id: number; name: string; profileImageUrl: string | null; isAdmin: boolean };
 
 /**
  * 현재 로그인한 사용자. 클라이언트에서 /api/v1/me를 부른다(Next 프록시 → Spring).

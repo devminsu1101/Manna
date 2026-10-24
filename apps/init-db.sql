@@ -68,7 +68,9 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     profile_image_url TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- 읽기 전용 관리자(D-3625). 켜는 화면은 없다 — DB에서 손으로 켠다.
+    is_admin BOOLEAN NOT NULL DEFAULT false
 );
 
 -- 소셜 로그인(Google/Kakao/Naver). 한 사용자가 여러 provider를 연결할 수 있어
@@ -95,7 +97,11 @@ CREATE TABLE IF NOT EXISTS communities (
     -- 초대 링크가 곧 코드다(D-1004). id와 별개 컬럼인 이유: 재발급하면 코드가 바뀌는데
     -- id는 세 테이블이 FK로 참조한다. 만료는 두지 않고 재발급만 한다(D-1708).
     invite_code VARCHAR(16) NOT NULL UNIQUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- 목록 카드 꾸미기(D-3624). 색은 프리셋 6개 중 하나, 사진은 리더가 올린 Vercel Blob 주소.
+    color VARCHAR(16) NOT NULL DEFAULT 'yellow'
+        CHECK (color IN ('yellow', 'mint', 'pink', 'green', 'blue', 'purple')),
+    cover_image_url TEXT
 );
 
 -- 가입은 리더 승인을 거친다(D-1707). pending은 방 내용을 하나도 못 본다 — 그것이 승인의

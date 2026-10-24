@@ -1,6 +1,7 @@
 import "server-only";
 
 import { backendFetch, backendGet } from "@/lib/backend";
+import type { CommunityColor } from "./colors";
 import type {
   CommunityDetail,
   CommunityMember,
@@ -24,17 +25,21 @@ type ListResponse = {
     id: number;
     name: string;
     status: MemberStatus;
-    memberCount?: number; // pending에는 없다
+    color?: CommunityColor; // pending에는 없다(아래 둘도)
+    coverImageUrl?: string | null;
+    memberCount?: number;
   }[];
 };
 
 type DetailResponse = {
   id: number;
   name: string;
+  color: CommunityColor;
+  coverImageUrl: string | null;
   myUserId: number;
   myRole: MemberRole;
   inviteCode?: string; // 리더에게만
-  prayerPartner: { userId: number; name: string; hasRequest: boolean } | null;
+  prayerPartner: { userId: number; name: string; profileImageUrl: string | null } | null;
   partnersStarted: boolean;
   members: { userId: number; name: string; profileImageUrl: string | null; role: MemberRole }[];
   pendingMembers?: { userId: number; name: string; profileImageUrl: string | null }[]; // 리더에게만
@@ -52,6 +57,8 @@ export async function listMyCommunities(): Promise<CommunitySummary[]> {
     id: c.id,
     name: c.name,
     memberCount: c.memberCount,
+    color: c.color,
+    coverImageUrl: c.coverImageUrl,
     myStatus: c.status,
   }));
 }
@@ -103,6 +110,8 @@ export async function getCommunity(id: number): Promise<CommunityDetail | null> 
   return {
     id: d.id,
     name: d.name,
+    color: d.color,
+    coverImageUrl: d.coverImageUrl,
     myUserId: d.myUserId,
     inviteCode: d.inviteCode,
     myRole: d.myRole,

@@ -19,6 +19,8 @@
   --manna-second-light: #f0fffe;
   --manna-third: #ff2d55;
   --manna-third-light: #ffeff2;
+  /* 기도마니또 링(D-3622). Figma 변수에는 없다 — 핑크(그 외 사람)와 구분되는 초록. */
+  --manna-partner: #34c759;
   --manna-white: #ffffff;
 
   /* 경계선은 본문 색의 25%. --manna-font에서 파생시켜 본문 색이 바뀌면 함께 따라간다. */
@@ -46,6 +48,7 @@
   --secondary-foreground: var(--manna-white);
   --accent: var(--manna-third);
   --accent-foreground: var(--manna-white);
+  --partner: var(--manna-partner);
 
   --muted: var(--manna-brand-light);
   /* 절 번호도 본문과 같은 #333 — 디자인상 연한 회색이 아니다. */
@@ -125,6 +128,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-partner: var(--partner);
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);

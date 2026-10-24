@@ -6,6 +6,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 
+import type { CommunityColor } from "../colors";
+import { ColorSwatches } from "./ColorSwatches";
+
 /**
  * 공동체 생성 폼. `POST /api/v1/communities` — 이 앱의 첫 쓰기 API다.
  *
@@ -16,6 +19,7 @@ import { apiFetch } from "@/lib/api";
 export function NewCommunityForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [color, setColor] = useState<CommunityColor>("yellow");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +31,7 @@ export function NewCommunityForm() {
       const res = await apiFetch("/api/v1/communities", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, color }),
       });
       if (res.status === 401) {
         router.push("/login");
@@ -68,11 +72,16 @@ export function NewCommunityForm() {
         className="mt-3 h-12 w-full rounded-xl border border-border bg-white px-4 text-foreground outline-none placeholder:text-foreground/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       />
 
+      {/* D-3624. 목록 카드 색. 사진은 만든 뒤 대문의 "카드 꾸미기"에서 올린다. */}
+      <p className="mt-5 font-bold text-foreground">카드 색</p>
+      <p className="mt-1 mb-3 text-sm text-foreground/60">공동체 목록에서 이 색으로 보여요</p>
+      <ColorSwatches value={color} onChange={setColor} disabled={submitting} />
+
       <Button
         type="submit"
         variant="warm"
         size="block"
-        className="mt-4"
+        className="mt-6"
         disabled={submitting || name.trim() === ""}
       >
         {submitting ? "만드는 중…" : "만들기"}

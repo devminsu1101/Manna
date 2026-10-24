@@ -34,6 +34,10 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    /** 읽기 전용 관리자(D-3625). 앱에서 켜는 길은 없다 — DB에서 손으로 켠다. */
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin;
+
     protected User() {} // JPA
 
     public User(String name, String profileImageUrl) {
@@ -63,5 +67,14 @@ public class User {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    /** 테스트용. 운영에서는 DB에서 켠다. */
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 }

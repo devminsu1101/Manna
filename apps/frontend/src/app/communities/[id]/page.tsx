@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { getCommunity } from "@/features/community/api";
+import { CommunityLook } from "@/features/community/components/CommunityLook";
 import { LeaveOrDeleteButton } from "@/features/community/components/LeaveOrDeleteButton";
 import { MemberList } from "@/features/community/components/MemberList";
 import { PrayerPartnerCard } from "@/features/community/components/PrayerPartnerCard";
@@ -55,6 +56,15 @@ export default async function CommunityPage(props: PageProps) {
         inviteCode={community.inviteCode}
         partnersStarted={community.partnersStarted}
       />
+      {community.myRole === "leader" && (
+        <CommunityLook
+          communityId={community.id}
+          name={community.name}
+          memberCount={community.members.filter((m) => m.status === "active").length}
+          color={community.color}
+          coverImageUrl={community.coverImageUrl}
+        />
+      )}
       <LeaveOrDeleteButton
         communityId={community.id}
         communityName={community.name}

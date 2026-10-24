@@ -44,7 +44,8 @@ public class MeController {
         this.prayer = prayer;
     }
 
-    public record MeResponse(Integer id, String name, String profileImageUrl) {}
+    /** isAdmin: 마이페이지에 '관리자' 링크를 보일지(D-3625). */
+    public record MeResponse(Integer id, String name, String profileImageUrl, boolean isAdmin) {}
 
     /** 보낸 칸만 바꾼다. 둘 다 없으면 400. */
     public record UpdateMeRequest(String name, String profileImageUrl) {}
@@ -61,7 +62,8 @@ public class MeController {
                 identity -> {
                     User u = identity.getUser();
                     return ResponseEntity.ok(
-                        new MeResponse(u.getId(), u.getName(), u.getProfileImageUrl()));
+                        new MeResponse(
+                            u.getId(), u.getName(), u.getProfileImageUrl(), u.isAdmin()));
                 })
             .orElseGet(() -> ResponseEntity.status(401).build());
     }

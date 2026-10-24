@@ -14,7 +14,8 @@ import { FOCUS_COLOR, SURFACE_COLOR } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "중보기도실 | 만나" };
 
-type Props = { searchParams: Promise<{ focus?: string }> };
+/** `u`: 처음 고를 사람(D-3622). 공동체 대문의 기도마니또 카드가 붙여 보낸다. */
+type Props = { searchParams: Promise<{ focus?: string; u?: string }> };
 
 const isFocus = async (searchParams: Props["searchParams"]) => (await searchParams).focus === "1";
 
@@ -44,6 +45,7 @@ export async function generateViewport({ searchParams }: Props): Promise<Viewpor
 export default async function PrayerPage({ searchParams }: Props) {
   if (await isFocus(searchParams)) return <FocusRoom />;
 
+  const { u } = await searchParams;
   const [{ partners, members }, profile, myRequests] = await Promise.all([
     getPrayRoom(),
     getMyProfile(),
@@ -60,6 +62,7 @@ export default async function PrayerPage({ searchParams }: Props) {
       <PrayerStories
         me={{ ...profile, request: myRequests[0] ?? null }}
         people={[...partners, ...members]}
+        initialUserId={u ? Number(u) : undefined}
       />
 
       {/* 리더가 기도마니또를 시작하기 전(D-3602)에는 빈 배열이다. 제목만 덩그러니 남지 않도록
