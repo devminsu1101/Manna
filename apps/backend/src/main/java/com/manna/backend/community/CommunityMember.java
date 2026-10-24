@@ -87,4 +87,14 @@ public class CommunityMember {
     public void approve() {
         this.status = ACTIVE;
     }
+
+    /** 리더 넘기기(D-3626)의 받는 쪽. 방마다 리더 한 명은 `stepDown`과 같은 트랜잭션에서 지켜진다. */
+    public void promote() {
+        this.role = LEADER;
+    }
+
+    /** 리더 넘기기의 주는 쪽. 멤버로 남는다. */
+    public void stepDown() {
+        this.role = MEMBER;
+    }
 }

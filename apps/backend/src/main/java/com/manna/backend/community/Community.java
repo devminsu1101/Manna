@@ -73,6 +73,11 @@ public class Community {
         return createdAt;
     }
 
+    /** 리더가 이름을 고친다. 길이 · 공백 검사는 `CommunityService.update`가 한다. */
+    public void rename(String name) {
+        this.name = name;
+    }
+
     public String getColor() {
         return color;
     }

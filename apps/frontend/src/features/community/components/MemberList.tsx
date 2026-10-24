@@ -39,7 +39,7 @@ export function MemberList({
       icon="/mascot/together.png"
       title={`멤버 ${active.length}명`}
       surface="cool"
-      // TODO(D-1003): 이름 변경 · 코드 재발급은 아직 API가 없다. 강퇴는 줄마다 붙는다.
+      // 이름 고치기는 상단바 제목 옆 연필(D-3626). 내보내기 · 리더 넘기기는 줄마다 ⋯에 있다.
       action={inviteCode && <InviteButton inviteCode={inviteCode} />}
     >
       {pending.length > 0 && (

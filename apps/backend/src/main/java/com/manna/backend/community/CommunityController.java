@@ -3,6 +3,7 @@ package com.manna.backend.community;
 import com.manna.backend.auth.CurrentUser;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,8 +39,13 @@ public class CommunityController {
                 String name,
             String color) {}
 
-    /** 보낸 칸만 바꾼다. 둘 다 없으면 400. */
-    public record UpdateRequest(String color, String coverImageUrl) {}
+    /** 보낸 칸만 바꾼다. 다 없으면 400. */
+    public record UpdateRequest(
+            @Size(max = 100, message = "이름은 100자까지입니다.") String name,
+            String color,
+            String coverImageUrl) {}
+
+    public record LeaderRequest(@NotNull(message = "누구에게 넘길지 골라 주세요.") Integer userId) {}
 
 @PostMapping                                                // 'POST' /api/v1/communities 가 오면 이 메서드를 실행한다. 
     @ResponseStatus(HttpStatus.CREATED)                     // 성공 시 기본 응답은 200인데, 해당 응답 성공 시 response status 를 '201 CREATED' 로 바꾼다. 
@@ -50,13 +56,22 @@ public class CommunityController {
         return service.create(currentUser.id(principal), req.name(), req.color());
     }
 
-    @PatchMapping("/{id}")                                      // 목록 카드 꾸미기 — 색 · 커버 사진 (리더, D-3624)
+    @PatchMapping("/{id}")                                      // 이름 · 카드 색 · 커버 사진 (리더, D-3624 · D-3626)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(
             @AuthenticationPrincipal OidcUser principal,
             @PathVariable Integer id,
-            @RequestBody UpdateRequest req) {
-        service.update(currentUser.id(principal), id, req.color(), req.coverImageUrl());
+            @Valid @RequestBody UpdateRequest req) {
+        service.update(currentUser.id(principal), id, req.name(), req.color(), req.coverImageUrl());
+    }
+
+    @PostMapping("/{id}/leader")                                // 리더 넘기기 (리더, D-3626)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void handOver(
+            @AuthenticationPrincipal OidcUser principal,
+            @PathVariable Integer id,
+            @Valid @RequestBody LeaderRequest req) {
+        service.handOver(currentUser.id(principal), id, req.userId());
     }
 
     @GetMapping                         // GET /api/v1/communities 가 오면 이 메서드를 실행한다. 

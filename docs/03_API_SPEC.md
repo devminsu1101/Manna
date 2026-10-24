@@ -113,7 +113,8 @@
 | POST | `/communities` | 생성 — 만든 사람이 곧 리더 — **구현됨** |
 | GET | `/communities/{id}` | 대문 — 기도마니또 · 멤버 목록 — **구현됨** |
 | POST | `/communities/{id}/partners` | 기도마니또 시작 (리더) — **구현됨** (D-3602) |
-| PATCH | `/communities/{id}` | 이름 변경 (리더) |
+| PATCH | `/communities/{id}` | 이름 · 카드 색 · 커버 사진 (리더) — **구현됨** (D-3624 · D-3626) |
+| POST | `/communities/{id}/leader` | 리더 넘기기 (리더) — **구현됨** (D-3626) |
 | POST | `/communities/{id}/invite-code` | 초대 코드 재발급 (리더) |
 | GET | `/invites/{code}` | **비로그인** — 방 이름만 미리 보기 — **구현됨** |
 | POST | `/invites/{code}/requests` | 가입 신청 → `pending` — **구현됨** |
@@ -362,20 +363,31 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 - 주 중간에 들어온 사람은 다음 일요일부터 배정된다.
 - 2명이면 서로 맡는다. 홀수여도 모두가 정확히 한 명을 맡고 한 명에게 맡겨진다.
 
-#### PATCH /communities/{id} — 카드 꾸미기 (리더) ✅ D-3624
+#### PATCH /communities/{id} — 이름 · 카드 꾸미기 (리더) ✅ D-3624 · D-3626
 
 ```json
-{ "color": "green", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg" }
+{ "name": "청년부 1팀", "color": "green", "coverImageUrl": "https://….public.blob.vercel-storage.com/communities/3-x.jpg" }
 ```
 
-- **보낸 칸만 바꾼다**(`PATCH /me`와 같은 규칙). 둘 다 없으면 `400`. `204`.
+- **보낸 칸만 바꾼다**(`PATCH /me`와 같은 규칙). 다 없으면 `400`. `204`.
+- `name`은 앞뒤 공백을 자르고 저장한다. 공백뿐이거나 100자를 넘으면 `400`.
 - `color`는 프리셋 6개만(DB CHECK와 같다), 아니면 `400`. 리더가 아니면 `403`.
 - `coverImageUrl`은 **우리 Vercel Blob 주소만** 받는다(`ProfilePhoto.isUploaded`) — 아무 주소나 받으면 멤버
   화면에 임의 이미지를 띄울 수 있다. 실제 업로드는 프론트 `POST /api/v1/community-cover`(multipart
   `communityId` + `photo`)가 한다: 리더 확인 → Blob 업로드 → 이 PATCH → 예전 사진 삭제.
   ⚠️ 그 라우트가 `/communities/{id}/cover`가 아닌 이유: `/api/v1/communities/:path*` rewrite가 동적 라우트보다
   먼저 걸려 백엔드로 가 버린다.
-- 이름 변경(`name`)은 아직 없다. 붙일 때 같은 PATCH에 칸을 더한다. 계층은 이름 문자열로만 표현한다(`06_ERD.md`).
+- 계층은 이름 문자열로만 표현한다(`06_ERD.md`).
+
+#### POST /communities/{id}/leader — 리더 넘기기 (리더) ✅ D-3626
+
+```json
+{ "userId": 12 }
+```
+
+- 나는 `member`, 받은 사람은 `leader`가 된다. 한 트랜잭션이라 방마다 리더 한 명은 그대로다. `204`.
+- 리더가 아니면 `403`. 나 자신이면 `400`. 받는 사람이 이 방의 active 멤버가 아니면(승인 대기 포함) `404`.
+- 넘긴 뒤에는 멤버라 나갈 수 있다(`DELETE .../members/{내 id}`).
 
 #### POST /communities/{id}/invite-code — 재발급 (리더)
 

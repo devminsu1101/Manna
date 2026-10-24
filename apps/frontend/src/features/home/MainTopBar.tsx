@@ -1,18 +1,19 @@
+import { Bell } from "lucide-react";
 import Image from "next/image";
 
-import { ProfileButton } from "@/features/auth/ProfileButton";
+import { Button } from "@/components/ui/button";
 import { DocsButton } from "@/features/devdocs/DocsButton";
 import { cn } from "@/lib/utils";
 
 /**
- * 앱의 유일한 상단 바. 좌: (개발자면 문서 버튼) + 마스코트 + 제목, 우: 프로필(로그인 상태).
+ * 앱의 유일한 상단 바. 좌: (개발자면 문서 버튼) + 마스코트 + 제목, 우: 알림 벨.
  * 성경 리더도 이걸 쓴다 — 제목 자리에 BiblePicker를 넣고 className으로 sticky를 준다.
  *
- * 서버 컴포넌트지만 우측 프로필만 클라이언트(ProfileButton)로 뗀다 — 세션 쿠키로 로그인
- * 상태를 판정해야 하기 때문. 알림 벨은 MVP에서 뺐다(아래 주석으로 남김, 알림 도메인 후속).
+ * 우측은 원래 프로필 사진이었다. 마이페이지가 하단 탭 "마이"로 가면서 그 자리를 알림 벨에 줬다
+ * (사용자 결정, 2026-10-24). 알림 도메인은 아직 없다 — 벨은 모양만 있고 빨간 점도 없다.
  *
  * 가운데 글자를 바꿀 수 있게 열어 둔 이유: 공동체 대문(`Community Page.png`)은 같은 바에
- * 앱 이름 대신 **방 이름**을 놓는다. 벨과 프로필이 똑같은 자리에 똑같이 있으므로,
+ * 앱 이름 대신 **방 이름**을 놓는다. 벨이 똑같은 자리에 똑같이 있으므로,
  * 두 줄만 다른 컴포넌트를 하나 더 만들면 알림 배지를 실데이터로 바꿀 때 두 곳을 고치게 된다.
  */
 export function MainTopBar({
@@ -41,19 +42,9 @@ export function MainTopBar({
         className,
       )}
     >
-      {/* 벨 옆 문서 아이콘은 개발자 계정에만 뜬다(DocsButton). 아니면 자리도 없다. */}
-      {/* TODO(알림 도메인): 안 읽은 알림 여부를 실제 데이터에 연결. 지금은 항상 표시. */}
-      {/* <div className="flex shrink-0 items-center">
-        <Button variant="ghost" size="icon-lg" className="relative shrink-0" aria-label="알림">
-          <Bell className="size-6" />
-          <span
-            className="absolute end-1.5 top-1.5 size-2 rounded-full bg-accent"
-            aria-label="읽지 않은 알림 있음"
-          />
-        </Button>
-      </div> */}
+      {/* 문서 아이콘은 개발자 계정에만 뜬다(DocsButton). 아니면 자리도 없다. */}
 
-      {/* 방 이름은 길어질 수 있다. 벨·프로필을 밀어내지 않도록 이 가운데 칸만 줄어든다. */}
+      {/* 방 이름은 길어질 수 있다. 벨을 밀어내지 않도록 이 가운데 칸만 줄어든다. */}
       <div className="flex min-w-0 items-center gap-2">
         <DocsButton />
         {icon && (
@@ -66,7 +57,11 @@ export function MainTopBar({
         )}
       </div>
 
-      <ProfileButton />
+      {/* TODO(알림 도메인): 누르면 알림 팝업, 안 읽은 게 있으면 빨간 점. 데이터가 없는 지금은 점을 띄우지 않는다
+          — 늘 떠 있는 점은 거짓말이다. */}
+      <Button variant="ghost" size="icon-lg" className="shrink-0" aria-label="알림">
+        <Bell className="size-6" />
+      </Button>
     </header>
   );
 }

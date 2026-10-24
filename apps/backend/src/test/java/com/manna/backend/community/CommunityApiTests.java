@@ -326,6 +326,62 @@ class CommunityApiTests {
     }
 
     @Test
+    void 이름은_리더만_고치고_공백은_400() throws Exception {
+        user("leader");
+        User member = user("member");
+        int id = create("leader", "만나 개발팀");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(
+            new CommunityMember(c, member, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+
+        mvc.perform(patch(id, "member", "{\"name\":\"남의 방\"}")).andExpect(status().isForbidden());
+        mvc.perform(patch(id, "leader", "{\"name\":\"   \"}")).andExpect(status().isBadRequest());
+        mvc.perform(patch(id, "leader", "{\"name\":\"" + "가".repeat(101) + "\"}"))
+            .andExpect(status().isBadRequest());
+
+        mvc.perform(patch(id, "leader", "{\"name\":\"  청년부 1팀  \"}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities/" + id).with(as("member")))
+            .andExpect(jsonPath("$.name").value("청년부 1팀"));
+    }
+
+    @Test
+    void 리더를_넘기면_받은_사람이_리더_나는_멤버() throws Exception {
+        User leader = user("leader");
+        User a = user("a");
+        User waiting = user("waiting");
+        user("outsider");
+        int id = create("leader", "만나 개발팀");
+        Community c = communities.findById(id).orElseThrow();
+        members.save(new CommunityMember(c, a, CommunityMember.MEMBER, CommunityMember.ACTIVE));
+        members.save(
+            new CommunityMember(c, waiting, CommunityMember.MEMBER, CommunityMember.PENDING));
+
+        mvc.perform(handOver(id, "a", leader.getId())).andExpect(status().isForbidden());
+        mvc.perform(handOver(id, "leader", leader.getId())).andExpect(status().isBadRequest());
+        mvc.perform(handOver(id, "leader", waiting.getId())).andExpect(status().isNotFound());
+        mvc.perform(handOver(id, "outsider", a.getId())).andExpect(status().isForbidden());
+
+        mvc.perform(handOver(id, "leader", a.getId())).andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities/" + id).with(as("a")))
+            .andExpect(jsonPath("$.myRole").value("leader"));
+        mvc.perform(get("/api/v1/communities/" + id).with(as("leader")))
+            .andExpect(jsonPath("$.myRole").value("member"));
+        // 넘긴 사람은 이제 멤버라 나갈 수 있다.
+        mvc.perform(delete("/api/v1/communities/" + id + "/members/" + leader.getId())
+                .with(as("leader")).with(csrf()))
+            .andExpect(status().isNoContent());
+    }
+
+    private MockHttpServletRequestBuilder handOver(int id, String sub, int userId) {
+        return post("/api/v1/communities/" + id + "/leader")
+            .with(as(sub))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"userId\":" + userId + "}");
+    }
+
+    @Test
     void 만들_때_색을_고를_수_있다() throws Exception {
         user("leader");
         mvc.perform(

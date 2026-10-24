@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { getCommunity } from "@/features/community/api";
 import { CommunityLook } from "@/features/community/components/CommunityLook";
+import { CommunityTitle } from "@/features/community/components/CommunityTitle";
 import { LeaveOrDeleteButton } from "@/features/community/components/LeaveOrDeleteButton";
 import { MemberList } from "@/features/community/components/MemberList";
 import { PrayerPartnerCard } from "@/features/community/components/PrayerPartnerCard";
@@ -44,7 +45,19 @@ export default async function CommunityPage(props: PageProps) {
 
   return (
     <AppShell
-      topBar={<MainTopBar icon="/mascot/together.png" title={community.name} />}
+      topBar={
+        <MainTopBar
+          icon="/mascot/together.png"
+          // 리더에게는 이름 옆 연필(D-3626).
+          title={
+            <CommunityTitle
+              communityId={community.id}
+              name={community.name}
+              leader={community.myRole === "leader"}
+            />
+          }
+        />
+      }
       className="space-y-6"
     >
       <PrayerPartnerCard partner={community.prayerPartner} />

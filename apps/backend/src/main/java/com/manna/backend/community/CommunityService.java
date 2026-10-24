@@ -219,12 +219,13 @@ public class CommunityService {
     // ── PATCH /communities/{id} ──────────────────────────────────────────
 
     /**
-     * 목록 카드 꾸미기(리더, D-3624). 보낸 칸만 바꾼다 — `PATCH /me`와 같은 규칙.
+     * 이름 고치기(D-3626) · 목록 카드 꾸미기(D-3624). 리더만. 보낸 칸만 바꾼다 — `PATCH /me`와 같은 규칙.
      * 커버는 프론트 `POST /api/v1/community-cover`가 Blob에 올린 뒤 그 주소로 부른다. Blob 주소만 받는다.
      */
     @Transactional
-    public void update(Integer userId, Integer communityId, String color, String coverImageUrl) {
-        if (color == null && coverImageUrl == null) {
+    public void update(
+            Integer userId, Integer communityId, String name, String color, String coverImageUrl) {
+        if (name == null && color == null && coverImageUrl == null) {
             throw ApiException.badRequest("바꿀 값이 없어요.");
         }
         CommunityMember me = requireActiveMember(communityId, userId);
@@ -232,6 +233,11 @@ public class CommunityService {
             throw ApiException.forbidden("리더만 할 수 있습니다.");
         }
         Community c = me.getCommunity();
+        if (name != null) {
+            // 100자는 컨트롤러 @Size가 막는다. 공백만 보낸 것은 여기서.
+            if (name.isBlank()) throw ApiException.badRequest("이름을 입력해 주세요.");
+            c.rename(name.strip());
+        }
         if (color != null) c.setColor(requireColor(color));
         if (coverImageUrl != null) {
             if (!ProfilePhoto.isUploaded(coverImageUrl)) {
@@ -246,6 +252,30 @@ public class CommunityService {
             throw ApiException.badRequest("고를 수 없는 색이에요.");
         }
         return color;
+    }
+
+    // ── POST /communities/{id}/leader ────────────────────────────────────
+
+    /**
+     * 리더 넘기기(D-3626). D-1707은 "방마다 리더 한 명, 넘기기 없음"이었다 — 리더가 바뀌어야 하는
+     * 실사용 요청으로 넘기기만 연다. 한 명 규칙은 그대로다: 주고 받는 것이 한 트랜잭션이다.
+     * 받는 사람은 이 방의 active 멤버여야 한다. 승인 대기면 없는 사람과 같다(404).
+     */
+    @Transactional
+    public void handOver(Integer userId, Integer communityId, Integer targetUserId) {
+        CommunityMember me = requireActiveMember(communityId, userId);
+        if (!me.isLeader()) {
+            throw ApiException.forbidden("리더만 할 수 있습니다.");
+        }
+        if (userId.equals(targetUserId)) {
+            throw ApiException.badRequest("이미 리더예요.");
+        }
+        CommunityMember target = requireMember(communityId, targetUserId);
+        if (!target.isActive()) {
+            throw ApiException.notFound("이 공동체의 멤버가 아닙니다.");
+        }
+        me.stepDown();
+        target.promote();
     }
 
     // ── POST /communities/{id}/partners ──────────────────────────────────
@@ -334,7 +364,7 @@ public class CommunityService {
             requireLeader(communityId, userId);
         }
         CommunityMember target = requireMember(communityId, targetUserId);
-        // ponytail: MVP는 방마다 리더가 한 명(위임 없음, D-1707)이라 "리더 = 마지막 리더"로 본다.
+        // 방마다 리더는 한 명이라(D-1707) "리더 = 마지막 리더"로 본다. 나가려면 먼저 넘긴다(D-3626).
         // 복수 리더가 생기면 active 리더 수를 세서 막는다.
         if (target.isLeader()) {
             throw ApiException.conflict("리더는 나갈 수 없습니다.");
