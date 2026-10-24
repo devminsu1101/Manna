@@ -4,7 +4,7 @@ import Link from "next/link";
 const ROW = "flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3";
 
 /**
- * 마이페이지 맨 위 한 칸 — "날 위한 n명의 기도로 살고 있어요". 홈을 없애며 여기로 왔다(2026-10-24).
+ * 마이페이지 맨 위 한 칸 — "날 위해 n명이 기도하고 있어요". 홈을 없애며 여기로 왔다(2026-10-24).
  * 숫자는 **어제 기준**이다(D-901, `PraySummary` 주석).
  *
  * ⚠️ **"0명이 기도했어요"를 절대 쓰지 않는다** (D-1705). 어제 기준이라 가입 첫날은 반드시

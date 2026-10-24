@@ -96,7 +96,7 @@ public class NotificationService {
         if (yesterday > 0) {
             notifications.save(
                 new Notification(
-                    me, Notification.PRAYED_FOR_YOU, "날 위한 " + yesterday + "명의 기도로 살고 있어요", "/prayer"));
+                    me, Notification.PRAYED_FOR_YOU, "날 위해 " + yesterday + "명이 기도하고 있어요", "/prayer"));
         }
     }
 

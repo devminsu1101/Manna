@@ -158,7 +158,7 @@ class NotificationApiTests {
 
         list("me")
             .andExpect(jsonPath("$.notifications.length()").value(1))
-            .andExpect(jsonPath("$.notifications[0].body").value("날 위한 2명의 기도로 살고 있어요"));
+            .andExpect(jsonPath("$.notifications[0].body").value("날 위해 2명이 기도하고 있어요"));
         unread("me").andExpect(jsonPath("$.count").value(1));
         list("me").andExpect(jsonPath("$.notifications.length()").value(1));
 
