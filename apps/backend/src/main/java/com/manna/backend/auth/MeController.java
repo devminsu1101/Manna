@@ -96,7 +96,7 @@ public class MeController {
         users.save(u);
     }
 
-    /** 마이페이지 숫자. `period` = today · week · month · days(+ `days`). 명세는 03_API_SPEC. */
+    /** 마이페이지 숫자. `period` = today · week · month · all · days(+ `days`). 명세는 03_API_SPEC. */
     @GetMapping("/api/v1/me/stats")
     public PrayerService.Stats stats(
             @AuthenticationPrincipal OidcUser principal,

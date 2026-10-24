@@ -103,7 +103,7 @@ export type MyPrayerRequest = {
 };
 
 /** `GET /me/stats`의 기간. `days`는 `days=N`과 함께 쓴다(오늘 포함 최근 N일). */
-export type StatsPeriod = "today" | "week" | "month" | { days: number };
+export type StatsPeriod = "today" | "week" | "month" | "all" | { days: number };
 
 /**
  * 마이페이지 숫자. 기간은 늘 오늘(KST)까지이고, 서버가 센다.

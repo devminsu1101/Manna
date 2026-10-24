@@ -202,13 +202,15 @@ public class PrayerService {
                 case "today" -> to;
                 case "week" -> PrayerPartnerService.weekStart(to);
                 case "month" -> to.withDayOfMonth(1);
+                // 기간 없이 전부 — 마이페이지 "내가 올린 나눔".
+                case "all" -> LocalDate.EPOCH;
                 case "days" -> {
                     if (days == null || days < 1 || days > 365) {
                         throw ApiException.badRequest("days는 1~365입니다.");
                     }
                     yield to.minusDays(days - 1);
                 }
-                default -> throw ApiException.badRequest("period는 today · week · month · days 중 하나입니다.");
+                default -> throw ApiException.badRequest("period는 today · week · month · all · days 중 하나입니다.");
             };
         return new Stats(
             period,

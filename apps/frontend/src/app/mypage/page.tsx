@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { List, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -10,19 +10,24 @@ import { ProfileHeader } from "@/features/auth/ProfileHeader";
 import { CommunitySection } from "@/features/community/components/CommunitySection";
 import { composeHref } from "@/features/compose/href";
 import { MainTopBar } from "@/features/home/MainTopBar";
-import { getMyPrayerRequests, getMyStats } from "@/features/prayer/api";
+import { getMyPrayerRequests, getMyStats, getPraySummary } from "@/features/prayer/api";
 import { MyPrayerHistory } from "@/features/prayer/components/MyPrayerHistory";
+import { PrayedForMe } from "@/features/prayer/components/PrayedForMe";
+
+/** 이전 기도제목을 펼쳐 두는 수. 나머지는 제목 옆 목록 버튼으로 본다 — 공동체 나눔 자료실과 같다. */
+const PREVIEW_COUNT = 3;
 
 export const metadata: Metadata = { title: "마이페이지 | 만나" };
 
 /**
- * 마이페이지 = **내 것 모아 보기**(D-3609). 상단바의 프로필 이미지로 들어온다.
+ * 마이페이지 = **내 것 모아 보기**(D-3609). 하단 탭 "마이"와 상단바 프로필 이미지로 들어온다.
  *
  * 처음엔 로그아웃을 둘 곳으로 생겼다(사용자 결정, 2026-09-19). 지금은 위에서부터
- * 프로필(사진 바꾸기 D-3618 · 이름 고치기 D-3608) · 숫자 두 개 · 이전 기도제목 · 로그아웃.
+ * 날 위한 기도(홈에서 옮김, 2026-10-24) · 프로필(사진 바꾸기 D-3618 · 이름 고치기 D-3608) ·
+ * 숫자 두 개 · 이전 기도제목(앞 몇 개, 전부는 `/mypage/prayers`) · 로그아웃.
  *
- * - 숫자는 기간이 서로 다르다 — 기도는 **이번 주**(일요일부터 KST), 나눔은 **이번 달**. `/me/stats`가
- *   기간 하나씩 받으므로 두 번 부른다. 명단은 두지 않는다.
+ * - 숫자는 기간이 서로 다르다 — 기도는 **이번 주**(일요일부터 KST), 나눔은 **기간 없이 전부**.
+ *   `/me/stats`가 기간 하나씩 받으므로 두 번 부른다. 명단은 두지 않는다.
  * - "홈으로 돌아가기"는 없다 — 하단 네비가 있어 막다른 곳이 아니다.
  *
  * 톤은 `warm`이다 — `toneOf()`의 폴백이라 세그먼트 layout의 themeColor를 따로 두지 않는다
@@ -39,21 +44,24 @@ export default async function MyPage() {
 }
 
 async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getMe>>> }) {
-  const [week, month, requests] = await Promise.all([
+  const [summary, week, all, requests] = await Promise.all([
+    getPraySummary(),
     getMyStats("week"),
-    getMyStats("month"),
+    getMyStats("all"),
     getMyPrayerRequests(),
   ]);
 
   return (
     <>
+      <PrayedForMe yesterdayCount={summary.yesterdayCount} />
+
       <section className="flex flex-col items-center gap-2 rounded-2xl bg-surface-warm p-6">
         <ProfileHeader name={me.name} photoUrl={me.profileImageUrl} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
         <Stat surface="love" label="이번 주 기도한 사람" value={week.prayedPeople} unit="명" />
-        <Stat surface="warm" label="이번 달 나눔" value={month.sharings} unit="개" />
+        <Stat surface="warm" label="내가 올린 나눔" value={all.sharings} unit="개" />
       </div>
 
       <CommunitySection
@@ -61,15 +69,22 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         title="이전 기도제목"
         surface="love"
         action={
-          // 새로 쓰면 그게 맨 위 "지금"이 된다. 대문 자료실의 ＋와 같은 모양 — 기도제목이 골라진 + 화면으로.
-          <Button asChild variant="ghost" size="icon" aria-label="새 기도제목 쓰기">
-            <Link href={composeHref({ kind: "prayer" })}>
-              <Plus className="size-5" />
-            </Link>
-          </Button>
+          <span className="flex shrink-0 items-center">
+            {/* 새로 쓰면 그게 맨 위 "지금"이 된다. 대문 자료실의 ＋와 같은 모양 — 기도제목이 골라진 + 화면으로. */}
+            <Button asChild variant="ghost" size="icon" aria-label="새 기도제목 쓰기">
+              <Link href={composeHref({ kind: "prayer" })}>
+                <Plus className="size-5" />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="icon" aria-label="이전 기도제목 전체">
+              <Link href="/mypage/prayers">
+                <List className="size-5" />
+              </Link>
+            </Button>
+          </span>
         }
       >
-        <MyPrayerHistory requests={requests} />
+        <MyPrayerHistory requests={requests.slice(0, PREVIEW_COUNT)} />
       </CommunitySection>
 
       <LogoutButton />

@@ -2,22 +2,24 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { MyTab } from "@/features/auth/MyTab";
 import { composeHref } from "@/features/compose/href";
 
 /**
- * 하단 탭 네비게이션. 로드맵 Phase 1~3의 네 도메인 + 가운데 작성 버튼.
+ * 하단 탭 네비게이션. 공동체 · 성경 읽기 · (가운데 작성) · 기도하기 · 마이.
  * 아이콘은 마스코트 일러스트라 lucide로 대체할 수 없다. public/mascot/의 PNG를 쓴다.
+ * 마이만 예외 — 내 프로필 사진이다(MyTab). 홈("만나!")은 없앴다(app/page.tsx).
  *
  * 위치는 호출부가 정한다. 성경 리더에서는 스크롤에 따라 숨었다 나타나야 하는데,
  * 그 transform은 클라이언트 래퍼(ReaderChrome)가 소유해야 하기 때문이다.
  */
 const TABS = [
-  { href: "/", label: "만나!", icon: "/mascot/hi.png" },
+  // 방 하나가 아니라 목록으로 간다 — 개수와 무관하게 항상 거친다(D-1001, D-1701).
+  // 맨 왼쪽인 이유: 홈("만나!")을 없앤 뒤 로그인한 사람의 첫 화면이다(app/page.tsx).
+  { href: "/communities", label: "공동체", icon: "/mascot/together.png" },
   // 장을 직접 찍지 않는다. /bible이 마지막에 읽던 장으로 이어준다 — 이 한 겹 덕분에
   // 여기가 정적인 href를 갖는 서버 컴포넌트로 남는다.
   { href: "/bible", label: "성경 읽기", icon: "/mascot/bible.png" },
-  // 방 하나가 아니라 목록으로 간다 — 개수와 무관하게 항상 거친다(D-1001, D-1701).
-  { href: "/communities", label: "공동체", icon: "/mascot/together.png" },
   { href: "/prayer", label: "기도하기", icon: "/mascot/warm.png" },
 ] as const;
 
@@ -45,6 +47,7 @@ export function BottomNav() {
       {right.map((tab) => (
         <NavTab key={tab.href} {...tab} />
       ))}
+      <MyTab />
     </nav>
   );
 }

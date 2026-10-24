@@ -15,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: BACKGROUND_COLOR,
     // **실행 직후 상태바 색이 이 값이다.** iOS standalone은 앱을 켤 때 문서의 theme-color가
     // 아니라 여기를 본다 — 브랜드 노랑(#FFCC00)을 두었더니 켤 때마다 시계 뒤가 노랬다.
-    // start_url이 `/`(홈)이므로 홈의 상단바 색과 같아야 한다.
+    // start_url `/`은 공동체(로그인) · 성경(미로그인)으로 넘어간다(app/page.tsx). 공동체 상단바 색과 같아야 한다.
     // ⚠️ iOS는 '홈 화면에 추가' 시점에 매니페스트를 캐시한다. 이 값을 바꿔도 이미 설치된
     //    앱에는 반영되지 않는다 — 지우고 다시 추가해야 보인다.
     theme_color: SURFACE_COLOR.warm,

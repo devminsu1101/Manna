@@ -37,7 +37,7 @@
 | GET | `/me` | 현재 로그인 사용자 `{ id, name, profileImageUrl }` — **구현됨** |
 | PATCH | `/me` | 이름 · 사진 주소 고치기 — **구현됨** |
 | POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
-| GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔) — **구현됨** |
+| GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔). period = today · week · month · all · days — **구현됨** |
 
 #### PATCH /me — 이름 · 사진 주소 고치기
 

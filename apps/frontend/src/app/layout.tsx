@@ -16,6 +16,12 @@ const pretendard = localFont({
 });
 
 export const metadata: Metadata = {
+  // og:image(opengraph-image.tsx)는 절대 주소여야 카톡이 읽는다. Vercel이 운영 도메인을 넣어 준다.
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000",
+  ),
   title: "만나",
   description: "말씀과 기도로 함께하는 공동체",
   // iOS Safari '홈 화면에 추가'가 /apple-touch-icon.png를 찾다 404를 낸다.

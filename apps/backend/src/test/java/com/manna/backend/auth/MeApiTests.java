@@ -134,6 +134,9 @@ class MeApiTests {
 
         mvc.perform(get("/api/v1/me/stats?period=month").with(as("me")))
             .andExpect(jsonPath("$.sharings").value(1));
+        // 기간 없이 전부 — 마이페이지 "내가 올린 나눔"
+        mvc.perform(get("/api/v1/me/stats?period=all").with(as("me")))
+            .andExpect(jsonPath("$.sharings").value(1));
     }
 
     @Test

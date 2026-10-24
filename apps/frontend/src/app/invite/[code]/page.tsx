@@ -8,7 +8,11 @@ import { getInvite } from "@/features/community/api";
 import { JoinButton } from "@/features/community/components/JoinButton";
 import { isInviteCode } from "@/features/community/invite";
 
-export const metadata: Metadata = { title: "공동체 초대 | 만나" };
+export const metadata: Metadata = {
+  title: "공동체 초대 | 만나",
+  // 카톡 미리보기 그림. 루트의 인사하는 만나 대신 화면과 같은 그림(app/og/invite.png).
+  openGraph: { images: [{ url: "/og/invite.png", width: 1200, height: 630 }] },
+};
 
 type PageProps = { params: Promise<{ code: string }> };
 

@@ -1,12 +1,11 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-import type { PraySummary } from "../types";
-
-const ROW = "mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3";
+const ROW = "flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3";
 
 /**
- * 홈 첫 섹션("사랑으로 나누세요") 안의 두 줄. 각각 독립이고, 둘 다 사라질 수 있다.
+ * 마이페이지 맨 위 한 칸 — "날 위한 n명의 기도로 살고 있어요". 홈을 없애며 여기로 왔다(2026-10-24).
+ * 숫자는 **어제 기준**이다(D-901, `PraySummary` 주석).
  *
  * ⚠️ **"0명이 기도했어요"를 절대 쓰지 않는다** (D-1705). 어제 기준이라 가입 첫날은 반드시
  * 0인데, 0은 틀린 숫자가 아니라 "어제의 기도로 오늘을 산다"가 아직 성립하지 않는 상태다.
@@ -17,11 +16,9 @@ const ROW = "mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px
  * 경로이기도 하다. 랜덤 문구는 반려됐다 — 매일 여는 같은 자리의 문구가 매번 바뀌면 숫자가
  * 뜰 때 그 자리가 쌓아 둔 신뢰가 깎인다.
  */
-export function PraySummaryRows({ summary }: { summary: PraySummary }) {
-  const { yesterdayCount, partner } = summary;
-
+export function PrayedForMe({ yesterdayCount }: { yesterdayCount: number }) {
   return (
-    <>
+    <section className="rounded-2xl bg-surface-love p-4">
       {yesterdayCount > 0 ? (
         <Link href="/prayer" className={ROW}>
           <span>
@@ -40,21 +37,6 @@ export function PraySummaryRows({ summary }: { summary: PraySummary }) {
           <ChevronRight className="size-5 shrink-0 text-foreground/40" />
         </Link>
       )}
-
-      {/* partner가 없으면 기도마니또가 아예 없는 것이다 — 리더가 아직 시작하지 않았거나(D-3602)
-          이번 주 중간에 들어왔다. 줄을 통째로 숨긴다. 오늘 이미 기도했어도 이름은 그대로 뜬다. */}
-      {partner && (
-        // 그 사람 기도제목으로 바로 간다 — 기도했어요도 거기서 누른다.
-        <Link href={`/prayer/${partner.userId}`} className={ROW}>
-          <span>
-            <span className="block font-bold text-foreground">
-              이번주 기도마니또는 <span className="text-secondary">{partner.name}</span>님이에요
-            </span>
-            <span className="block text-sm text-foreground/60">{partner.communityName}</span>
-          </span>
-          <ChevronRight className="size-5 shrink-0 text-foreground/40" />
-        </Link>
-      )}
-    </>
+    </section>
   );
 }
