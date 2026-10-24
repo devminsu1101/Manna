@@ -43,8 +43,9 @@ export function PrayerStories({ me, people }: { me?: Me; people: PrayPerson[] })
   }
 
   return (
-    <section className="rounded-2xl bg-surface-love p-4">
-      <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+    // 화면 아래까지 꽉 찬다 — 스토리 줄과 아래 버튼은 제자리, 가운데 기도 내용만 스크롤한다.
+    <section className="flex min-h-0 flex-1 flex-col rounded-2xl bg-surface-love p-4">
+      <ul className="-mx-4 flex shrink-0 gap-3 overflow-x-auto px-4 pb-1">
         {me && (
           <Story
             name="내 기도제목"
@@ -66,7 +67,11 @@ export function PrayerStories({ me, people }: { me?: Me; people: PrayPerson[] })
         ))}
       </ul>
 
-      <div className="mt-3 rounded-xl bg-white px-4 py-5">
+      {/* key — 다른 사람을 누르면 본문 스크롤이 맨 위에서 다시 시작한다. */}
+      <div
+        key={String(selected)}
+        className="mt-3 flex min-h-0 flex-1 flex-col rounded-xl bg-white px-4 py-5"
+      >
         {person ? <PersonPanel person={person} /> : me && <MyPanel request={me.request} />}
       </div>
     </section>
@@ -128,25 +133,33 @@ function PersonPanel({ person }: { person: PrayPerson }) {
 
   return (
     <>
-      <p className="text-xs text-foreground/50">
-        {partnerIn ? "이번주 기도마니또 · " : ""}
-        {communities.map((c) => c.name).join(" · ")}
-      </p>
-      <h2 className="text-lg font-bold text-foreground">{name}</h2>
-
-      {request ? (
-        <>
-          <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{request.body}</p>
-          <p className="mt-3 text-right text-xs text-foreground/40">{daysAgoLabel(request.daysAgo)}</p>
-        </>
-      ) : (
-        // D-903. 기도제목이 없어도 기도는 할 수 있다 — 기도의 단위가 사람이라서다.
-        <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-          아직 기도제목을 올리지 않았어요. 그래도 함께 기도할 수 있어요
+      <div className="shrink-0">
+        <p className="text-xs text-foreground/50">
+          {partnerIn ? "이번주 기도마니또 · " : ""}
+          {communities.map((c) => c.name).join(" · ")}
         </p>
-      )}
+        <h2 className="text-lg font-bold text-foreground">{name}</h2>
+      </div>
 
-      <PrayButton userId={person.userId} prayedToday={prayedByMeToday} />
+      <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+        {request ? (
+          <>
+            <p className="whitespace-pre-line leading-relaxed text-foreground">{request.body}</p>
+            <p className="mt-3 text-right text-xs text-foreground/40">
+              {daysAgoLabel(request.daysAgo)}
+            </p>
+          </>
+        ) : (
+          // D-903. 기도제목이 없어도 기도는 할 수 있다 — 기도의 단위가 사람이라서다.
+          <p className="text-sm leading-relaxed text-foreground/60">
+            아직 기도제목을 올리지 않았어요. 그래도 함께 기도할 수 있어요
+          </p>
+        )}
+      </div>
+
+      <div className="shrink-0">
+        <PrayButton userId={person.userId} prayedToday={prayedByMeToday} />
+      </div>
     </>
   );
 }
@@ -155,7 +168,7 @@ function PersonPanel({ person }: { person: PrayPerson }) {
 function MyPanel({ request }: { request: MyPrayerRequest | null }) {
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">내 기도제목</h2>
         <Link
           href="/mypage"
@@ -166,16 +179,20 @@ function MyPanel({ request }: { request: MyPrayerRequest | null }) {
         </Link>
       </div>
 
-      {request ? (
-        <>
-          <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{request.body}</p>
-          <p className="mt-3 text-right text-xs text-foreground/40">{request.createdAt.slice(0, 10)}</p>
-        </>
-      ) : (
-        <p className="mt-3 text-sm text-foreground/60">아직 올린 기도제목이 없어요</p>
-      )}
+      <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+        {request ? (
+          <>
+            <p className="whitespace-pre-line leading-relaxed text-foreground">{request.body}</p>
+            <p className="mt-3 text-right text-xs text-foreground/40">
+              {request.createdAt.slice(0, 10)}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-foreground/60">아직 올린 기도제목이 없어요</p>
+        )}
+      </div>
 
-      <Button asChild variant="love" size="block" className="mt-4">
+      <Button asChild variant="love" size="block" className="mt-4 shrink-0">
         <Link href={composeHref({ kind: "prayer" })}>{request ? "새로 작성하기" : "기도제목 작성하기"}</Link>
       </Button>
     </>

@@ -53,7 +53,7 @@ export default async function PrayerPage({ searchParams }: Props) {
   return (
     <AppShell
       topBar={<MainTopBar icon="/mascot/warm.png" title="중보기도실" />}
-      className="flex flex-col space-y-6"
+      className="flex flex-col gap-6 overflow-hidden"
     >
       <FocusToggle on={false} />
 
@@ -95,7 +95,7 @@ async function FocusRoom() {
   const { partners, members } = await getPrayRoom();
 
   return (
-    <AppShell focus className="flex flex-col space-y-6">
+    <AppShell focus className="flex flex-col gap-6 overflow-hidden">
       <FocusToggle on />
       <PrayerStories people={[...partners, ...members]} />
     </AppShell>

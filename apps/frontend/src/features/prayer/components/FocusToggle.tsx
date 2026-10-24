@@ -13,7 +13,7 @@ export function FocusToggle({ on }: { on: boolean }) {
       href={on ? "/prayer" : "/prayer?focus=1"}
       role="switch"
       aria-checked={on}
-      className="flex items-center justify-between gap-3 rounded-xl px-1 py-1"
+      className="flex shrink-0 items-center justify-between gap-3 rounded-xl px-1 py-1"
     >
       <span>
         <span className="block text-sm font-bold text-foreground">집중 모드</span>

@@ -26,7 +26,7 @@ export function PraySummaryRows({ summary }: { summary: PraySummary }) {
         <Link href="/prayer" className={ROW}>
           <span>
             <span className="block font-bold text-foreground">
-              날 위해 <span className="text-accent">{yesterdayCount}명</span>이 기도했어요
+              날 위한 <span className="text-accent">{yesterdayCount}명</span>의 기도로 살고 있어요.
             </span>
             {/* 누가 기도했는지는 보여주지 않는다(D-902). 실명이 더 따뜻하지만 동시에
                 "나는 저 사람을 위해 기도 안 했는데"라는 부채감을 만든다. */}
