@@ -59,19 +59,16 @@ export function MemberActions({
     run(`${name}님을 내보낼까요? 올린 나눔은 남아요.`, `/members/${userId}`, { method: "DELETE" });
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) setFailed(false);
-      }}
-    >
+    <Sheet open={open} onOpenChange={setOpen}>
       <Button
         variant="ghost"
         size="icon"
         className="shrink-0"
         aria-label={`${name}님 관리`}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setFailed(false);
+          setOpen(true);
+        }}
       >
         <MoreHorizontal className="size-5 text-foreground/60" />
       </Button>

@@ -3,11 +3,16 @@ package com.manna.backend.sharing;
 import com.manna.backend.common.ApiException;
 import com.manna.backend.community.CommunityService;
 import com.manna.backend.domain.User;
+import com.manna.backend.notification.Notification;
+import com.manna.backend.notification.NotificationService;
 import com.manna.backend.prayer.PrayerService;
 import com.manna.backend.repository.UserRepository;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +31,17 @@ public class SharingService {
     private final SharingRepository sharings;
     private final CommunityService communities;
     private final UserRepository users;
+    private final NotificationService notifications;
 
     public SharingService(
-            SharingRepository sharings, CommunityService communities, UserRepository users) {
+            SharingRepository sharings,
+            CommunityService communities,
+            UserRepository users,
+            NotificationService notifications) {
         this.sharings = sharings;
         this.communities = communities;
         this.users = users;
+        this.notifications = notifications;
     }
 
     // ── 응답 ─────────────────────────────────────────────────────────────
@@ -61,18 +71,25 @@ public class SharingService {
         }
         Set<Integer> ids = new LinkedHashSet<>(communityIds);
         // 같은 규칙으로 막는다: 없는 방·pending 404, 비멤버 403.
-        ids.forEach(id -> communities.requireActiveMember(id, userId));
+        Map<Integer, String> names = new LinkedHashMap<>();
+        ids.forEach(id -> names.put(id, communities.requireActiveMember(id, userId).getCommunity().getName()));
+        User author = users.findById(userId).orElseThrow();
 
         // 방마다 글을 따로 만든다(D-3507) — 수정 · 삭제 · 댓글이 그 방 안에서만 일어난다.
+        // 알림도 방마다 그 방 글로 보낸다. 여러 방에 겹치는 사람은 처음 겹친 방 하나만 받는다(D-3627).
         Integer first = null;
+        Set<Integer> notified = new HashSet<>(Set.of(userId));
         for (Integer id : ids) {
-            Sharing s =
-                sharings.save(
-                    new Sharing(users.getReferenceById(userId), type, Sharing.PUBLIC, body.strip()));
+            Sharing s = sharings.save(new Sharing(author, type, Sharing.PUBLIC, body.strip()));
             sharings.shareTo(s.getId(), id);
             if (first == null) {
                 first = s.getId();
             }
+            notifications.notify(
+                communities.activeMemberIds(id).stream().filter(notified::add).toList(),
+                Notification.NEW_SHARING,
+                author.getName() + "님이 " + names.get(id) + "에 나눔을 올렸어요",
+                "/sharings/" + s.getId());
         }
         return new Created(first);
     }

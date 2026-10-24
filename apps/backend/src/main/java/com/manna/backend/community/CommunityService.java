@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.manna.backend.auth.ProfilePhoto;
 import com.manna.backend.common.ApiException;
 import com.manna.backend.domain.User;
+import com.manna.backend.notification.Notification;
+import com.manna.backend.notification.NotificationService;
 import com.manna.backend.prayer.PrayerPartnerService;
 import com.manna.backend.repository.UserRepository;
 import com.manna.backend.sharing.SharingRepository;
@@ -33,18 +35,21 @@ public class CommunityService {
     private final UserRepository users;
     private final PrayerPartnerService partners;
     private final SharingRepository sharings;
+    private final NotificationService notifications;
 
     public CommunityService(
             CommunityRepository communities,
             CommunityMemberRepository members,
             UserRepository users,
             PrayerPartnerService partners,
-            SharingRepository sharings) {
+            SharingRepository sharings,
+            NotificationService notifications) {
         this.communities = communities;
         this.members = members;
         this.users = users;
         this.partners = partners;
         this.sharings = sharings;
+        this.notifications = notifications;
     }
 
     // ── 응답 ─────────────────────────────────────────────────────────────
@@ -285,6 +290,20 @@ public class CommunityService {
     public void startPartners(Integer userId, Integer communityId) {
         requireLeader(communityId, userId);
         partners.start(communityId);
+        notifications.notify(
+            activeMemberIds(communityId).stream().filter(id -> !id.equals(userId)).toList(),
+            Notification.PARTNERS_STARTED,
+            communities.findById(communityId).orElseThrow().getName() + " 기도마니또가 시작됐어요",
+            "/prayer");
+    }
+
+    /** 이 방의 승인된 멤버 id. 알림 받는 사람을 고를 때 쓴다(D-3627). */
+    @Transactional(readOnly = true)
+    public List<Integer> activeMemberIds(Integer communityId) {
+        return members.findByCommunity_IdOrderByJoinedAtAsc(communityId).stream()
+            .filter(CommunityMember::isActive)
+            .map(m -> m.getUser().getId())
+            .toList();
     }
 
     // ── DELETE /communities/{id} ─────────────────────────────────────────
@@ -337,9 +356,17 @@ public class CommunityService {
         if (members.findByCommunity_IdAndUser_Id(c.getId(), userId).isPresent()) {
             throw ApiException.conflict("이미 신청했거나 멤버입니다.");
         }
-        members.save(
-            new CommunityMember(
-                c, users.getReferenceById(userId), CommunityMember.MEMBER, CommunityMember.PENDING));
+        User me = users.findById(userId).orElseThrow();
+        members.save(new CommunityMember(c, me, CommunityMember.MEMBER, CommunityMember.PENDING));
+        // 승인은 리더만 하므로 리더에게만 알린다(D-3627).
+        notifications.notify(
+            members.findByCommunity_IdOrderByJoinedAtAsc(c.getId()).stream()
+                .filter(m -> m.isLeader() && m.isActive())
+                .map(m -> m.getUser().getId())
+                .toList(),
+            Notification.JOIN_REQUEST,
+            me.getName() + "님이 " + c.getName() + "에 가입을 신청했어요",
+            "/communities/" + c.getId());
         return new JoinRequested(c.getId(), CommunityMember.PENDING);
     }
 
@@ -353,6 +380,12 @@ public class CommunityService {
             throw ApiException.conflict("이미 멤버입니다.");
         }
         target.approve();
+        Community c = target.getCommunity();
+        notifications.notify(
+            List.of(targetUserId),
+            Notification.JOIN_APPROVED,
+            c.getName() + "에 함께하게 됐어요",
+            "/communities/" + c.getId());
     }
 
     // ── DELETE /communities/{id}/members/{userId} ────────────────────────

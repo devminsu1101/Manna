@@ -1,8 +1,7 @@
-import { Bell } from "lucide-react";
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
 import { DocsButton } from "@/features/devdocs/DocsButton";
+import { NotificationBell } from "@/features/notification/NotificationBell";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,7 +9,7 @@ import { cn } from "@/lib/utils";
  * 성경 리더도 이걸 쓴다 — 제목 자리에 BiblePicker를 넣고 className으로 sticky를 준다.
  *
  * 우측은 원래 프로필 사진이었다. 마이페이지가 하단 탭 "마이"로 가면서 그 자리를 알림 벨에 줬다
- * (사용자 결정, 2026-10-24). 알림 도메인은 아직 없다 — 벨은 모양만 있고 빨간 점도 없다.
+ * (사용자 결정, 2026-10-24). 벨은 클라이언트(NotificationBell, D-3627)다 — 안 읽은 알림 수를 세션으로 센다.
  *
  * 가운데 글자를 바꿀 수 있게 열어 둔 이유: 공동체 대문(`Community Page.png`)은 같은 바에
  * 앱 이름 대신 **방 이름**을 놓는다. 벨이 똑같은 자리에 똑같이 있으므로,
@@ -57,11 +56,7 @@ export function MainTopBar({
         )}
       </div>
 
-      {/* TODO(알림 도메인): 누르면 알림 팝업, 안 읽은 게 있으면 빨간 점. 데이터가 없는 지금은 점을 띄우지 않는다
-          — 늘 떠 있는 점은 거짓말이다. */}
-      <Button variant="ghost" size="icon-lg" className="shrink-0" aria-label="알림">
-        <Bell className="size-6" />
-      </Button>
+      <NotificationBell />
     </header>
   );
 }

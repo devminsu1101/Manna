@@ -62,19 +62,14 @@ export function CommunityTitle({
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) {
-          setValue(name);
-          setError(null);
-        }
-      }}
-    >
+    <Sheet open={open} onOpenChange={setOpen}>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setValue(name);
+          setError(null);
+          setOpen(true);
+        }}
         className="flex min-w-0 items-center gap-1.5 rounded-lg px-1 py-0.5 transition-colors hover:bg-white/60"
         aria-label="공동체 이름 고치기"
       >
