@@ -34,6 +34,10 @@ const ME = "me";
  *   ponytail: 끝에서 익명 기도제목 구역(D-906)으로 넘어가는 건 그 구역이 생길 때 붙인다.
  * - 이번 주 기도마니또는 초록 링 — 핑크인 다른 사람과 구분된다. 기도하면 다른 사람처럼 회색.
  * - `initialUserId`(`/prayer?u=`)가 있으면 그 사람을 먼저 고른다. 공동체 대문의 기도마니또 카드가 보낸다.
+ *
+ * **보는 동안 줄 순서를 고정한다**(D-3628). 기도하면 서버가 다시 정렬해 주는데(안 한 사람 먼저) 그대로 따르면
+ * 누른 사람이 줄 뒤로 튀어 나간다. 순서는 처음 그릴 때 것을 쓰고, 링 색 같은 데이터만 새로 받은 것을 쓴다.
+ * 다른 화면에 갔다 오면 새로 마운트되며 새 순서가 된다.
  */
 export function PrayerStories({
   me,
@@ -44,15 +48,22 @@ export function PrayerStories({
   people: PrayPerson[];
   initialUserId?: number;
 }) {
+  const [frozen] = useState(() => people.map((p) => p.userId));
+  // 처음 순서대로, 그 사이 새로 보이게 된 사람은 뒤에. 안 보이게 된 사람은 빠진다.
+  const ordered = [
+    ...frozen.flatMap((id) => people.filter((p) => p.userId === id)),
+    ...people.filter((p) => !frozen.includes(p.userId)),
+  ];
+
   // 처음엔 링크로 고른 사람, 없으면 아직 기도 안 한 첫 사람. 다 했으면 첫 사람, 아무도 없으면 나.
   const first =
     people.find((p) => p.userId === initialUserId) ??
     people.find((p) => !p.prayedByMeToday) ??
     people[0];
   const [selected, setSelected] = useState<number | typeof ME>(first?.userId ?? ME);
-  const person = selected === ME ? null : people.find((p) => p.userId === selected);
+  const person = selected === ME ? null : ordered.find((p) => p.userId === selected);
 
-  const order: (number | typeof ME)[] = people.map((p) => p.userId);
+  const order: (number | typeof ME)[] = ordered.map((p) => p.userId);
   if (me) order.unshift(ME);
   const row = useRef<HTMLUListElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -88,7 +99,7 @@ export function PrayerStories({
     <section className="flex min-h-0 flex-1 flex-col rounded-2xl bg-surface-love p-4">
       <ul
         ref={row}
-        className="-mx-4 flex shrink-0 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {me && (
           <Story
@@ -99,7 +110,7 @@ export function PrayerStories({
             onClick={() => setSelected(ME)}
           />
         )}
-        {people.map((p) => (
+        {ordered.map((p) => (
           <Story
             key={p.userId}
             name={p.name}

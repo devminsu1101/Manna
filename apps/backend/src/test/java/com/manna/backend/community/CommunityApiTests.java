@@ -114,7 +114,7 @@ class CommunityApiTests {
     }
 
     @Test
-    void 일반_멤버에게는_리더_전용_필드가_없다() throws Exception {
+    void 일반_멤버에게는_승인_대기가_없고_초대_코드는_있다() throws Exception {
         user("leader");
         User member = user("member");
         int id = create("leader", "만나 개발팀");
@@ -125,7 +125,8 @@ class CommunityApiTests {
         mvc.perform(get("/api/v1/communities/" + id).with(as("member")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.myRole").value("member"))
-            .andExpect(jsonPath("$.inviteCode").doesNotExist())
+            // 초대는 누구나, 승인은 리더만(D-3628).
+            .andExpect(jsonPath("$.inviteCode").isString())
             .andExpect(jsonPath("$.pendingMembers").doesNotExist())
             .andExpect(jsonPath("$.members.length()").value(2));
         mvc.perform(get("/api/v1/communities").with(as("member")))
@@ -193,7 +194,8 @@ class CommunityApiTests {
             .andExpect(status().isConflict());
         mvc.perform(get("/api/v1/communities/" + id).with(as("joiner")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.inviteCode").doesNotExist());
+            .andExpect(jsonPath("$.inviteCode").isString())
+            .andExpect(jsonPath("$.pendingMembers").doesNotExist());
         mvc.perform(get("/api/v1/invites/" + code).with(as("joiner")))
             .andExpect(jsonPath("$.myStatus").value("active"))
             .andExpect(jsonPath("$.communityId").value(id));

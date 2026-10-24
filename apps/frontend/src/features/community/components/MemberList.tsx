@@ -1,3 +1,4 @@
+import { Crown } from "lucide-react";
 import Image from "next/image";
 
 import type { CommunityMember, MemberRole } from "../types";
@@ -26,11 +27,14 @@ export function MemberList({
   communityId: number;
   members: CommunityMember[];
   myRole: MemberRole;
-  /** 리더에게만 온다. 없으면 초대 버튼도 없다 — 초대는 리더의 일이다. */
+  /** 멤버 모두에게 온다 — 초대는 누구나, 승인은 리더만(D-3628). */
   inviteCode?: string;
   partnersStarted: boolean;
 }) {
-  const active = members.filter((m) => m.status === "active");
+  // 리더가 맨 위, 나머지는 서버 순서(가입순) 그대로 — sort는 안정 정렬이다.
+  const active = members
+    .filter((m) => m.status === "active")
+    .sort((a, b) => Number(b.role === "leader") - Number(a.role === "leader"));
   // 리더가 아니면 신청자가 있는지조차 알 필요가 없다. 승인은 리더만 한다.
   const pending = myRole === "leader" ? members.filter((m) => m.status === "pending") : [];
 
@@ -60,15 +64,13 @@ export function MemberList({
       <ul className="space-y-2">
         {active.map((member) => (
           <li key={member.userId} className={ROW_CLASS}>
-            <MemberName name={member.name} photoUrl={member.profileImageUrl} />
-            {member.role === "leader" ? (
-              <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground">
-                리더
-              </span>
-            ) : (
-              myRole === "leader" && (
-                <MemberActions communityId={communityId} userId={member.userId} name={member.name} />
-              )
+            <MemberName
+              name={member.name}
+              photoUrl={member.profileImageUrl}
+              leader={member.role === "leader"}
+            />
+            {myRole === "leader" && member.role !== "leader" && (
+              <MemberActions communityId={communityId} userId={member.userId} name={member.name} />
             )}
           </li>
         ))}
@@ -82,8 +84,19 @@ export function MemberList({
   );
 }
 
-/** 프로필 사진이 없으면(provider가 안 줬거나 아직 안 올렸으면) 기본 마스코트다. */
-function MemberName({ name, photoUrl }: { name: string; photoUrl: string | null }) {
+/**
+ * 프로필 사진이 없으면(provider가 안 줬거나 아직 안 올렸으면) 기본 마스코트다.
+ * 리더는 이름 뒤 왕관 — 글자 배지보다 줄이 가볍다(D-3628).
+ */
+function MemberName({
+  name,
+  photoUrl,
+  leader = false,
+}: {
+  name: string;
+  photoUrl: string | null;
+  leader?: boolean;
+}) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       <Image
@@ -94,6 +107,9 @@ function MemberName({ name, photoUrl }: { name: string; photoUrl: string | null 
         className={`size-8 shrink-0 rounded-full ${photoUrl ? "object-cover" : "object-contain"}`}
       />
       <span className="truncate text-foreground">{name}</span>
+      {leader && (
+        <Crown aria-label="리더" role="img" className="size-4 shrink-0 fill-primary text-primary" />
+      )}
     </span>
   );
 }

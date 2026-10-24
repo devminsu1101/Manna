@@ -53,7 +53,8 @@ public class CommunityService {
     }
 
     // ── 응답 ─────────────────────────────────────────────────────────────
-    // 리더에게만 가는 필드는 NON_NULL로 멤버 응답에서 필드째 뺀다(명세: "필드 자체가 없다").
+    // 리더에게만 가는 필드(승인 대기 명단)는 NON_NULL로 멤버 응답에서 필드째 뺀다(명세: "필드 자체가 없다").
+    // 초대 코드는 active 멤버 모두에게 준다 — 승인은 리더만 하니 누가 초대해도 된다(D-3628).
     // prayerPartner는 null이어도 내보낸다 — 화면이 "아직 배정 전"으로 읽는 값이다.
     // partnersStarted는 리더의 "기도마니또 시작하기" 버튼을 숨길지 정한다.
 
@@ -89,7 +90,7 @@ public class CommunityService {
             String coverImageUrl,
             Integer myUserId,
             String myRole,
-            @JsonInclude(JsonInclude.Include.NON_NULL) String inviteCode,
+            String inviteCode,
             PrayerPartner prayerPartner,
             boolean partnersStarted,
             List<Member> members,
@@ -214,7 +215,7 @@ public class CommunityService {
             c.getCoverImageUrl(),
             userId,
             me.getRole(),
-            leader ? c.getInviteCode() : null,
+            c.getInviteCode(),
             partner,
             partners.started(communityId),
             active,

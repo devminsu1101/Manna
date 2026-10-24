@@ -38,7 +38,7 @@ type DetailResponse = {
   coverImageUrl: string | null;
   myUserId: number;
   myRole: MemberRole;
-  inviteCode?: string; // 리더에게만
+  inviteCode?: string; // active 멤버 모두(D-3628)
   prayerPartner: { userId: number; name: string; profileImageUrl: string | null } | null;
   partnersStarted: boolean;
   members: { userId: number; name: string; profileImageUrl: string | null; role: MemberRole }[];

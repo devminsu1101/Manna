@@ -354,7 +354,8 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 ```
 
 - `myUserId`: 나가기 버튼이 `DELETE .../members/{myUserId}`로 쓴다.
-- **`inviteCode`와 `pendingMembers`는 리더에게만.** 멤버 응답에는 필드가 아예 없다.
+- **`pendingMembers`는 리더에게만.** 멤버 응답에는 필드가 아예 없다.
+- `inviteCode`는 active 멤버 모두에게 간다 — 초대는 누구나, 승인은 리더만(D-3628).
 - `prayerPartner`는 **이 방의** 짝이다. 메인의 기도마니또(`GET /pray/summary`)은 내 모든 방의 짝
   중 하나라 값이 다르다 — 같은 것으로 보고 한쪽을 지우면 안 된다.
   **이 방에서 내가 맡은 사람**이다(D-3601). 리더가 시작하기 전, 이번 주 중간에 들어온 경우,
