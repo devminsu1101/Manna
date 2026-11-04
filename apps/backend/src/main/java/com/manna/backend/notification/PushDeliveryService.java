@@ -88,11 +88,7 @@ public class PushDeliveryService {
         }
         try {
             Notification n = notification.get();
-            String body = switch (n.getType()) {
-                case Notification.PRAYED_FOR_YOU, Notification.ADMIN_TEST -> n.getBody();
-                default -> "새 알림이 도착했어요";
-            };
-            byte[] payload = mapper.writeValueAsBytes(new Payload("만나", body, n.getLinkPath()));
+            byte[] payload = mapper.writeValueAsBytes(new Payload("만나", n.getBody(), n.getLinkPath()));
             PushSubscription s = subscription.get();
             var message = new nl.martijndwars.webpush.Notification(
                 s.getEndpoint(), s.getP256dh(), s.getAuth(), payload);

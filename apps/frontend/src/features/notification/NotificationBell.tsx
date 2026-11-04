@@ -16,7 +16,7 @@ import type { AppNotification } from "./types";
 /**
  * 상단바 오른쪽 벨(D-3627). 안 읽은 알림이 있으면 빨간 점, 누르면 아래 시트에 최근 30일 목록.
  *
- * - 시트를 열면 보관 기간·목록 개수와 무관하게 모든 미읽음 알림을 읽는다.
+ * - 시트를 열 때 목록을 조회하고, 닫을 때 보관 기간·목록 개수와 무관하게 미읽음 전체를 읽는다.
  * - 줄을 누르면 해당 화면으로 이동한다.
  * - 점은 화면마다 상단바가 새로 그려질 때 다시 센다. 실시간은 아니다 — 푸시가 붙을 때 다시 본다.
  * - 미로그인(401)이면 점 없이 벨만, 시트에는 로그인 안내.
@@ -44,24 +44,45 @@ export function NotificationBell() {
     setItems(null);
     setLoadError(false);
     try {
-      const res = await apiFetch("/api/v1/notifications/read-all", { method: "POST" });
+      const res = await fetch("/api/v1/notifications", { credentials: "include" });
       if (res.status === 401) return setItems("signed-out");
-      if (!res.ok) throw new Error(`읽음 처리 실패 (${res.status})`);
+      if (!res.ok) throw new Error(`알림 조회 실패 (${res.status})`);
       const data: { notifications: AppNotification[] } = await res.json();
       setItems(data.notifications);
-      setUnread(0);
     } catch {
       setLoadError(true);
     }
   }
 
-  function go(n: AppNotification) {
+  async function closeSheet() {
     setOpen(false);
+    // 목록을 확인하지 못했다면 읽음 처리하지 않는다.
+    if (!Array.isArray(items)) return;
+    try {
+      const res = await apiFetch("/api/v1/notifications/read-all", { method: "POST" });
+      if (!res.ok) return;
+      setUnread(0);
+      setItems((current) => Array.isArray(current)
+        ? current.map((item) => ({ ...item, read: true })) : current);
+    } catch {
+      // 다음에 벨을 열면 서버의 미읽음 상태를 다시 조회한다.
+    }
+  }
+
+  async function go(n: AppNotification) {
+    await closeSheet();
     if (n.linkPath) router.push(n.linkPath);
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={(nextOpen) => {
+      if (nextOpen) {
+        setOpen(true);
+        void load();
+      } else {
+        void closeSheet();
+      }
+    }}>
       <Button
         variant="ghost"
         size="icon-lg"

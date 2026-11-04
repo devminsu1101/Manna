@@ -184,7 +184,7 @@
 | GET | `/notifications` | 최근 30일, 최신순 50개 `{ notifications: [{ id, type, body, linkPath, read, createdAt }] }` |
 | GET | `/notifications/unread-count` | 상단 벨 빨간 점 `{ count }` (같은 30일) |
 | POST | `/notifications/{id}/read` | 하나 읽음. `204`. 남의 알림이면 `404` |
-| POST | `/notifications/read-all` | 벨을 열 때 기존 미읽음 **전체**를 읽고 최근 30일·50개 목록을 반환. `200` |
+| POST | `/notifications/read-all` | 벨 시트를 닫을 때 기존 미읽음 **전체**를 읽고 최근 30일·50개 목록을 반환. `200` |
 | GET | `/notifications/push-key` | 로그인한 사용자에게 VAPID 공개 키 `{ publicKey }`. 미설정이면 `503` |
 | POST | `/notifications/subscriptions` | 현재 기기의 `{ endpoint, keys: { p256dh, auth } }` 등록 또는 계정 재연결. `204` |
 | DELETE | `/notifications/subscriptions` | `{ endpoint }`로 **본인 기기만** 해제. `204` |
@@ -198,7 +198,7 @@
   - `admin_test`: 관리자 시험 발송 → 지정한 사용자 한 명
 - `prayed_for_you`는 자정 이후 벨 조회에서 먼저 만들 수 있다. KST 매일 06:00 배치는 그날 행이 없으면
   만들고, 아직 읽지 않은 행에만 푸시를 예약한다. 전날 기도자가 0명이면 만들지 않는다(D-1705).
-- 벨을 여는 `read-all`은 날짜·50개 제한 없이 그 사용자의 기존 미읽음을 모두 읽는다. 푸시 발송 실패는
+- 벨을 열 때는 `GET /notifications`로 조회만 하고, 닫을 때 `read-all`로 날짜·50개 제한 없이 그 사용자의 기존 미읽음을 모두 읽는다. 푸시 본문은 앱 안 알림의 `body`와 같다. 푸시 발송 실패는
   앱 안 알림을 지우지 않는다. 30일이 지난 알림은 삭제하지 않고 목록·점에서만 뺀다.
 - 관리자 시험 API는 서버에서 관리자 권한을 확인하고, 메시지는 앞뒤 공백을 제거한 뒤 1~120자만 받는다.
   `202`는 발송 작업을 저장했다는 뜻이며 휴대폰에 표시됐다는 뜻은 아니다.
