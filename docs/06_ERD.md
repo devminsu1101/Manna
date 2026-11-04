@@ -1,6 +1,6 @@
 # ERD (데이터 모델)
 
-Manna의 전체 데이터 모델. 성경 3테이블(books/chapters/verses)은 이미 있었고, 여기에 사용자·공동체·나눔·기도·알림 9테이블을 얹었다.
+Manna의 전체 데이터 모델. 성경 3테이블과 사용자·공동체·나눔·기도·알림·푸시 11테이블이다.
 
 - **실제 스키마:** `apps/init-db.sql` — 이 문서와 컬럼·제약이 일치한다. 스키마가 진실이고 이 문서는 설명이다.
 - **화면 근거:** `docs/design/screens/`
@@ -23,6 +23,9 @@ erDiagram
     communities ||--o{ prayer_partners : "주간 매칭"
     users ||--o{ prayer_partners : "기도마니또"
     users ||--o{ notifications : "받음"
+    users ||--o{ push_subscriptions : "알림 허용 기기"
+    notifications ||--o{ push_deliveries : "발송 작업"
+    push_subscriptions ||--o{ push_deliveries : "전송 대상"
 
     users {
         int id PK
@@ -84,7 +87,23 @@ erDiagram
         string type
         text body
         string link_path
+        date prayer_date "기도 소식의 집계 날짜"
         timestamptz read_at "NULL이면 안읽음"
+    }
+    push_subscriptions {
+        bigint id PK
+        int user_id FK
+        text endpoint UK
+        text p256dh
+        text auth
+    }
+    push_deliveries {
+        bigint id PK
+        int notification_id FK
+        bigint subscription_id FK
+        int attempts
+        timestamptz next_attempt_at
+        timestamptz sent_at
     }
 ```
 
@@ -100,7 +119,9 @@ erDiagram
 | `sharing_communities` | 나눔↔공동체 (다대다) | 복합 PK |
 | `prayer_logs` | "기도했어요" | `UNIQUE(prayed_for, pray_by, prayed_on)`, 자기참조 금지 |
 | `prayer_partners` | 기도마니또 | `UNIQUE(community_id, week_start, user_id)`, 자기참조 금지 |
-| `notifications` | 알림 | `read_at IS NULL` = 안읽음(부분 인덱스) |
+| `notifications` | 앱 안 알림 | `read_at IS NULL` = 안읽음. 기도 소식은 `(user_id, prayer_date)` 고유 |
+| `push_subscriptions` | 사용자별 기기 구독 | `UNIQUE(endpoint)`, 사용자 삭제 시 함께 삭제 |
+| `push_deliveries` | 알림별·기기별 발송 작업 | `UNIQUE(notification_id, subscription_id)`, 알림·구독 삭제 시 함께 삭제 |
 
 ## 설계 결정과 근거
 

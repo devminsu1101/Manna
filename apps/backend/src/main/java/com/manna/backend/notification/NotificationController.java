@@ -39,4 +39,9 @@ public class NotificationController {
     public void read(@AuthenticationPrincipal OidcUser principal, @PathVariable Integer id) {
         service.read(currentUser.id(principal), id);
     }
+
+    @PostMapping("/read-all")
+    public NotificationService.ListResponse readAll(@AuthenticationPrincipal OidcUser principal) {
+        return service.readAll(currentUser.id(principal));
+    }
 }

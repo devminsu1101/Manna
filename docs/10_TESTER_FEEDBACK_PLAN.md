@@ -1,13 +1,13 @@
 # 초기 테스터 피드백 반영 계획
 
-> **상태: 승인된 계획, 미구현 (2026-11-04).** 이 문서는 바꿀 동작을 기록한다. 현재 API는 `03_API_SPEC.md`, 현재 DB는 `apps/init-db.sql`과 `06_ERD.md`가 기준이다. 완료 표시는 구현·검증 후에만 한다.
+> **상태: 푸시·전체 읽음은 로컬 구현, 운영 배포·실기기 검증 전 (2026-11-04).** 나눔 댓글/반응·초대 복사 안내는 미구현이다. 현재 API는 `03_API_SPEC.md`, 현재 DB는 `apps/init-db.sql`과 `06_ERD.md`가 기준이다.
 > 결정의 이유는 `07_HISTORY.md` D-3629~3632, 진행 상태는 `05_ROADMAP.md`를 본다.
 
 ## 현재 호출 흐름
 
-- `manifest.ts`는 standalone 시작 화면과 아이콘을 정의한다. 서비스 워커, 푸시 구독·발송은 없다.
-- 가입 신청·승인·기도마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`가 `NotificationService.notify`를 부른다. `NotificationRepository`는 사용자별 최근 30일 최대 50개와 미읽음 수를 조회한다. `prayed_for_you`만 벨 조회 시 생성한다.
-- `NotificationBell`은 시트를 열 때 목록을 GET하고, 항목을 누를 때 `POST /notifications/{id}/read`를 보낸다.
+- `manifest.ts`는 standalone 시작 화면과 아이콘을 정의한다. 서비스 워커와 구독·발송 코드는 로컬 구현됐고 운영 배포 전이다.
+- 가입 신청·승인·기도마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`가 `NotificationService.notify`를 부른다. `NotificationRepository`는 사용자별 최근 30일 최대 50개와 미읽음 수를 조회한다. `prayed_for_you`는 벨 조회에서 생성하거나 오전 6시 배치가 보충한다.
+- `NotificationBell`은 시트를 열 때 `POST /notifications/read-all`로 전체 읽음과 목록 조회를 함께 한다.
 - 나눔은 `sharings`와 `sharing_communities`에 저장한다. 여러 방을 선택하면 방마다 별도 글이 생긴다(D-3507). 목록·홈 소식·상세가 `/sharings/{id}`로 이어지며 댓글·반응은 아직 없다.
 - active 멤버의 대문에 있는 `InviteButton`은 `${location.origin}/invite/{inviteCode}`를 `copyToClipboard`로 복사한다. Clipboard API 실패 시 `execCommand`로 재시도하고 성공 여부를 반환한다. 지금은 아이콘·스크린 리더 문구를 1.5초만 보여 준다.
 
@@ -15,10 +15,12 @@
 
 **목표:** 이미 저장하는 앱 안 알림을 사용자가 허용한 기기에도 보여 준다. 앱 안 알림이 기준이며 푸시 실패로 알림 행을 잃지 않는다.
 
-1. 프런트에 서비스 워커를 등록한다. `push`에서는 곧바로 `showNotification`을 호출하고, `notificationclick`에서는 알림의 앱 내부 `linkPath`를 연다. 알림 설정의 **알림 받기** 버튼에서만 권한 요청·구독을 시작한다. 지원하지 않거나 거절한 환경은 앱 안 알림을 계속 사용한다.
+1. 프런트에 서비스 워커를 등록한다. `push`에서는 곧바로 `showNotification`을 호출하고, `notificationclick`에서는 알림의 앱 내부 `linkPath`를 연다. 마이페이지의 **이 기기에서 알림 받기** 켜기에서만 권한 요청·구독을 시작한다. 지원하지 않거나 거절한 환경은 앱 안 알림을 계속 사용한다.
 2. 인증된 구독 등록·해제 API와 `push_subscriptions` 테이블을 둔다. 사용자 한 명에게 여러 기기를 허용하고 endpoint를 중복 저장하지 않는다. endpoint·암호화 키는 비밀 값으로 취급하며 VAPID 개인 키는 서버 환경변수에 둔다. 재로그인·계정 전환·로그아웃·구독 해제 시 기기와 사용자 연결을 정리한다. 다른 계정의 알림 노출을 줄이기 위해 OS 알림 본문에는 민감한 공동체 내용을 싣지 않는다.
 3. `NotificationService.notify`가 저장한 알림을 **트랜잭션 확정 후** 해당 사용자의 구독으로 발송한다. 만료된 구독은 제거하고 일시적인 발송 실패를 기록한다. 발송 실패는 원래 API와 앱 안 알림 저장을 실패시키지 않는다.
-4. `prayed_for_you`는 지금 접속 시 생성하므로, 앱을 열지 않아도 보내려면 KST 기준 일일 생성 작업이 필요하다. 기존 `ensurePrayedForYou`와 중복되지 않게 동일한 날짜 기준으로 처리한다.
+4. `prayed_for_you`는 자정부터 기존처럼 벨 조회에서 만들 수 있다. KST 06:00 배치는 전날 기도자 수가 1명 이상인 사람의 빠진 행을 만들고, 아직 읽지 않은 행만 푸시 작업에 넣는다. 본문은 기존과 같은 “날 위해 n명이 기도하고 있어요”다. `prayer_date` 고유 인덱스로 중복 생성을 막는다.
+
+**실기기 시험:** 관리자 화면 아래에서 사용자 ID와 메시지를 입력해 `POST /api/v1/admin/notifications/test`를 호출한다. 관리자만 가능하며, 대상에게 구독 기기가 없으면 `409`를 반환한다. `202`는 발송 작업 접수이고 휴대폰 수신 여부는 iPhone에서 직접 확인한다. 홈 화면 앱에서 알림 켜기 → 자기 ID로 시험 발송 → 앱 닫은 상태에서 수신 → 탭 이동 → 벨 열기만으로 전체 읽음 → 알림 끄기를 확인한다.
 
 **플랫폼 조건:** iOS·iPadOS 16.4 이상은 홈 화면에 추가한 standalone 웹앱에서 Web Push를 쓸 수 있다. Android 지원 브라우저는 브라우저와 설치 앱에서 쓸 수 있다. 공통으로 HTTPS, 서비스 워커, 사용자 허용이 필요하다. 권한·구독 요청은 버튼 클릭에 연결하고 `denied`·미결정 상태를 처리한다. Safari에서는 수신한 푸시를 사용자에게 즉시 보여 줘야 한다. [Apple Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers), [MDN PushManager.subscribe](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe), [MDN 권한 요청](https://developer.mozilla.org/en-US/docs/Web/API/Notification/requestPermission_static).
 
@@ -39,7 +41,7 @@
 
 **목표:** 벨 시트를 성공적으로 열어 알림 목록을 확인하면 그 사용자의 **기존 미읽음 행 전체**를 읽음 처리한다. 목록의 최근 30일·50개 제한 밖에 있는 행도 포함한다.
 
-- `POST /notifications/read-all`을 추가한다. Service가 오늘의 `prayed_for_you`를 먼저 생성하고 Repository가 `user_id = 나 AND read_at IS NULL`을 한 번에 갱신한다. GET 조회에 **읽음 처리**를 넣지 않는다.
+- `POST /notifications/read-all`을 추가했다. Service가 오늘의 `prayed_for_you`를 먼저 생성하고 Repository가 `user_id = 나 AND read_at IS NULL`을 한 번에 갱신한다. GET 조회에 **읽음 처리**를 넣지 않는다.
 - 응답으로 갱신 후의 최근 30일 최대 50개 목록을 주면 벨의 열기 요청 한 번으로 목록·읽음 상태를 맞출 수 있다. `NotificationBell`은 성공 후 빨간 점을 내리고, 실패 시 읽음 성공처럼 표시하지 않는다. 줄 클릭 시의 개별 읽음 호출은 UI에서 제거하되 기존 API는 호환을 위해 유지한다.
 - 새 알림이 읽음 요청과 동시에 도착할 수 있으므로 읽음 처리 시점 이후에 생성된 알림은 다음 조회에서 미읽음으로 남는다. 30일 보관 표시는 그대로다.
 

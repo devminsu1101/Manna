@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
       { source: "/api/v1/invites/:path*", destination: `${backend}/api/v1/invites/:path*` },
       { source: "/api/v1/pray/:path*", destination: `${backend}/api/v1/pray/:path*` },
       { source: "/api/v1/notifications", destination: `${backend}/api/v1/notifications` },
+      { source: "/api/v1/admin/notifications/test", destination: `${backend}/api/v1/admin/notifications/test` },
       {
         source: "/api/v1/notifications/:path*",
         destination: `${backend}/api/v1/notifications/:path*`,

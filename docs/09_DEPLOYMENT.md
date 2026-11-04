@@ -39,12 +39,17 @@
 | `SPRING_DATASOURCE_USERNAME` | `${{Postgres.PGUSER}}` | 인증 실패 |
 | `SPRING_DATASOURCE_PASSWORD` | `${{Postgres.PGPASSWORD}}` | 인증 실패 |
 | `FRONTEND_ORIGIN` | `https://manna-five-tau.vercel.app` (끝 `/` 없이) | ⚠️ **조용히 틀린다** — 로그인 후 `localhost:3000`으로 튄다 |
+| `PUSH_VAPID_PUBLIC_KEY` | `apps/backend/.env`에서 생성한 공개 키 | 푸시 설정 API `503` |
+| `PUSH_VAPID_PRIVATE_KEY` | 같은 키쌍의 개인 키. **Railway에만 저장** | 푸시 설정 API `503` |
 
 - `PORT`는 넣지 않는다. Railway가 주입하고 `server.port=${PORT:8080}`이 읽는다.
 - `${{Postgres.*}}`는 Railway 참조 문법이다. DB 비밀번호를 재생성해도 따라간다.
   Postgres 서비스 이름이 `Postgres`가 아니면 그 이름으로.
 - Spring은 `SPRING_DATASOURCE_URL` 같은 환경변수가 `application.properties`의 같은 키를 덮는다.
   그래서 코드는 로컬 값 그대로 두고 서버마다 값만 끼운다.
+- VAPID 키쌍은 `apps/backend/`에서 `node scripts/generate-vapid.mjs`로 한 번 만든다. 결과는 커밋되지 않는
+  `.env`에 저장된다. 공개·개인 키를 Railway에 **같은 쌍**으로 등록한다. 개인 키를 바꾸면 기존 기기 구독을
+  다시 받아야 한다. `PUSH_VAPID_SUBJECT`는 선택 사항이며 기본값은 `FRONTEND_ORIGIN`이다.
 
 **Vercel · 프로젝트 → Settings → Environment Variables**
 
@@ -101,7 +106,7 @@ Railway 주소나 `localhost`가 나오면 아래 장애 표.
    입력 후 ✓ 저장, 그리고 화면 위 **Apply**. Railway는 설정을 모아 두었다가 Apply 때 배포한다.
    적용되면 빌드 로그가 Railpack이 아니라 Dockerfile(`FROM eclipse-temurin`)로 바뀐다.
 3. **Postgres** — 캔버스에서 + Create → Database → PostgreSQL.
-4. **환경변수** — 위 표의 6개를 백엔드 Variables → Raw Editor에 붙이고 Apply.
+4. **환경변수** — 위 표의 8개를 백엔드 Variables → Raw Editor에 붙이고 Apply.
 5. **스키마 적용** — 아래 절.
 6. **도메인** — 백엔드 → Settings → Networking → Generate Domain (포트 `8080`).
 7. **Vercel** `BACKEND_ORIGIN`을 새 도메인으로 → Redeploy.
@@ -123,7 +128,7 @@ psql "DATABASE_PUBLIC_URL값" -v ON_ERROR_STOP=1 -f apps/init-db.sql
 psql "DATABASE_PUBLIC_URL값" -c "\dt"
 ```
 
-   테이블 12개면 끝(로컬과 같은 수).
+   테이블 14개면 끝(로컬과 같은 수).
 3. **TCP Proxy를 다시 끈다** — 같은 자리의 휴지통 → Apply. `DATABASE_PUBLIC_URL`이 사라지면 꺼진 것.
    백엔드는 내부 주소로 붙으므로 영향이 없다.
 
@@ -131,6 +136,20 @@ psql "DATABASE_PUBLIC_URL값" -c "\dt"
 `ALTER` 문만 같은 방법으로 넣는다. 프로덕션 DB를 들여다볼 때도 같은 방법(켜고 → 보고 → 끈다).
 
 ⚠️ **순서: ALTER 먼저, push는 그다음.** `ddl-auto=validate`라 컬럼이 없는 DB에 새 백엔드가 뜨면 기동이 실패한다.
+
+### PWA 푸시 배포 (2026-11-04)
+
+운영 DB에 `apps/migrations/2026-11-04_push_notifications.sql`을 먼저 적용한다. 이 파일은 기존
+기도 소식에 `prayer_date`를 채우고 구독·발송 작업 테이블을 만든다. 기존 데이터는 삭제하지 않는다.
+위의 TCP Proxy를 잠시 켜고 맥에서 다음 명령을 실행한다.
+
+```
+psql "DATABASE_PUBLIC_URL값" -v ON_ERROR_STOP=1 -f apps/migrations/2026-11-04_push_notifications.sql
+```
+
+그다음 TCP Proxy를 끄고 Railway에 VAPID 공개·개인 키를 등록한다. **DB 적용과 환경변수 등록이
+끝난 뒤** `main`을 push한다. Vercel은 새 서비스 워커를, Railway는 푸시 발송 코드와 KST 06:00
+작업을 배포한다. 아이폰 홈 화면 앱에서 마이페이지 알림을 켠 다음 관리자 시험 발송으로 실수신을 확인한다.
 
 ### 스키마 변경 이력 (프로덕션에 손으로 넣은 것)
 

@@ -2,6 +2,8 @@ package com.manna.backend.admin;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -15,6 +17,11 @@ import com.manna.backend.repository.UserIdentityRepository;
 import com.manna.backend.repository.UserRepository;
 import com.manna.backend.sharing.Sharing;
 import com.manna.backend.sharing.SharingRepository;
+import com.manna.backend.notification.PushSubscription;
+import com.manna.backend.notification.PushSubscriptionRepository;
+import com.manna.backend.notification.NotificationRepository;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +42,9 @@ class AdminApiTests {
     @Autowired CommunityRepository communities;
     @Autowired CommunityMemberRepository members;
     @Autowired SharingRepository sharings;
+    @Autowired PushSubscriptionRepository subscriptions;
+    @Autowired NotificationRepository notifications;
+    @Autowired JdbcTemplate jdbc;
 
     private User user(String sub) {
         User u = users.save(new User(sub, null));
@@ -72,5 +82,35 @@ class AdminApiTests {
         mvc.perform(get("/api/v1/admin/users").with(as("leader"))).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/admin/communities").with(as("leader")))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 시험_알림은_관리자만_구독한_대상_한명에게_보낸다() throws Exception {
+        User admin = user("admin");
+        admin.setAdmin(true);
+        User target = user("target");
+        User other = user("other");
+        subscriptions.saveAndFlush(new PushSubscription(target.getId(),
+            "https://push.example.com/test", "key", "auth"));
+        String body = "{\"userId\":" + target.getId() + ",\"message\":\"수신 시험\"}";
+
+        mvc.perform(post("/api/v1/admin/notifications/test").with(as("other")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/admin/notifications/test").with(as("admin"))
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/admin/notifications/test").with(as("admin")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"userId\":" + other.getId() + ",\"message\":\"수신 시험\"}"))
+            .andExpect(status().isConflict());
+        mvc.perform(post("/api/v1/admin/notifications/test").with(as("admin")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.subscriptionCount").value(1));
+        org.junit.jupiter.api.Assertions.assertEquals(1L,
+            jdbc.queryForObject("SELECT count(*) FROM notifications WHERE user_id = ? AND type = 'admin_test'", Long.class, target.getId()));
+        org.junit.jupiter.api.Assertions.assertEquals(1L,
+            jdbc.queryForObject("SELECT count(*) FROM push_deliveries", Long.class));
     }
 }

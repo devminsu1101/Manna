@@ -48,6 +48,8 @@ class NotificationApiTests {
     @Autowired PrayerLogRepository logs;
     @Autowired NotificationRepository notifications;
     @Autowired JdbcTemplate jdbc;
+    @Autowired DailyPrayerNotificationJob dailyJob;
+    @Autowired PushSubscriptionRepository subscriptions;
 
     private User user(String sub) {
         User u = users.save(new User(sub, null));
@@ -186,5 +188,57 @@ class NotificationApiTests {
             .andExpect(status().isNoContent());
         unread("me").andExpect(jsonPath("$.count").value(0));
         list("me").andExpect(jsonPath("$.notifications[0].read").value(true));
+    }
+
+    @Test
+    void 벨을_열면_기간과_목록_제한_밖의_알림도_전부_읽고_남의_알림은_남는다() throws Exception {
+        User me = user("me");
+        User other = user("other");
+        for (int i = 0; i < 55; i++) {
+            notifications.save(new Notification(me.getId(), Notification.JOIN_APPROVED, "알림 " + i, "/"));
+        }
+        Notification old = notifications.saveAndFlush(
+            new Notification(me.getId(), Notification.JOIN_APPROVED, "오래된 알림", "/"));
+        Notification theirs = notifications.saveAndFlush(
+            new Notification(other.getId(), Notification.JOIN_APPROVED, "남의 알림", "/"));
+        jdbc.update("UPDATE notifications SET created_at = now() - interval '31 days' WHERE id = ?", old.getId());
+
+        mvc.perform(post("/api/v1/notifications/read-all").with(as("me")).with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.notifications.length()").value(50))
+            .andExpect(jsonPath("$.notifications[0].read").value(true));
+        mvc.perform(post("/api/v1/notifications/read-all").with(as("me")).with(csrf()))
+            .andExpect(status().isOk());
+        unread("me").andExpect(jsonPath("$.count").value(0));
+        Long remaining = jdbc.queryForObject(
+            "SELECT count(*) FROM notifications WHERE user_id = ? AND read_at IS NULL", Long.class, me.getId());
+        org.junit.jupiter.api.Assertions.assertEquals(0L, remaining);
+        org.junit.jupiter.api.Assertions.assertFalse(
+            notifications.findById(theirs.getId()).orElseThrow().isRead());
+    }
+
+    @Test
+    void 새벽에_만든_기도_소식은_6시_배치가_재사용하고_이미_읽었으면_푸시하지_않는다() throws Exception {
+        User me = user("me");
+        User other = user("other");
+        LocalDate yesterday = LocalDate.now(PrayerService.KST).minusDays(1);
+        logs.saveAndFlush(new PrayerLog(me, other, yesterday));
+        subscriptions.saveAndFlush(new PushSubscription(me.getId(),
+            "https://push.example.com/test", "key", "auth"));
+
+        list("me").andExpect(jsonPath("$.notifications.length()").value(1));
+        dailyJob.runFor(yesterday);
+        dailyJob.runFor(yesterday);
+        Long rows = jdbc.queryForObject(
+            "SELECT count(*) FROM notifications WHERE user_id = ? AND type = 'prayed_for_you'", Long.class, me.getId());
+        Long jobs = jdbc.queryForObject("SELECT count(*) FROM push_deliveries", Long.class);
+        org.junit.jupiter.api.Assertions.assertEquals(1L, rows);
+        org.junit.jupiter.api.Assertions.assertEquals(1L, jobs);
+
+        mvc.perform(post("/api/v1/notifications/read-all").with(as("me")).with(csrf()))
+            .andExpect(status().isOk());
+        dailyJob.runFor(yesterday);
+        org.junit.jupiter.api.Assertions.assertEquals(1L,
+            jdbc.queryForObject("SELECT count(*) FROM push_deliveries", Long.class));
     }
 }

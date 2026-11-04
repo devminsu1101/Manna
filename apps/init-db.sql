@@ -197,6 +197,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(30) NOT NULL,              -- prayer_partner | new_sharing | prayed_for_you ...
     body TEXT NOT NULL,
     link_path VARCHAR(255),                 -- 누르면 갈 앱 경로. 예: /prayer
+    prayer_date DATE,                       -- 기도 소식이 집계한 KST 날짜
     read_at TIMESTAMPTZ,                    -- NULL이면 안 읽음
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -217,6 +218,35 @@ CREATE INDEX idx_prayer_logs_by_me ON prayer_logs(pray_by, prayed_for_user_id, p
 CREATE INDEX idx_prayer_partners_lookup ON prayer_partners(community_id, week_start);
 -- 안읽은 알림만 빠르게(배지). 읽은 알림은 인덱스에서 빠진다.
 CREATE INDEX idx_notifications_unread ON notifications(user_id) WHERE read_at IS NULL;
+CREATE UNIQUE INDEX uq_notifications_prayer_day ON notifications(user_id, prayer_date)
+    WHERE type = 'prayed_for_you' AND prayer_date IS NOT NULL;
+
+-- 한 사용자에게 여러 기기. endpoint는 기기 구독의 고유 키이며 계정 전환 시 재연결한다.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
+
+-- 알림 저장과 함께 발송 작업을 기록한다. 서버 재시작 뒤에도 미발송 건을 재시도한다.
+CREATE TABLE IF NOT EXISTS push_deliveries (
+    id BIGSERIAL PRIMARY KEY,
+    notification_id INT NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+    subscription_id BIGINT NOT NULL REFERENCES push_subscriptions(id) ON DELETE CASCADE,
+    attempts INT NOT NULL DEFAULT 0,
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    claimed_until TIMESTAMPTZ,
+    sent_at TIMESTAMPTZ,
+    last_error VARCHAR(255),
+    UNIQUE(notification_id, subscription_id)
+);
+CREATE INDEX idx_push_deliveries_pending ON push_deliveries(next_attempt_at)
+    WHERE sent_at IS NULL;
 
 -- ── 로그인 세션 (Spring Session JDBC, D-3620) ─────────────────────────────
 -- 세션을 메모리에 두면 Railway 재배포마다 전원이 로그아웃된다. 정의는 spring-session-jdbc의

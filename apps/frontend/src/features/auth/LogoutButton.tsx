@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { turnOffPush } from "@/features/notification/push-client";
 
 /**
  * 마이페이지 맨 아래 로그아웃. 상단바에서 옮겨 왔다(사용자 결정, 2026-09-19).
@@ -25,6 +26,8 @@ export function LogoutButton() {
     setLoggingOut(true);
     setFailed(false);
     try {
+      // 같은 기기의 다른 계정에 이전 계정 알림이 보이지 않도록 먼저 구독을 해제한다.
+      await turnOffPush();
       const res = await apiFetch("/logout", { method: "POST", redirect: "manual" });
       if (res.type === "opaqueredirect" || res.ok) {
         window.location.assign("/login");

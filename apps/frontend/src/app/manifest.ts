@@ -2,8 +2,6 @@ import type { MetadataRoute } from "next";
 
 import { BACKGROUND_COLOR, SURFACE_COLOR } from "@/lib/brand";
 
-// 서비스워커는 아직 없다(로드맵 Phase 3). 따라서 매니페스트는 감지되지만
-// 설치 가능(installable) 판정은 나지 않는 것이 정상이다.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "만나",
@@ -11,6 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "말씀과 기도로 함께하는 공동체",
     lang: "ko",
     start_url: "/",
+    id: "/",
     display: "standalone",
     background_color: BACKGROUND_COLOR,
     // **실행 직후 상태바 색이 이 값이다.** iOS standalone은 앱을 켤 때 문서의 theme-color가

@@ -1,9 +1,12 @@
 package com.manna.backend.notification;
 
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 public interface NotificationRepository extends JpaRepository<Notification, Integer> {
 
@@ -19,4 +22,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
         Integer userId, String type, OffsetDateTime from);
 
     Optional<Notification> findByIdAndUserId(Integer id, Integer userId);
+
+    Optional<Notification> findByUserIdAndTypeAndPrayerDate(Integer userId, String type, LocalDate prayerDate);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Notification n set n.readAt = CURRENT_TIMESTAMP where n.userId = :userId and n.readAt is null")
+    int markAllRead(Integer userId);
 }

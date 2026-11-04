@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
@@ -23,6 +24,7 @@ public class Notification {
     public static final String NEW_SHARING = "new_sharing";
     public static final String PARTNERS_STARTED = "partners_started";
     public static final String PRAYED_FOR_YOU = "prayed_for_you";
+    public static final String ADMIN_TEST = "admin_test";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,6 +42,9 @@ public class Notification {
     @Column(name = "link_path")
     private String linkPath;
 
+    @Column(name = "prayer_date")
+    private LocalDate prayerDate;
+
     @Column(name = "read_at")
     private OffsetDateTime readAt;
 
@@ -56,6 +61,11 @@ public class Notification {
         this.linkPath = linkPath;
     }
 
+    public Notification(Integer userId, String type, String body, String linkPath, LocalDate prayerDate) {
+        this(userId, type, body, linkPath);
+        this.prayerDate = prayerDate;
+    }
+
     public Integer getId() {
         return id;
     }
@@ -63,6 +73,11 @@ public class Notification {
     public Integer getUserId() {
         return userId;
     }
+
+    public LocalDate getPrayerDate() {
+        return prayerDate;
+    }
+
 
     public String getType() {
         return type;

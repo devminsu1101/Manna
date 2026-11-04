@@ -16,8 +16,8 @@ import type { AppNotification } from "./types";
 /**
  * 상단바 오른쪽 벨(D-3627). 안 읽은 알림이 있으면 빨간 점, 누르면 아래 시트에 최근 30일 목록.
  *
- * - **하나씩 눌러야 읽음**(사용자 결정). 시트를 열기만 해서는 점이 사라지지 않는다.
- * - 줄을 누르면 읽음을 보내고(기다리지 않는다 — 실패해도 이동은 한다) 그 화면으로 간다.
+ * - 시트를 열면 보관 기간·목록 개수와 무관하게 모든 미읽음 알림을 읽는다.
+ * - 줄을 누르면 해당 화면으로 이동한다.
  * - 점은 화면마다 상단바가 새로 그려질 때 다시 센다. 실시간은 아니다 — 푸시가 붙을 때 다시 본다.
  * - 미로그인(401)이면 점 없이 벨만, 시트에는 로그인 안내.
  */
@@ -27,6 +27,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   // null = 아직 안 불러옴, "signed-out" = 401
   const [items, setItems] = useState<AppNotification[] | "signed-out" | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -41,26 +42,20 @@ export function NotificationBell() {
 
   async function load() {
     setItems(null);
+    setLoadError(false);
     try {
-      const res = await fetch("/api/v1/notifications", { credentials: "include" });
+      const res = await apiFetch("/api/v1/notifications/read-all", { method: "POST" });
       if (res.status === 401) return setItems("signed-out");
-      if (!res.ok) return setItems([]);
+      if (!res.ok) throw new Error(`읽음 처리 실패 (${res.status})`);
       const data: { notifications: AppNotification[] } = await res.json();
       setItems(data.notifications);
-      setUnread(data.notifications.filter((n) => !n.read).length);
+      setUnread(0);
     } catch {
-      setItems([]);
+      setLoadError(true);
     }
   }
 
   function go(n: AppNotification) {
-    if (!n.read) {
-      apiFetch(`/api/v1/notifications/${n.id}/read`, { method: "POST" }).catch(() => {});
-      setItems((prev) =>
-        Array.isArray(prev) ? prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)) : prev,
-      );
-      setUnread((count) => Math.max(0, count - 1));
-    }
     setOpen(false);
     if (n.linkPath) router.push(n.linkPath);
   }
@@ -90,7 +85,12 @@ export function NotificationBell() {
           <SheetTitle>알림</SheetTitle>
         </SheetHeader>
 
-        {items === null ? (
+        {loadError ? (
+          <div className="py-8 text-center">
+            <p role="alert" className="text-sm text-destructive">알림을 불러오지 못했어요. 다시 시도해 주세요.</p>
+            <Button variant="outline" className="mt-3" onClick={load}>다시 시도</Button>
+          </div>
+        ) : items === null ? (
           <p className="py-10 text-center text-sm text-foreground/50">불러오는 중…</p>
         ) : items === "signed-out" ? (
           <div className="py-6 text-center">

@@ -13,6 +13,7 @@ import { MainTopBar } from "@/features/home/MainTopBar";
 import { getMyPrayerRequests, getMyStats, getPraySummary } from "@/features/prayer/api";
 import { MyPrayerHistory } from "@/features/prayer/components/MyPrayerHistory";
 import { PrayedForMe } from "@/features/prayer/components/PrayedForMe";
+import { PushSettings } from "@/features/notification/PushSettings";
 
 /** 이전 기도제목을 펼쳐 두는 수. 나머지는 제목 옆 목록 버튼으로 본다 — 공동체 나눔 자료실과 같다. */
 const PREVIEW_COUNT = 3;
@@ -65,6 +66,8 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         <Stat surface="love" label="이번 주 기도한 사람" value={week.prayedPeople} unit="명" />
         <Stat surface="warm" label="내가 올린 나눔" value={all.sharings} unit="개" />
       </div>
+
+      <PushSettings />
 
       <CommunitySection
         icon="/mascot/tears.png"

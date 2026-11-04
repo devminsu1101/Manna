@@ -8,11 +8,12 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 앱 안 알림(D-3627). 푸시는 아직 없다 — 붙일 때 `notify` 안에서 함께 보낸다.
+ * 앱 안 알림과 푸시 발송 작업. 알림 행이 기준이며 푸시 실패는 원래 행에 영향이 없다.
  *
  * - **보내는 쪽이 부른다.** 가입 신청 · 승인 · 마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`.
  *   이 서비스는 다른 서비스에 기대지 않는다 — 그래야 어디에 주입해도 순환이 생기지 않는다.
@@ -27,10 +28,15 @@ public class NotificationService {
 
     private final NotificationRepository notifications;
     private final PrayerLogRepository logs;
+    private final PushDeliveryService push;
+    private final JdbcTemplate jdbc;
 
-    public NotificationService(NotificationRepository notifications, PrayerLogRepository logs) {
+    public NotificationService(NotificationRepository notifications, PrayerLogRepository logs,
+            PushDeliveryService push, JdbcTemplate jdbc) {
         this.notifications = notifications;
         this.logs = logs;
+        this.push = push;
+        this.jdbc = jdbc;
     }
 
     public record Item(
@@ -43,10 +49,19 @@ public class NotificationService {
     /** 여러 사람에게 같은 알림. 같은 사람이 두 번 들어와도 하나만 만든다. */
     @Transactional
     public void notify(Collection<Integer> userIds, String type, String body, String linkPath) {
-        notifications.saveAll(
+        List<Notification> saved = notifications.saveAllAndFlush(
             new LinkedHashSet<>(userIds).stream()
                 .map(id -> new Notification(id, type, body, linkPath))
                 .toList());
+        saved.forEach(push::enqueue);
+    }
+
+    @Transactional
+    public Notification adminTest(Integer userId, String body) {
+        Notification saved = notifications.saveAndFlush(
+            new Notification(userId, Notification.ADMIN_TEST, body, "/mypage"));
+        push.enqueue(saved);
+        return saved;
     }
 
     @Transactional
@@ -75,7 +90,15 @@ public class NotificationService {
             notifications.countByUserIdAndReadAtIsNullAndCreatedAtGreaterThanEqual(me, keepFrom()));
     }
 
-    /** 하나씩 눌러야 읽음(사용자 결정). 남의 알림은 없는 것과 같다. */
+    /** 벨을 여는 순간, 보관 기간·목록 개수와 무관하게 전부 읽는다. */
+    @Transactional
+    public ListResponse readAll(Integer me) {
+        ensurePrayedForYou(me);
+        notifications.markAllRead(me);
+        return list(me);
+    }
+
+    /** 옛 개별 읽음 API는 호환을 위해 남긴다. 벨 화면은 readAll을 사용한다. */
     @Transactional
     public void read(Integer me, Integer id) {
         notifications
@@ -86,18 +109,22 @@ public class NotificationService {
 
     private void ensurePrayedForYou(Integer me) {
         LocalDate today = LocalDate.now(PrayerService.KST);
-        OffsetDateTime todayStart = today.atStartOfDay(PrayerService.KST).toOffsetDateTime();
-        if (notifications.existsByUserIdAndTypeAndCreatedAtGreaterThanEqual(
-                me, Notification.PRAYED_FOR_YOU, todayStart)) {
-            return;
+        LocalDate prayerDate = today.minusDays(1);
+        if (notifications.findByUserIdAndTypeAndPrayerDate(me, Notification.PRAYED_FOR_YOU, prayerDate).isEmpty()) {
+            ensureDailyPrayer(me, prayerDate, logs.countByPrayedFor_IdAndPrayedOn(me, prayerDate), false);
         }
-        // 마이페이지 맨 위 칸(PrayedForMe)과 같은 숫자 · 같은 문장이다 — 어제 기준(D-901).
-        long yesterday = logs.countByPrayedFor_IdAndPrayedOn(me, today.minusDays(1));
-        if (yesterday > 0) {
-            notifications.save(
-                new Notification(
-                    me, Notification.PRAYED_FOR_YOU, "날 위해 " + yesterday + "명이 기도하고 있어요", "/prayer"));
-        }
+    }
+
+    /** 자정 이후 벨 조회와 오전 6시 배치가 같은 행을 공유한다. */
+    @Transactional
+    public void ensureDailyPrayer(Integer userId, LocalDate prayerDate, long count, boolean sendPush) {
+        if (count <= 0) return;
+        jdbc.update("INSERT INTO notifications(user_id, type, body, link_path, prayer_date) "
+                + "VALUES (?, 'prayed_for_you', ?, '/prayer', ?) ON CONFLICT DO NOTHING",
+            userId, "날 위해 " + count + "명이 기도하고 있어요", prayerDate);
+        Notification n = notifications.findByUserIdAndTypeAndPrayerDate(
+            userId, Notification.PRAYED_FOR_YOU, prayerDate).orElseThrow();
+        if (sendPush && !n.isRead()) push.enqueue(n);
     }
 
     private static OffsetDateTime keepFrom() {

@@ -33,6 +33,13 @@ GOOGLE_CLIENT_SECRET=...
 ⚠️ **Desktop 타입이면 로컬만 되고 프로덕션은 안 된다**(07_HISTORY D-2904). 그 클라이언트의
 Authorized redirect URIs에 `http://localhost:3000/login/oauth2/code/google`이 있어야 한다.
 
+**푸시 키** — 백엔드 `.env`가 준비된 뒤 `apps/backend/`에서 아래 명령을 한 번 실행한다.
+키는 같은 파일에 저장되며 커밋되지 않는다. 다시 생성하면 기존 기기 구독은 사용할 수 없다.
+
+```
+node scripts/generate-vapid.mjs
+```
+
 **프론트 의존성** — `apps/frontend/`에서
 
 ```
@@ -112,7 +119,14 @@ docker exec -it manna_postgres psql -U manna_user -d manna_db
 ## 4. 스키마를 바꿨을 때
 
 `apps/init-db.sql`은 **볼륨이 처음 만들어질 때 한 번만** 실행된다. 파일을 고쳐도 떠 있는 DB는
-그대로다. 데이터를 버려도 되면 볼륨째 다시 만든다 — `apps/`에서
+그대로다. 푸시 알림 스키마는 기존 데이터를 유지하며 저장소 루트에서 적용한다.
+
+
+```
+PGPASSWORD=manna_password psql -h localhost -U manna_user -d manna_db -v ON_ERROR_STOP=1 -f apps/migrations/2026-11-04_push_notifications.sql
+```
+
+데이터를 버려도 되면 볼륨째 다시 만든다 — `apps/`에서
 
 ```
 docker compose down -v

@@ -7,6 +7,8 @@ import com.manna.backend.community.CommunityMember;
 import com.manna.backend.community.CommunityMemberRepository;
 import com.manna.backend.community.CommunityRepository;
 import com.manna.backend.domain.User;
+import com.manna.backend.notification.NotificationService;
+import com.manna.backend.notification.PushSubscriptionRepository;
 import com.manna.backend.repository.UserRepository;
 import com.manna.backend.sharing.Sharing;
 import com.manna.backend.sharing.SharingRepository;
@@ -16,8 +18,12 @@ import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,18 +45,24 @@ public class AdminController {
     private final CommunityRepository communities;
     private final CommunityMemberRepository members;
     private final SharingRepository sharings;
+    private final NotificationService notifications;
+    private final PushSubscriptionRepository pushSubscriptions;
 
     public AdminController(
             CurrentUser currentUser,
             UserRepository users,
             CommunityRepository communities,
             CommunityMemberRepository members,
-            SharingRepository sharings) {
+            SharingRepository sharings,
+            NotificationService notifications,
+            PushSubscriptionRepository pushSubscriptions) {
         this.currentUser = currentUser;
         this.users = users;
         this.communities = communities;
         this.members = members;
         this.sharings = sharings;
+        this.notifications = notifications;
+        this.pushSubscriptions = pushSubscriptions;
     }
 
     // ── 응답 ─────────────────────────────────────────────────────────────
@@ -87,6 +99,25 @@ public class AdminController {
     public record Request(Integer id, String body, String visibility, OffsetDateTime createdAt) {}
 
     public record UserDetail(Person user, List<String> communities, List<Request> requests) {}
+
+    public record TestNotificationRequest(Integer userId, String message) {}
+    public record TestNotificationResult(Integer notificationId, long subscriptionCount) {}
+
+    @PostMapping("/notifications/test")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public TestNotificationResult sendTest(@AuthenticationPrincipal OidcUser principal,
+            @RequestBody TestNotificationRequest request) {
+        requireAdmin(principal);
+        if (request == null || request.userId() == null || request.message() == null
+                || request.message().trim().isEmpty() || request.message().trim().length() > 120) {
+            throw ApiException.badRequest("사용자 ID와 1~120자의 메시지를 입력해 주세요.");
+        }
+        if (!users.existsById(request.userId())) throw ApiException.notFound("없는 사용자입니다.");
+        long count = pushSubscriptions.countByUserId(request.userId());
+        if (count == 0) throw ApiException.conflict("대상 사용자가 알림을 켠 기기가 없어요.");
+        var notification = notifications.adminTest(request.userId(), request.message().trim());
+        return new TestNotificationResult(notification.getId(), count);
+    }
 
     // ── GET /admin/communities ───────────────────────────────────────────
 

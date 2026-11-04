@@ -39,8 +39,8 @@
 | POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
 | GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔). period = today · week · month · all · days — **구현됨** |
 
-### Admin — 읽기 전용 관리자 (D-3625) — **구현됨**
-`users.is_admin`인 사람만. 아니면 `403`(화면은 404로 보인다). 방에 속하지 않아도 전부 본다. 쓰기는 없다.
+### Admin — 조회 + 시험 알림 — **로컬 구현됨**
+`users.is_admin`인 사람만. 아니면 `403`(조회 화면은 404로 보인다). 방에 속하지 않아도 전부 본다.
 `is_admin`을 켜는 API · 화면은 없다 — DB에서 손으로 켠다(09_DEPLOYMENT).
 
 | 메서드 | 경로 | 하는 일 |
@@ -49,6 +49,7 @@
 | GET | `/admin/communities/{id}` | `{ id, name, color, members[{ userId, name, profileImageUrl, role, status }], sharings[{ id, type, authorName, body, createdAt }] }` |
 | GET | `/admin/users` | 전체 사용자 `[{ id, name, profileImageUrl, communities[], latestRequest, createdAt }]`, 가입 최신순 |
 | GET | `/admin/users/{id}` | `{ user, communities[], requests[{ id, body, visibility, createdAt }] }` — **익명 기도제목도 준다** |
+| POST | `/admin/notifications/test` | `{ userId, message }` → 해당 사용자 한 명의 앱 안 알림과 푸시 발송 작업. 활성 구독이 없으면 `409`, 성공은 `202 { notificationId, subscriptionCount }` |
 
 - 기존 API의 권한 확인은 건드리지 않고 따로 둔다 — 기존 응답은 "나" 기준(내 역할 · 오늘 기도했는지)이라 관리자에게 맞지 않는다.
 - `communities[]`의 승인 대기 방은 이름 뒤에 ` (대기)`가 붙는다.
@@ -177,12 +178,16 @@
 > 기도제목은 저장이 `sharings(type='prayer')`이지만 **경로는 `/pray` 아래에 둔다.** 테이블이
 > 같다고 API까지 같을 이유는 없고, 기도는 Phase 2 · 나눔 전체는 Phase 3이다.
 
-### Notification — 앱 안 알림 (D-3627) — **구현됨**
+### Notification — 앱 안 알림·푸시 — **로컬 구현됨, 실기기 검증 전**
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
 | GET | `/notifications` | 최근 30일, 최신순 50개 `{ notifications: [{ id, type, body, linkPath, read, createdAt }] }` |
 | GET | `/notifications/unread-count` | 상단 벨 빨간 점 `{ count }` (같은 30일) |
 | POST | `/notifications/{id}/read` | 하나 읽음. `204`. 남의 알림이면 `404` |
+| POST | `/notifications/read-all` | 벨을 열 때 기존 미읽음 **전체**를 읽고 최근 30일·50개 목록을 반환. `200` |
+| GET | `/notifications/push-key` | 로그인한 사용자에게 VAPID 공개 키 `{ publicKey }`. 미설정이면 `503` |
+| POST | `/notifications/subscriptions` | 현재 기기의 `{ endpoint, keys: { p256dh, auth } }` 등록 또는 계정 재연결. `204` |
+| DELETE | `/notifications/subscriptions` | `{ endpoint }`로 **본인 기기만** 해제. `204` |
 
 - `type`과 받는 사람:
   - `join_request`: 가입 신청 → 그 방 리더
@@ -190,19 +195,20 @@
   - `new_sharing`: 새 나눔 → 고른 방들의 active 멤버. 작성자 제외, 겹치는 사람은 처음 겹친 방 하나. 링크는 그 방 글
   - `partners_started`: 기도마니또 시작 → 그 방 멤버(시작한 리더 제외)
   - `prayed_for_you`: "날 위해 n명이 기도하고 있어요"
-- `prayed_for_you`는 **읽을 때 만든다**(스케줄러 없음). 앞의 두 GET이 부를 때, 어제 날 위해 기도한 사람이 있고
-  오늘(KST) 아직 없으면 하나. 0명이면 만들지 않는다(D-1705).
-- 시트를 여는 것만으로는 읽음이 되지 않는다 — 줄을 눌러야 한다(사용자 결정). 30일이 지난 알림은 지우지 않고 목록 · 점에서만 뺀다.
+  - `admin_test`: 관리자 시험 발송 → 지정한 사용자 한 명
+- `prayed_for_you`는 자정 이후 벨 조회에서 먼저 만들 수 있다. KST 매일 06:00 배치는 그날 행이 없으면
+  만들고, 아직 읽지 않은 행에만 푸시를 예약한다. 전날 기도자가 0명이면 만들지 않는다(D-1705).
+- 벨을 여는 `read-all`은 날짜·50개 제한 없이 그 사용자의 기존 미읽음을 모두 읽는다. 푸시 발송 실패는
+  앱 안 알림을 지우지 않는다. 30일이 지난 알림은 삭제하지 않고 목록·점에서만 뺀다.
+- 관리자 시험 API는 서버에서 관리자 권한을 확인하고, 메시지는 앞뒤 공백을 제거한 뒤 1~120자만 받는다.
+  `202`는 발송 작업을 저장했다는 뜻이며 휴대폰에 표시됐다는 뜻은 아니다.
 
-### 초기 테스터 피드백 — 계획안, 전부 미구현 (D-3629~3631)
+### 초기 테스터 피드백 — 나눔 댓글·반응 계획안 (D-3630)
 
-현재 구현 API는 위 표와 아래 Sharing 절이 기준이다. 이 절은 승인된 다음 작업의 계약 초안이며, 실제 구현·검증 후 **구현됨**으로 바꾼다. 공통 세션·CSRF·에러 규약을 그대로 쓴다. 상세 근거와 화면 계획은 `10_TESTER_FEEDBACK_PLAN.md`.
+현재 구현 API는 위 표와 아래 Sharing 절이 기준이다. 이 절의 댓글·반응은 계약 초안이며, 실제 구현·검증 후 **구현됨**으로 바꾼다. 공통 세션·CSRF·에러 규약을 그대로 쓴다. 상세 근거와 화면 계획은 `10_TESTER_FEEDBACK_PLAN.md`.
 
 | 메서드 | 경로 | 계획한 동작 |
 |---|---|---|
-| POST | `/notifications/read-all` | 벨을 열 때 사용자의 기존 미읽음 **전체**를 읽고, 갱신 후 최근 30일 최대 50개 `{ notifications: [Item, ...] }` 반환. `200` |
-| POST | `/notifications/subscriptions` | 로그인한 기기의 PushSubscription(endpoint·`p256dh`·`auth`) 등록 또는 갱신. `204` |
-| DELETE | `/notifications/subscriptions` | `{ "endpoint": "https://..." }`로 그 기기의 구독 해제. `204` |
 | GET | `/sharings/{id}/comments?communityId=` | 해당 방의 댓글, 오래된 순. active 멤버만. `{ "comments": [...] }` |
 | POST | `/sharings/{id}/comments` | `{ "communityId": 3, "body": "..." }`로 작성. `201` |
 | DELETE | `/sharings/{id}/comments/{commentId}` | 작성자 본인 댓글 삭제. `204` |
@@ -210,8 +216,6 @@
 | PUT | `/sharings/{id}/reaction` | `{ "communityId": 3, "key": "warm" }`로 내 반응 선택·교체. `204` |
 | DELETE | `/sharings/{id}/reaction?communityId=` | 내 반응 취소. `204` |
 
-- `read-all`은 먼저 오늘의 `prayed_for_you`를 생성한 뒤 `user_id = 나 AND read_at IS NULL`을 날짜·목록 개수 제한 없이 갱신한다. 다른 사용자의 행은 바꾸지 않는다. 기존 `POST /notifications/{id}/read`는 호환을 위해 남기되 벨 UI는 더 이상 부르지 않는다. D-3627의 옛 읽음 규칙은 `07_HISTORY.md`에 그대로 남긴다.
-- 푸시는 기존 `notifications` 행이 기준이다. 사용자가 허용한 구독에만 트랜잭션 확정 뒤 발송하고, 발송 실패가 앱 안 알림을 취소하지 않는다. `prayed_for_you`를 앱이 닫힌 동안에도 보내려면 일일 생성 작업이 필요하다. 공개 VAPID 키는 프런트 배포 설정에서 제공하며 개인 키는 서버에만 둔다.
 - 댓글·반응은 `type='prayer'`에 적용하지 않는다. 요청의 `communityId`는 그 글의 `sharing_communities` 연결과 현재 사용자의 active 가입을 **둘 다** 확인한다. 다른 방·pending·비멤버·기도제목은 `404`; 볼 수 있는 남의 댓글 삭제는 `403`. 본문은 공백 금지·최대 500자, 반응 키는 `hi | warm | tears | together`만 허용한다. 댓글·반응 알림은 이번 범위에 넣지 않는다.
 - 과거 한 글이 여러 방에 연결된 행도 있으므로 댓글·반응은 `(sharing_id, community_id)`별로 분리한다. 글을 볼 수 있는 작성자라도 현재 active 멤버가 아니면 그 방의 댓글·반응은 볼 수 없다. 초대 복사 안내는 브라우저 동작만 바뀌므로 API 추가가 없다.
 
@@ -468,8 +472,8 @@ URL이 배포마다 동일하므로 `immutable`이면 이미 읽은 클라이언
 
 `204`. 대상이 `pending`이 아니면 `409`.
 
-⚠️ **승인 결과를 푸시로 알리지 않는다.** 앱 안 알림(벨)으로만 간다 — 신청은 리더에게, 승인은 신청자에게(D-3627).
-푸시는 아직 없다.
+승인 결과는 앱 안 알림으로 저장하고, 허용한 기기에는 푸시 발송 작업도 만든다. 신청은 리더에게,
+승인은 신청자에게 간다(D-3627, D-3629). 운영 실수신은 아직 검증 전이다.
 
 #### DELETE /communities/{id}/members/{userId} — 거절 · 강퇴 · 나가기
 

@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { listAllCommunities, listAllUsers } from "@/features/admin/api";
+import { TestNotificationForm } from "@/features/admin/TestNotificationForm";
+import { getMe } from "@/features/auth/api";
 import { COMMUNITY_COLORS } from "@/features/community/colors";
 import { CommunitySection, ROW_CLASS } from "@/features/community/components/CommunitySection";
 import { MainTopBar } from "@/features/home/MainTopBar";
@@ -16,7 +18,7 @@ export const metadata: Metadata = { title: "관리자 | 만나" };
  * 쓰기(강퇴 · 삭제)는 없다 — 보기만 한다. 관리자가 아니면 404(`features/admin/api.ts`).
  */
 export default async function AdminPage() {
-  const [communities, users] = await Promise.all([listAllCommunities(), listAllUsers()]);
+  const [communities, users, me] = await Promise.all([listAllCommunities(), listAllUsers(), getMe()]);
 
   return (
     <AppShell topBar={<MainTopBar title="관리자" />} className="space-y-6">
@@ -52,7 +54,7 @@ export default async function AdminPage() {
               <span className="min-w-0">
                 <span className="block truncate font-bold text-foreground">{u.name}</span>
                 <span className="block truncate text-xs text-foreground/60">
-                  {u.communities.join(" · ") || "공동체 없음"}
+                  ID {u.id} · {u.communities.join(" · ") || "공동체 없음"}
                 </span>
                 {u.latestRequest && (
                   <span className="block truncate text-xs text-foreground/50">
@@ -65,6 +67,7 @@ export default async function AdminPage() {
           </Link>
         ))}
       </CommunitySection>
+      {me && <TestNotificationForm defaultUserId={me.id} />}
     </AppShell>
   );
 }
