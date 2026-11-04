@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { currentSubscription, needsHomeScreen, pushSupported, registerSubscription, turnOffPush, urlBase64ToBytes } from "./push-client";
 
 type Status = "loading" | "on" | "off" | "unsupported" | "install" | "denied";
@@ -34,14 +34,14 @@ export function PushSettings() {
 
   async function turnOn() {
     setError("");
-    // iPhone은 사용자의 탭에 직접 연결된 권한 요청만 허용한다.
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      setStatus(permission === "denied" ? "denied" : "off");
-      return;
-    }
     setBusy(true);
     try {
+      // iPhone은 사용자의 탭에 직접 연결된 권한 요청만 허용한다.
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setStatus(permission === "denied" ? "denied" : "off");
+        return;
+      }
       const keyResponse = await fetch("/api/v1/notifications/push-key", { credentials: "include" });
       if (!keyResponse.ok) throw new Error("key");
       const { publicKey } = await keyResponse.json() as { publicKey: string };
@@ -72,22 +72,36 @@ export function PushSettings() {
     }
   }
 
+  const canToggle = status === "on" || status === "off";
+  const on = status === "on";
+
   return (
     <section className="rounded-2xl bg-surface-warm p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="font-bold text-foreground">이 기기에서 알림 받기</h2>
-          <p className="mt-1 text-sm text-foreground/60">
-            {status === "on" ? "이 기기에 알림을 보내고 있어요" : "기도 소식과 공동체 알림을 받을 수 있어요"}
-          </p>
-        </div>
-        {(status === "on" || status === "off") && (
-          <Button type="button" variant={status === "on" ? "outline" : "warm"}
-            onClick={status === "on" ? turnOff : turnOn} disabled={busy}>
-            {busy ? "처리 중…" : status === "on" ? "끄기" : "켜기"}
-          </Button>
-        )}
-      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="이 기기에서 알림 받기"
+        disabled={!canToggle || busy}
+        onClick={on ? turnOff : turnOn}
+        className="flex w-full items-center justify-between gap-3 rounded-xl text-left disabled:cursor-default"
+      >
+        <span>
+          <span className="block font-bold text-foreground">이 기기에서 알림 받기</span>
+          <span className="mt-1 block text-sm text-foreground/60">
+            {busy ? "처리 중…" : on ? "이 기기에 알림을 보내고 있어요" : "기도 소식과 공동체 알림을 받을 수 있어요"}
+          </span>
+        </span>
+        <span
+          aria-hidden
+          className={cn(
+            "flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors",
+            on ? "justify-end bg-primary" : "justify-start bg-foreground/20",
+          )}
+        >
+          <span className="size-6 rounded-full bg-white shadow-sm" />
+        </span>
+      </button>
       {status === "install" && <p className="mt-3 text-sm text-foreground/70">iPhone Safari의 공유 버튼에서 ‘홈 화면에 추가’한 뒤, 홈 화면 아이콘으로 열어 주세요.</p>}
       {status === "unsupported" && <p className="mt-3 text-sm text-foreground/70">이 브라우저에서는 휴대폰 알림을 사용할 수 없어요.</p>}
       {status === "denied" && <p className="mt-3 text-sm text-foreground/70">iPhone 설정 → 알림 → 만나에서 알림을 허용해 주세요.</p>}

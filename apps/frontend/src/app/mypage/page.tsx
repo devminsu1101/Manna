@@ -67,8 +67,6 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         <Stat surface="warm" label="내가 올린 나눔" value={all.sharings} unit="개" />
       </div>
 
-      <PushSettings />
-
       <CommunitySection
         icon="/mascot/tears.png"
         title="이전 기도제목"
@@ -91,6 +89,8 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
       >
         <MyPrayerHistory requests={requests.slice(0, PREVIEW_COUNT)} />
       </CommunitySection>
+
+      <PushSettings />
 
       {/* 이용후기는 구글폼으로 받는다(D-3623). 앱 안에 폼을 만들지 않는다 — 받는 쪽이 시트로 보기 편하다. */}
       <div className="space-y-2">
