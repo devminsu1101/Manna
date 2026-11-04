@@ -1,11 +1,11 @@
 # 초기 테스터 피드백 반영 계획
 
-> **상태: 푸시·전체 읽음은 로컬 구현, 운영 배포·실기기 검증 전 (2026-11-04).** 나눔 댓글/반응·초대 복사 안내는 미구현이다. 현재 API는 `03_API_SPEC.md`, 현재 DB는 `apps/init-db.sql`과 `06_ERD.md`가 기준이다.
+> **상태 (2026-11-05):** 운영 iPhone에서 홈 화면 웹앱의 푸시 수신을 확인했다. 앱 안 알림과 같은 푸시 본문·벨을 닫을 때 전체 읽음은 수정했으며 배포 후 재검증이 필요하다. 06:00 배치·Android 수신은 미확인이다. 나눔 댓글/반응·초대 복사 안내는 미구현이다. 현재 API는 `03_API_SPEC.md`, 현재 DB는 `apps/init-db.sql`과 `06_ERD.md`가 기준이다.
 > 결정의 이유는 `07_HISTORY.md` D-3629~3632, 진행 상태는 `05_ROADMAP.md`를 본다.
 
 ## 현재 호출 흐름
 
-- `manifest.ts`는 standalone 시작 화면과 아이콘을 정의한다. 서비스 워커와 구독·발송 코드는 로컬 구현됐고 운영 배포 전이다.
+- `manifest.ts`는 standalone 시작 화면과 아이콘을 정의한다. 서비스 워커와 구독·발송 코드는 운영에 배포됐고 iPhone에서 푸시 수신을 확인했다.
 - 가입 신청·승인·기도마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`가 `NotificationService.notify`를 부른다. `NotificationRepository`는 사용자별 최근 30일 최대 50개와 미읽음 수를 조회한다. `prayed_for_you`는 벨 조회에서 생성하거나 오전 6시 배치가 보충한다.
 - `NotificationBell`은 시트를 열 때 `GET /notifications`로 목록만 조회하고, 닫을 때 `POST /notifications/read-all`로 전체 읽음 처리한다.
 - 나눔은 `sharings`와 `sharing_communities`에 저장한다. 여러 방을 선택하면 방마다 별도 글이 생긴다(D-3507). 목록·홈 소식·상세가 `/sharings/{id}`로 이어지며 댓글·반응은 아직 없다.
@@ -20,7 +20,7 @@
 3. `NotificationService.notify`가 저장한 알림을 **트랜잭션 확정 후** 해당 사용자의 구독으로 발송한다. 만료된 구독은 제거하고 일시적인 발송 실패를 기록한다. 발송 실패는 원래 API와 앱 안 알림 저장을 실패시키지 않는다.
 4. `prayed_for_you`는 자정부터 기존처럼 벨 조회에서 만들 수 있다. KST 06:00 배치는 전날 기도자 수가 1명 이상인 사람의 빠진 행을 만들고, 아직 읽지 않은 행만 푸시 작업에 넣는다. 본문은 기존과 같은 “날 위해 n명이 기도하고 있어요”다. `prayer_date` 고유 인덱스로 중복 생성을 막는다.
 
-**실기기 시험:** 관리자 화면 아래에서 사용자 ID와 메시지를 입력해 `POST /api/v1/admin/notifications/test`를 호출한다. 관리자만 가능하며, 대상에게 구독 기기가 없으면 `409`를 반환한다. `202`는 발송 작업 접수이고 휴대폰 수신 여부는 iPhone에서 직접 확인한다. 홈 화면 앱에서 알림 켜기 → 자기 ID로 시험 발송 → 앱 닫은 상태에서 수신 → 탭 이동 → 벨 열기만으로 전체 읽음 → 알림 끄기를 확인한다.
+**실기기 시험:** 관리자 화면 아래에서 사용자 ID와 메시지를 입력해 `POST /api/v1/admin/notifications/test`를 호출한다. 관리자만 가능하며, 대상에게 구독 기기가 없으면 `409`를 반환한다. `202`는 발송 작업 접수이고 휴대폰 수신 여부는 iPhone에서 직접 확인한다. 홈 화면 앱에서 알림 켜기 → 자기 ID로 시험 발송 → 앱 닫은 상태에서 수신 → 탭 이동 → 벨을 열어 미읽음 확인 → 벨을 닫아 전체 읽음 → 알림 끄기를 확인한다.
 
 **플랫폼 조건:** iOS·iPadOS 16.4 이상은 홈 화면에 추가한 standalone 웹앱에서 Web Push를 쓸 수 있다. Android 지원 브라우저는 브라우저와 설치 앱에서 쓸 수 있다. 공통으로 HTTPS, 서비스 워커, 사용자 허용이 필요하다. 권한·구독 요청은 버튼 클릭에 연결하고 `denied`·미결정 상태를 처리한다. Safari에서는 수신한 푸시를 사용자에게 즉시 보여 줘야 한다. [Apple Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers), [MDN PushManager.subscribe](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe), [MDN 권한 요청](https://developer.mozilla.org/en-US/docs/Web/API/Notification/requestPermission_static).
 

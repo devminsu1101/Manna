@@ -39,7 +39,7 @@
 | POST | `/me/photo` | 프로필 사진 올리기 — **Next 라우트 핸들러**(백엔드 아님) — **구현됨** |
 | GET | `/me/stats?period=` | 기간별 숫자(기도한 사람 · 누른 횟수 · 나눔). period = today · week · month · all · days — **구현됨** |
 
-### Admin — 조회 + 시험 알림 — **로컬 구현됨**
+### Admin — 조회 + 시험 알림 — **운영 iPhone 시험 발송 확인**
 `users.is_admin`인 사람만. 아니면 `403`(조회 화면은 404로 보인다). 방에 속하지 않아도 전부 본다.
 `is_admin`을 켜는 API · 화면은 없다 — DB에서 손으로 켠다(09_DEPLOYMENT).
 
@@ -178,7 +178,7 @@
 > 기도제목은 저장이 `sharings(type='prayer')`이지만 **경로는 `/pray` 아래에 둔다.** 테이블이
 > 같다고 API까지 같을 이유는 없고, 기도는 Phase 2 · 나눔 전체는 Phase 3이다.
 
-### Notification — 앱 안 알림·푸시 — **로컬 구현됨, 실기기 검증 전**
+### Notification — 앱 안 알림·푸시 — **운영 iPhone 푸시 수신 확인, 최신 본문·읽음 시점은 재검증 전**
 | 메서드 | 경로 | 하는 일 |
 |---|---|---|
 | GET | `/notifications` | 최근 30일, 최신순 50개 `{ notifications: [{ id, type, body, linkPath, read, createdAt }] }` |
