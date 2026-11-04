@@ -194,6 +194,27 @@
   오늘(KST) 아직 없으면 하나. 0명이면 만들지 않는다(D-1705).
 - 시트를 여는 것만으로는 읽음이 되지 않는다 — 줄을 눌러야 한다(사용자 결정). 30일이 지난 알림은 지우지 않고 목록 · 점에서만 뺀다.
 
+### 초기 테스터 피드백 — 계획안, 전부 미구현 (D-3629~3631)
+
+현재 구현 API는 위 표와 아래 Sharing 절이 기준이다. 이 절은 승인된 다음 작업의 계약 초안이며, 실제 구현·검증 후 **구현됨**으로 바꾼다. 공통 세션·CSRF·에러 규약을 그대로 쓴다. 상세 근거와 화면 계획은 `10_TESTER_FEEDBACK_PLAN.md`.
+
+| 메서드 | 경로 | 계획한 동작 |
+|---|---|---|
+| POST | `/notifications/read-all` | 벨을 열 때 사용자의 기존 미읽음 **전체**를 읽고, 갱신 후 최근 30일 최대 50개 `{ notifications: [Item, ...] }` 반환. `200` |
+| POST | `/notifications/subscriptions` | 로그인한 기기의 PushSubscription(endpoint·`p256dh`·`auth`) 등록 또는 갱신. `204` |
+| DELETE | `/notifications/subscriptions` | `{ "endpoint": "https://..." }`로 그 기기의 구독 해제. `204` |
+| GET | `/sharings/{id}/comments?communityId=` | 해당 방의 댓글, 오래된 순. active 멤버만. `{ "comments": [...] }` |
+| POST | `/sharings/{id}/comments` | `{ "communityId": 3, "body": "..." }`로 작성. `201` |
+| DELETE | `/sharings/{id}/comments/{commentId}` | 작성자 본인 댓글 삭제. `204` |
+| GET | `/sharings/{id}/reactions?communityId=` | `{ "counts": [{ "key": "warm", "count": 2 }], "myKey": "warm" }` |
+| PUT | `/sharings/{id}/reaction` | `{ "communityId": 3, "key": "warm" }`로 내 반응 선택·교체. `204` |
+| DELETE | `/sharings/{id}/reaction?communityId=` | 내 반응 취소. `204` |
+
+- `read-all`은 먼저 오늘의 `prayed_for_you`를 생성한 뒤 `user_id = 나 AND read_at IS NULL`을 날짜·목록 개수 제한 없이 갱신한다. 다른 사용자의 행은 바꾸지 않는다. 기존 `POST /notifications/{id}/read`는 호환을 위해 남기되 벨 UI는 더 이상 부르지 않는다. D-3627의 옛 읽음 규칙은 `07_HISTORY.md`에 그대로 남긴다.
+- 푸시는 기존 `notifications` 행이 기준이다. 사용자가 허용한 구독에만 트랜잭션 확정 뒤 발송하고, 발송 실패가 앱 안 알림을 취소하지 않는다. `prayed_for_you`를 앱이 닫힌 동안에도 보내려면 일일 생성 작업이 필요하다. 공개 VAPID 키는 프런트 배포 설정에서 제공하며 개인 키는 서버에만 둔다.
+- 댓글·반응은 `type='prayer'`에 적용하지 않는다. 요청의 `communityId`는 그 글의 `sharing_communities` 연결과 현재 사용자의 active 가입을 **둘 다** 확인한다. 다른 방·pending·비멤버·기도제목은 `404`; 볼 수 있는 남의 댓글 삭제는 `403`. 본문은 공백 금지·최대 500자, 반응 키는 `hi | warm | tears | together`만 허용한다. 댓글·반응 알림은 이번 범위에 넣지 않는다.
+- 과거 한 글이 여러 방에 연결된 행도 있으므로 댓글·반응은 `(sharing_id, community_id)`별로 분리한다. 글을 볼 수 있는 작성자라도 현재 active 멤버가 아니면 그 방의 댓글·반응은 볼 수 없다. 초대 복사 안내는 브라우저 동작만 바뀌므로 API 추가가 없다.
+
 ---
 
 ## 확정된 스키마

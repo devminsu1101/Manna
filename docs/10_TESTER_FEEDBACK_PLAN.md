@@ -1,0 +1,62 @@
+# 초기 테스터 피드백 반영 계획
+
+> **상태: 승인된 계획, 미구현 (2026-11-04).** 이 문서는 바꿀 동작을 기록한다. 현재 API는 `03_API_SPEC.md`, 현재 DB는 `apps/init-db.sql`과 `06_ERD.md`가 기준이다. 완료 표시는 구현·검증 후에만 한다.
+> 결정의 이유는 `07_HISTORY.md` D-3629~3632, 진행 상태는 `05_ROADMAP.md`를 본다.
+
+## 현재 호출 흐름
+
+- `manifest.ts`는 standalone 시작 화면과 아이콘을 정의한다. 서비스 워커, 푸시 구독·발송은 없다.
+- 가입 신청·승인·기도마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`가 `NotificationService.notify`를 부른다. `NotificationRepository`는 사용자별 최근 30일 최대 50개와 미읽음 수를 조회한다. `prayed_for_you`만 벨 조회 시 생성한다.
+- `NotificationBell`은 시트를 열 때 목록을 GET하고, 항목을 누를 때 `POST /notifications/{id}/read`를 보낸다.
+- 나눔은 `sharings`와 `sharing_communities`에 저장한다. 여러 방을 선택하면 방마다 별도 글이 생긴다(D-3507). 목록·홈 소식·상세가 `/sharings/{id}`로 이어지며 댓글·반응은 아직 없다.
+- active 멤버의 대문에 있는 `InviteButton`은 `${location.origin}/invite/{inviteCode}`를 `copyToClipboard`로 복사한다. Clipboard API 실패 시 `execCommand`로 재시도하고 성공 여부를 반환한다. 지금은 아이콘·스크린 리더 문구를 1.5초만 보여 준다.
+
+## 1. PWA 푸시 알림
+
+**목표:** 이미 저장하는 앱 안 알림을 사용자가 허용한 기기에도 보여 준다. 앱 안 알림이 기준이며 푸시 실패로 알림 행을 잃지 않는다.
+
+1. 프런트에 서비스 워커를 등록한다. `push`에서는 곧바로 `showNotification`을 호출하고, `notificationclick`에서는 알림의 앱 내부 `linkPath`를 연다. 알림 설정의 **알림 받기** 버튼에서만 권한 요청·구독을 시작한다. 지원하지 않거나 거절한 환경은 앱 안 알림을 계속 사용한다.
+2. 인증된 구독 등록·해제 API와 `push_subscriptions` 테이블을 둔다. 사용자 한 명에게 여러 기기를 허용하고 endpoint를 중복 저장하지 않는다. endpoint·암호화 키는 비밀 값으로 취급하며 VAPID 개인 키는 서버 환경변수에 둔다. 재로그인·계정 전환·로그아웃·구독 해제 시 기기와 사용자 연결을 정리한다. 다른 계정의 알림 노출을 줄이기 위해 OS 알림 본문에는 민감한 공동체 내용을 싣지 않는다.
+3. `NotificationService.notify`가 저장한 알림을 **트랜잭션 확정 후** 해당 사용자의 구독으로 발송한다. 만료된 구독은 제거하고 일시적인 발송 실패를 기록한다. 발송 실패는 원래 API와 앱 안 알림 저장을 실패시키지 않는다.
+4. `prayed_for_you`는 지금 접속 시 생성하므로, 앱을 열지 않아도 보내려면 KST 기준 일일 생성 작업이 필요하다. 기존 `ensurePrayedForYou`와 중복되지 않게 동일한 날짜 기준으로 처리한다.
+
+**플랫폼 조건:** iOS·iPadOS 16.4 이상은 홈 화면에 추가한 standalone 웹앱에서 Web Push를 쓸 수 있다. Android 지원 브라우저는 브라우저와 설치 앱에서 쓸 수 있다. 공통으로 HTTPS, 서비스 워커, 사용자 허용이 필요하다. 권한·구독 요청은 버튼 클릭에 연결하고 `denied`·미결정 상태를 처리한다. Safari에서는 수신한 푸시를 사용자에게 즉시 보여 줘야 한다. [Apple Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers), [MDN PushManager.subscribe](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe), [MDN 권한 요청](https://developer.mozilla.org/en-US/docs/Web/API/Notification/requestPermission_static).
+
+**확인 기준:** Android 브라우저·설치 앱과 iOS 홈 화면 앱에서 허용·거절·알림 탭을 확인한다. 여러 기기, 구독 만료, 로그아웃·계정 전환, 앱을 닫은 동안의 기도 소식을 확인한다. iOS 일반 브라우저에서는 지원 안내가 정확해야 한다.
+
+## 2. 공동체 나눔 댓글·캐릭터 반응
+
+**목표:** 글이 걸린 **공동체 안에서만** 댓글과 반응을 주고받는다. 기도제목(`type='prayer'`)에는 붙이지 않는다.
+
+- DB 계획: `sharing_comments(id, sharing_id, community_id, author_id, body, created_at)`와 `sharing_reactions(sharing_id, community_id, user_id, reaction_key, created_at)`를 추가한다. 반응은 `(sharing_id, community_id, user_id)`당 하나이며 같은 키를 다시 누르면 취소, 다른 키는 교체한다. `(sharing_id, community_id)`는 `sharing_communities`를 참조하고 삭제 시 종속 행을 정리한다. 이 방 식별자가 있어야 과거 한 글이 여러 방에 걸린 행도 댓글을 서로 노출하지 않는다.
+- API 계획: `/sharings/{id}/comments` 조회·작성, `/sharings/{id}/comments/{commentId}` 본인 삭제, `/sharings/{id}/reactions` 요약 조회, `/sharings/{id}/reaction` 내 선택·취소. 요청의 `communityId`가 해당 글에 연결되어 있고 내가 그 방의 **active** 멤버인지 확인한다. 작성자는 자신의 글 상세를 볼 수 있어도 방에서 나간 뒤에는 새 대화에 참여하거나 댓글·반응을 조회할 수 없다. 본문 길이·반응 키는 서버에서 검증하고, 남의 방·기도제목은 404로 감춘다.
+- 화면 계획: `/sharings/{id}` 하단에 반응별 수·내 선택과 댓글 목록·작성·본인 삭제를 둔다. 작성·삭제 실패는 화면에 알리고, 성공 후 목록·수를 갱신한다. 글을 삭제하면 댓글·반응도 함께 사라진다.
+- 이미지 계획: 현재 `public/mascot/`의 투명 PNG `hi`, `warm`, `tears`, `together`를 첫 반응 세트로 재사용하고 각 버튼에 텍스트 이름과 접근 가능한 라벨을 붙인다. `default`는 기본 캐릭터, `bible`은 책 그림이므로 반응에서는 제외한다. 새 표정 제작은 이 원본의 형태·색·투명도를 기준으로 후속 작업에서 결정한다.
+
+**확인 기준:** active·pending·비멤버·탈퇴한 작성자별 조회·작성 권한, 다른 공동체와 과거 다중 연결 글 사이의 격리, 반응 교체·취소, 글·방 삭제 시 정리, 모바일 키보드와 스크린 리더를 검증한다.
+
+## 3. 벨을 열면 미읽음 전체 읽음
+
+**목표:** 벨 시트를 성공적으로 열어 알림 목록을 확인하면 그 사용자의 **기존 미읽음 행 전체**를 읽음 처리한다. 목록의 최근 30일·50개 제한 밖에 있는 행도 포함한다.
+
+- `POST /notifications/read-all`을 추가한다. Service가 오늘의 `prayed_for_you`를 먼저 생성하고 Repository가 `user_id = 나 AND read_at IS NULL`을 한 번에 갱신한다. GET 조회에 **읽음 처리**를 넣지 않는다.
+- 응답으로 갱신 후의 최근 30일 최대 50개 목록을 주면 벨의 열기 요청 한 번으로 목록·읽음 상태를 맞출 수 있다. `NotificationBell`은 성공 후 빨간 점을 내리고, 실패 시 읽음 성공처럼 표시하지 않는다. 줄 클릭 시의 개별 읽음 호출은 UI에서 제거하되 기존 API는 호환을 위해 유지한다.
+- 새 알림이 읽음 요청과 동시에 도착할 수 있으므로 읽음 처리 시점 이후에 생성된 알림은 다음 조회에서 미읽음으로 남는다. 30일 보관 표시는 그대로다.
+
+**확인 기준:** 다른 사용자의 알림은 바뀌지 않고, 50개 초과·30일 이전 알림도 읽음이 되며, 재호출이 안전하다. 기도 소식이 그날 새로 만들어져도 즉시 읽음 상태가 된다. 실패하면 점이 거짓으로 사라지지 않는다.
+
+## 4. 초대 링크 복사 안내
+
+**목표:** 기존 링크 생성·복사 흐름을 유지하면서 결과를 눈으로도 확인할 수 있게 한다. API·DB 변경은 없다.
+
+- `InviteButton`의 `copyToClipboard`가 `true`를 돌려준 경우에만 아래 문구를 버튼 근처의 보이는 `role="status"` 영역에 표시한다: **“초대 링크를 복사했어요. 초대할 사람이나 그룹에 붙여넣어 공유해 주세요.”**
+- `false`이면 **“초대 링크를 복사하지 못했어요. 다시 시도해 주세요.”**를 표시한다. 기존 아이콘·`aria-label`·스크린 리더 안내를 결과와 일치시키고, 긴 문장을 읽을 시간을 확보한다. 재시도 시 이전 결과를 지운다.
+
+**확인 기준:** HTTPS와 지원 브라우저의 복사 성공, 권한 거부·비보안 LAN 환경의 폴백 성공 또는 실패, 카톡 등에 붙여넣은 실제 URL, 스크린 리더 안내를 확인한다.
+
+## 구현 시 함께 맞출 문서·배포 순서
+
+- `03_API_SPEC.md`의 **계획안**을 실제 계약으로 바꾸고, `05_ROADMAP.md`는 검증한 항목만 `[x]`로 바꾼다. `08_USER_FLOWS.md`의 예정 흐름도 구현 흐름으로 바꾼다.
+- 새 테이블의 실제 DDL을 `apps/init-db.sql`에 추가하고 **같은 컬럼·제약**을 `06_ERD.md`에 반영한다. `01_PROJECT_OVERVIEW.md`의 현재 상태·테이블 수가 달라지면 함께 갱신한다.
+- 운영 DB에는 `09_DEPLOYMENT.md`에 확정된 증분 SQL을 기록하고 **DB 적용 후 백엔드 배포** 순서를 지킨다. VAPID 키·설정이 생기면 `00_SETUP_GUIDE.md`와 `09_DEPLOYMENT.md`의 환경변수 설명을 갱신한다. `07_HISTORY.md`에는 구현·검증 결과를 새 날짜 항목으로 덧붙인다.
+- 백엔드 `NotificationApiTests`·`SharingApiTests`에 권한·경계 사례를 추가하고, 프런트는 실제 모바일 브라우저에서 복사와 푸시 권한을 확인한다. `next.config.ts`의 `/api/v1/notifications/**`·`/api/v1/sharings/**` rewrite와 `apiFetch`의 CSRF 경로를 사용한다.
