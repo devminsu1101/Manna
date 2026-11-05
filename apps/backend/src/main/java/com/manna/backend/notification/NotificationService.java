@@ -115,7 +115,7 @@ public class NotificationService {
         }
     }
 
-    /** 자정 이후 벨 조회와 오전 6시 배치가 같은 행을 공유한다. */
+    /** 자정 이후 벨 조회와 자정 배치가 같은 행을 공유한다. */
     @Transactional
     public void ensureDailyPrayer(Integer userId, LocalDate prayerDate, long count, boolean sendPush) {
         if (count <= 0) return;

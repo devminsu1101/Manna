@@ -218,7 +218,7 @@ class NotificationApiTests {
     }
 
     @Test
-    void 새벽에_만든_기도_소식은_6시_배치가_재사용하고_이미_읽었으면_푸시하지_않는다() throws Exception {
+    void 미리_만든_기도_소식은_배치가_재사용하고_이미_읽었으면_푸시하지_않는다() throws Exception {
         User me = user("me");
         User other = user("other");
         LocalDate yesterday = LocalDate.now(PrayerService.KST).minusDays(1);
