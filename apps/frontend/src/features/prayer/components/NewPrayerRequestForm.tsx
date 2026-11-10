@@ -85,7 +85,7 @@ export function NewPrayerRequestForm() {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={6}
-          placeholder="요즘 어떤 기도가 필요하신가요"
+          placeholder="요즘 어떤 기도가 필요하신가요?"
           className="min-h-40 w-full resize-none rounded-xl border border-border bg-white p-4 leading-relaxed text-foreground outline-none placeholder:text-foreground/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </CommunitySection>
