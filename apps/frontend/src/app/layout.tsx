@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 
 import { ToneNavigation } from "@/components/ToneNavigation";
 import { PushSessionSync } from "@/features/notification/PushSessionSync";
+import { InstallGuide } from "@/features/install/InstallGuide";
 import { SURFACE_COLOR } from "@/lib/brand";
 import "./globals.css";
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         {/* 색이 바뀌는 이동만 문서 이동으로 돌린다 — iOS가 상태바 색을 다시 읽게. */}
         <ToneNavigation />
         <PushSessionSync />
+        <InstallGuide />
         {children}
       </body>
     </html>

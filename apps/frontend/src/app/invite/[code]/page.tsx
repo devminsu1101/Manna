@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { getInvite } from "@/features/community/api";
 import { JoinButton } from "@/features/community/components/JoinButton";
 import { isInviteCode } from "@/features/community/invite";
+import { PendingInviteInstallCheck } from "@/features/install/PendingInviteInstallCheck";
 
 export const metadata: Metadata = {
   title: "공동체 초대 | 만나",
@@ -47,7 +48,8 @@ export default async function InvitePage({ params }: PageProps) {
       </div>
 
       {invite.myStatus === "pending" ? (
-        <div className="w-full max-w-sm">
+        <div data-invite-pending className="w-full max-w-sm">
+          <PendingInviteInstallCheck />
           <p className="font-bold text-foreground">가입을 신청했어요</p>
           <p className="mt-1 text-sm text-foreground/60">리더가 승인하면 들어갈 수 있어요</p>
           <Link

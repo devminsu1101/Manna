@@ -14,6 +14,7 @@ import { getMyPrayerRequests, getMyStats, getPraySummary } from "@/features/pray
 import { MyPrayerHistory } from "@/features/prayer/components/MyPrayerHistory";
 import { PrayedForMe } from "@/features/prayer/components/PrayedForMe";
 import { PushSettings } from "@/features/notification/PushSettings";
+import { InstallGuideButton } from "@/features/install/InstallGuideButton";
 
 /** 이전 기도제목을 펼쳐 두는 수. 나머지는 제목 옆 목록 버튼으로 본다 — 공동체 나눔 자료실과 같다. */
 const PREVIEW_COUNT = 3;
@@ -91,6 +92,8 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
       </CommunitySection>
 
       <PushSettings />
+
+      <InstallGuideButton />
 
       {/* 이용후기는 구글폼으로 받는다(D-3623). 앱 안에 폼을 만들지 않는다 — 받는 쪽이 시트로 보기 편하다. */}
       <div className="space-y-2">

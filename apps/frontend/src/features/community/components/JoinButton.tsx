@@ -41,7 +41,10 @@ export function JoinButton({ code }: { code: string }) {
       const res = await apiFetch(`/api/v1/invites/${code}/requests`, { method: "POST" });
       if (res.status === 401) return login(); // 세션이 그새 끊겼다
       // 409(이미 신청함)도 화면을 다시 그리면 "승인 대기 중"으로 맞춰진다.
-      if (res.ok || res.status === 409) return router.refresh();
+      if (res.ok || res.status === 409) {
+        router.refresh();
+        return;
+      }
       setError("신청하지 못했어요. 잠시 후 다시 시도해 주세요.");
     } catch {
       setError("신청하지 못했어요. 잠시 후 다시 시도해 주세요.");
