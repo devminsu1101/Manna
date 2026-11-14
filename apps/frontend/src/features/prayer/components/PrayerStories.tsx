@@ -17,6 +17,7 @@ import { PrayButton } from "./PrayButton";
 type Me = { name: string; profileImageUrl: string | null; request: MyPrayerRequest | null };
 
 const ME = "me";
+const NEXT_PERSON_DELAY_MS = 100;
 
 /**
  * 중보기도실 맨 위 스토리 줄 — 인스타 스토리처럼 가로 한 줄이다(사용자 결정, 2026-10-16).
@@ -24,8 +25,8 @@ const ME = "me";
  * - **맨 왼쪽은 나.** 누르면 아래 칸에 내 지금 기도제목 + 새로 작성 · 이전 기도제목.
  * - 그 옆은 볼 수 있는 사람들. 순서는 서버 그대로 — 기도마니또 먼저, 그다음 D-1909 정렬.
  * - 링: 오늘 아직 기도 안 함 = 핑크, 기도함 = 회색. 기도는 하루 단위라 매일 0시(KST)에 다시 핑크.
- * - 누르면 **이 줄 바로 아래 칸**에 그 사람 기도제목과 "기도했어요"가 뜬다. 기도하면 `PrayButton`이
- *   서버를 다시 그려 링이 회색이 된다 — 로컬 상태로 눌린 척하지 않는다. 그냥 다른 사람을 누르면 그대로다.
+ * - 누르면 **이 줄 바로 아래 칸**에 그 사람 기도제목과 "기도했어요"가 뜬다. 저장에 성공하면
+ *   다음 미기도자로 자동 이동하고 서버를 다시 그려 링을 회색으로 바꾼다. 실패하면 제자리에 머문다.
  * - 집중 모드(D-3611)에서는 `me`를 넘기지 않는다 — 내 칸은 숨기고 다른 사람들만 남는다.
  *
  * D-3622(실사용 피드백):
@@ -61,6 +62,9 @@ export function PrayerStories({
     people.find((p) => !p.prayedByMeToday) ??
     people[0];
   const [selected, setSelected] = useState<number | typeof ME>(first?.userId ?? ME);
+  const selectedRef = useRef(selected);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [completedFor, setCompletedFor] = useState<number | null>(null);
   const person = selected === ME ? null : ordered.find((p) => p.userId === selected);
 
   const order: (number | typeof ME)[] = ordered.map((p) => p.userId);
@@ -68,11 +72,42 @@ export function PrayerStories({
   const row = useRef<HTMLUListElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
+  useEffect(() => () => {
+    if (advanceTimer.current !== null) clearTimeout(advanceTimer.current);
+  }, []);
+
   useEffect(() => {
     row.current
       ?.querySelector('[aria-pressed="true"]')
       ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
   }, [selected]);
+
+  function select(next: number | typeof ME) {
+    if (advanceTimer.current !== null) clearTimeout(advanceTimer.current);
+    advanceTimer.current = null;
+    selectedRef.current = next;
+    setSelected(next);
+  }
+
+  function onPrayed(userId: number) {
+    // 저장 중 다른 사람을 직접 골랐다면 자동 이동으로 그 선택을 덮어쓰지 않는다.
+    if (selectedRef.current !== userId) return;
+    const index = ordered.findIndex((p) => p.userId === userId);
+    if (index < 0) return;
+    const next = ordered
+      .slice(index + 1)
+      .concat(ordered.slice(0, index))
+      .find((p) => !p.prayedByMeToday && p.userId !== userId);
+
+    if (!next) {
+      setCompletedFor(userId);
+      return;
+    }
+
+    advanceTimer.current = setTimeout(() => {
+      if (selectedRef.current === userId) select(next.userId);
+    }, NEXT_PERSON_DELAY_MS);
+  }
 
   function onTouchEnd(e: React.TouchEvent) {
     const start = touchStart.current;
@@ -83,7 +118,7 @@ export function PrayerStories({
     // 세로 스크롤과 헷갈리지 않게 가로로 충분히, 세로보다 많이 밀었을 때만.
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
     const next = order[order.indexOf(selected) + (dx < 0 ? 1 : -1)];
-    if (next !== undefined) setSelected(next);
+    if (next !== undefined) select(next);
   }
 
   if (!me && people.length === 0) {
@@ -107,7 +142,7 @@ export function PrayerStories({
             image={me.profileImageUrl}
             ring="none"
             active={selected === ME}
-            onClick={() => setSelected(ME)}
+            onClick={() => select(ME)}
           />
         )}
         {ordered.map((p) => (
@@ -117,10 +152,17 @@ export function PrayerStories({
             image={p.profileImageUrl}
             ring={p.prayedByMeToday ? "done" : p.partnerIn ? "partner" : "todo"}
             active={selected === p.userId}
-            onClick={() => setSelected(p.userId)}
+            onClick={() => select(p.userId)}
           />
         ))}
       </ul>
+
+      {completedFor !== null &&
+        ordered.every((p) => p.prayedByMeToday || p.userId === completedFor) && (
+          <p role="status" className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-center text-sm font-medium text-foreground">
+            오늘 함께 기도할 사람을 모두 기도했어요
+          </p>
+        )}
 
       {/* key — 다른 사람으로 넘어가면 본문 스크롤이 맨 위에서 다시 시작한다. */}
       <div
@@ -131,7 +173,7 @@ export function PrayerStories({
         }
         onTouchEnd={onTouchEnd}
       >
-        {person ? <PersonPanel person={person} /> : me && <MyPanel request={me.request} />}
+        {person ? <PersonPanel person={person} onPrayed={onPrayed} /> : me && <MyPanel request={me.request} />}
       </div>
     </section>
   );
@@ -194,7 +236,7 @@ function Story({
   );
 }
 
-function PersonPanel({ person }: { person: PrayPerson }) {
+function PersonPanel({ person, onPrayed }: { person: PrayPerson; onPrayed: (userId: number) => void }) {
   const { name, communities, request, prayedByMeToday, partnerIn } = person;
 
   return (
@@ -224,7 +266,11 @@ function PersonPanel({ person }: { person: PrayPerson }) {
       </div>
 
       <div className="shrink-0">
-        <PrayButton userId={person.userId} prayedToday={prayedByMeToday} />
+        <PrayButton
+          userId={person.userId}
+          prayedToday={prayedByMeToday}
+          onSuccess={() => onPrayed(person.userId)}
+        />
       </div>
     </>
   );
