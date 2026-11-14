@@ -17,7 +17,7 @@ import { PrayButton } from "./PrayButton";
 type Me = { name: string; profileImageUrl: string | null; request: MyPrayerRequest | null };
 
 const ME = "me";
-const NEXT_PERSON_DELAY_MS = 100;
+const NEXT_PERSON_DELAY_MS = 300;
 
 /**
  * 중보기도실 맨 위 스토리 줄 — 인스타 스토리처럼 가로 한 줄이다(사용자 결정, 2026-10-16).
@@ -64,7 +64,6 @@ export function PrayerStories({
   const [selected, setSelected] = useState<number | typeof ME>(first?.userId ?? ME);
   const selectedRef = useRef(selected);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [completedFor, setCompletedFor] = useState<number | null>(null);
   const person = selected === ME ? null : ordered.find((p) => p.userId === selected);
 
   const order: (number | typeof ME)[] = ordered.map((p) => p.userId);
@@ -99,10 +98,7 @@ export function PrayerStories({
       .concat(ordered.slice(0, index))
       .find((p) => !p.prayedByMeToday && p.userId !== userId);
 
-    if (!next) {
-      setCompletedFor(userId);
-      return;
-    }
+    if (!next) return;
 
     advanceTimer.current = setTimeout(() => {
       if (selectedRef.current === userId) select(next.userId);
@@ -156,13 +152,6 @@ export function PrayerStories({
           />
         ))}
       </ul>
-
-      {completedFor !== null &&
-        ordered.every((p) => p.prayedByMeToday || p.userId === completedFor) && (
-          <p role="status" className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-center text-sm font-medium text-foreground">
-            오늘 함께 기도할 사람을 모두 기도했어요
-          </p>
-        )}
 
       {/* key — 다른 사람으로 넘어가면 본문 스크롤이 맨 위에서 다시 시작한다. */}
       <div
