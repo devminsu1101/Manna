@@ -1,5 +1,27 @@
 # ERD (데이터 모델)
 
+> **아래 다이어그램과 표는 현재 운영 스키마**(`apps/init-db.sql`)를 설명한다. 2026-11-18 확정한 다음 모델은 [`12_PRAYER_FIRST_REDESIGN.md`](12_PRAYER_FIRST_REDESIGN.md)의 `sharing_posts`·`sharing_post_audiences`·`prayer_requests`·`patch_notes` 및 글 단위 댓글/반응을 따른다. 기존 `sharings`를 곧바로 바꾸거나 삭제하지 않는다.
+
+## 다음 버전 데이터 관계 (계획, 미구현)
+
+```mermaid
+erDiagram
+    users ||--o{ sharing_posts : "작성"
+    users ||--o{ prayer_requests : "작성"
+    users ||--o{ sharing_post_comments : "댓글"
+    users ||--o{ sharing_post_reactions : "반응"
+    sharing_posts ||--o{ sharing_post_audiences : "선택한 공동체"
+    communities ||--o{ sharing_post_audiences : "공개 대상"
+    sharing_posts ||--o{ sharing_post_comments : "글 단위 대화"
+    sharing_posts ||--o{ sharing_post_reactions : "글 단위 반응"
+    users ||--o{ patch_notes : "관리자 작성"
+```
+
+- `sharing_posts`: 한 발행 글에 한 행. `body TEXT`, 최대 10,000자는 API에서 검증. 사진 참조, 작성/수정 시각, `all|selected` 공개 모드. `selected`의 고정 집합은 `sharing_post_audiences`; `all`은 조회 시점의 공동체 연결을 계산한다.
+- `prayer_requests`: 작성자별 활성 한 건만 허용. 새 행 생성 시 이전 활성 행을 끄고 이력은 남긴다. `prayer_logs`에는 계속 제목 FK를 두지 않는다.
+- 댓글은 글 FK, 반응은 `(post_id, user_id)` 고유. 공동체 ID로 대화를 나누지 않는다. 읽기·쓰기는 해당 글의 **현재 권한**을 검사한다.
+- `patch_notes`는 관리자 게시물이며 나눔 공개 범위를 상속하지 않는다. `sharings`와 `sharing_communities`는 마이그레이션 원본·옛 ID 대응에 남긴다. 실제 컬럼·제약은 구현 시 마이그레이션 파일에 고정한다.
+
 Manna의 전체 데이터 모델. 성경 3테이블과 사용자·공동체·나눔·기도·알림·푸시 11테이블이다.
 
 - **실제 스키마:** `apps/init-db.sql` — 이 문서와 컬럼·제약이 일치한다. 스키마가 진실이고 이 문서는 설명이다.
@@ -176,7 +198,7 @@ append-only라 이력은 남고, "최신만"은 조회 시점의 규칙이다. �
 ## 의도적 제외
 
 - **성경 읽기 진도(last-read):** 테이블로 만들지 않는다. 이미 프론트에서 쿠키로 구현돼 있고(`apps/frontend/src/features/bible/last-read.ts`), 서버 계정에 묶을 이유가 아직 없다. 기기 간 동기화가 요구되면 그때 `user_reading_progress(user_id, book_id, chapter_num, updated_at)`를 얹는다.
-- **좋아요/댓글:** 이 14개 화면에 나눔 좋아요·댓글 UI가 없다. 반응은 기도(prayer_logs)가 대신한다. 필요해지면 별도 테이블로 추가.
+- **좋아요/댓글(당시 MVP 제외):** 이 14개 화면에는 나눔 좋아요·댓글 UI가 없었다. **2026-11-18 개편에는 글 단위 댓글·캐릭터 반응을 포함한다**(맨 위 다음 버전 모델). 기도 기록(`prayer_logs`)은 별개다.
 - **오늘의 말씀(@dailymayim):** 메인의 "오늘의 말씀"은 외부 채널 인용으로 보인다. 자체 콘텐츠가 아니면 테이블이 아니라 설정/피드 연동 문제다. 출처가 확정되면 재검토.
 
 ## API 명세 대응
