@@ -45,11 +45,11 @@ export function markInstalled(): void { save(INSTALLED_KEY, "true"); }
 
 export function isInstallGuideRoute(pathname: string): boolean {
   if (pathname.startsWith("/dev") || pathname.startsWith("/admin")) return false;
-  if (pathname === "/login" || pathname === "/landing" || pathname === "/") return false;
+  if (pathname === "/login" || pathname === "/landing") return false;
   if (pathname.startsWith("/bible")) return false;
   if (pathname.endsWith("/new") || pathname.endsWith("/edit")) return false;
   if (pathname === "/prayer" && new URLSearchParams(window.location.search).get("focus") === "1") return false;
   if (pathname.startsWith("/invite/")) return document.querySelector("[data-invite-pending]") !== null;
-  return pathname.startsWith("/communities")
+  return pathname === "/" || pathname.startsWith("/communities")
     || pathname.startsWith("/prayer") || pathname.startsWith("/mypage") || pathname.startsWith("/sharings/");
 }

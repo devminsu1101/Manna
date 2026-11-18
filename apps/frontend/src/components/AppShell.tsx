@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { BottomNav } from "@/components/BottomNav";
+import { INSTALL_GUIDE_RECHECK } from "@/features/install/install-guide";
 import { cn } from "@/lib/utils";
 
 /**
@@ -45,6 +46,11 @@ export function AppShell({
   // 리렌더를 만들지 않으려고 onScroll이 ref만 갱신한다. 언마운트 때 el.scrollTop을 직접
   // 읽지 않는 이유이기도 하다 — cleanup 시점에는 엘리먼트가 이미 DOM에서 빠졌을 수 있다.
   const last = useRef(0);
+
+  // `/`의 시작 화면이 사라지고 실제 기도실이 붙은 뒤 설치 안내 자격을 다시 확인한다.
+  useEffect(() => {
+    if (pathname === "/") window.dispatchEvent(new Event(INSTALL_GUIDE_RECHECK));
+  }, [pathname]);
 
   // Next의 스크롤 복원은 window에만 걸려서 내부 스크롤러는 뒤로가기에 맨 위로 리셋된다.
   // 중보기도실이 "들어가서 기도하고 나오기"를 반복하는 화면이라 그대로 두면 매일 거슬린다.

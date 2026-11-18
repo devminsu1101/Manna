@@ -33,12 +33,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * 기본 상단바 색. 홈 · 공동체 · /sharings/new · /login · /landing · 404가 전부 warm이라
- * 여기 한 줄이 그 전부를 덮는다. 성경·기도는 자기 세그먼트 layout에서 덮어쓴다.
+ * 기본 상단바 색. 공동체 · 나눔 · 로그인 · 404는 warm이다.
+ * 성경·기도·첫 화면은 각 세그먼트에서 덮어쓴다.
  *
- * 매니페스트의 `theme_color`도 같은 warm이어야 한다(app/manifest.ts) — iOS standalone은
- * **앱을 켜는 순간**의 상태바 색을 매니페스트에서, 그 뒤로는 이 meta에서 가져온다.
- * start_url이 `/`라 둘이 같은 값이라야 켤 때 색이 튀지 않는다.
+ * iOS standalone은 **앱을 켜는 순간** 매니페스트의 색을 쓰고, 이후 이 meta를 따른다.
+ * 매니페스트는 노란 시작 화면, `/`의 viewport는 준비된 기도실의 love 색을 따른다.
  */
 export const viewport: Viewport = {
   themeColor: SURFACE_COLOR.warm,

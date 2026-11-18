@@ -5,10 +5,8 @@
  * JSON으로 읽기 때문에 var(--manna-brand)를 해석하지 못한다. CSS로는 해결할 수 없는
  * 지점이라 값을 한 곳에 모아두고, globals.css의 primitive와 짝을 맞춘다.
  *
- * globals.css의 --manna-brand / --manna-white를 바꾸면 여기도 함께 바꿀 것.
+ * globals.css의 화면 색을 바꾸면 여기의 대응하는 색도 함께 바꿀 것.
  */
-export const BACKGROUND_COLOR = "#FFFFFF"; // --manna-white — 매니페스트의 스플래시 배경
-
 /**
  * 화면별 상단바 색 = **그 화면의 status bar 색**. globals.css의 --surface-* 와 같은 값이다.
  *
@@ -27,6 +25,9 @@ export const SURFACE_COLOR = {
   cool: "#F0FFFE", // --manna-second-light — 성경
   love: "#FFEFF2", // --manna-third-light — 기도
 } as const;
+
+/** 설치 앱을 처음 열 때 OS가 쓰는 배경. 기존 노란 시작 화면과 맞춘다. */
+export const BACKGROUND_COLOR = SURFACE_COLOR.warm;
 
 export type Tone = keyof typeof SURFACE_COLOR;
 
@@ -49,6 +50,7 @@ export const FOCUS_COLOR = "#141216";
  * 읽히지만 404 화면은 크림이다. 주소를 손으로 쳐야 닿는 자리라 그대로 둔다.
  */
 export function toneOf(pathname: string): Tone {
+  if (pathname === "/") return "love";
   if (pathname.startsWith("/bible")) return "cool";
   if (pathname.startsWith("/prayer")) return "love";
   return "warm";

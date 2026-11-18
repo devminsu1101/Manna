@@ -46,6 +46,7 @@ export function InstallGuide() {
 
   const checkEligibility = useCallback(async () => {
     if (!isInstallGuideRoute(pathname) || detectInstallPlatform() === "other" || !mayAutoOpen()) return;
+    if (pathname === "/" && !document.querySelector("[data-app-shell]")) return;
     try {
       const me = await fetch("/api/v1/me", { credentials: "include" });
       if (!me.ok) return;

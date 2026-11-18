@@ -11,25 +11,26 @@ import { useMe } from "./useMe";
  * 로그인 상태를 세션으로 판정해야 해서 클라이언트로 뗐다(`useMe`).
  * 사진이 없거나 판정 전이거나 미로그인이면 빈 사람 아이콘. 미로그인도 `/mypage`가 로그인으로 안내한다.
  */
-export function MyTab() {
+export function MyTab({ active = false }: { active?: boolean }) {
   const { me } = useMe();
 
   return (
-    <Link href="/mypage" className="flex w-16 flex-col items-center gap-1">
+    <Link href="/mypage" aria-current={active ? "page" : undefined} className="flex w-16 flex-col items-center gap-1">
       {me?.profileImageUrl ? (
         <Image
           src={me.profileImageUrl}
           alt=""
           width={32}
           height={32}
-          className="size-8 rounded-full object-cover"
+          className={`size-8 rounded-full object-cover ${active ? "" : "grayscale opacity-50"}`}
         />
       ) : (
-        <span className="flex size-8 items-center justify-center rounded-full bg-foreground/5">
+        <span className={`flex size-8 items-center justify-center rounded-full bg-foreground/5 ${active ? "" : "grayscale opacity-50"}`}>
           <User className="size-5 text-foreground/60" />
         </span>
       )}
-      <span className="text-xs font-medium text-foreground">마이</span>
+      <span className={`text-xs font-medium ${active ? "text-foreground" : "text-foreground/50"}`}>마이</span>
+      <span aria-hidden className={`h-1 w-4 rounded-full ${active ? "bg-tone" : "bg-transparent"}`} />
     </Link>
   );
 }

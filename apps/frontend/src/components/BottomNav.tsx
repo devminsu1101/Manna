@@ -1,62 +1,52 @@
-import { Plus } from "lucide-react";
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { MyTab } from "@/features/auth/MyTab";
-import { composeHref } from "@/features/compose/href";
 
 /**
- * 하단 탭 네비게이션. 공동체 · 성경 읽기 · (가운데 작성) · 기도하기 · 마이.
- * 아이콘은 마스코트 일러스트라 lucide로 대체할 수 없다. public/mascot/의 PNG를 쓴다.
- * 마이만 예외 — 내 프로필 사진이다(MyTab). 홈("만나!")은 없앴다(app/page.tsx).
+ * 하단 탭 네비게이션. 기도 · 나눔(현재는 공동체 목록) · 성경 · 마이.
+ * 아이콘은 기존 마스코트 그림을 쓴다. 마이는 내 프로필 사진이다(MyTab).
  *
  * 위치는 호출부가 정한다. 성경 리더에서는 스크롤에 따라 숨었다 나타나야 하는데,
  * 그 transform은 클라이언트 래퍼(ReaderChrome)가 소유해야 하기 때문이다.
  */
 const TABS = [
-  // 방 하나가 아니라 목록으로 간다 — 개수와 무관하게 항상 거친다(D-1001, D-1701).
-  // 맨 왼쪽인 이유: 홈("만나!")을 없앤 뒤 로그인한 사람의 첫 화면이다(app/page.tsx).
-  { href: "/communities", label: "공동체", icon: "/mascot/together.png" },
-  // 장을 직접 찍지 않는다. /bible이 마지막에 읽던 장으로 이어준다 — 이 한 겹 덕분에
-  // 여기가 정적인 href를 갖는 서버 컴포넌트로 남는다.
-  { href: "/bible", label: "성경 읽기", icon: "/mascot/bible.png" },
-  { href: "/prayer", label: "기도하기", icon: "/mascot/warm.png" },
+  { href: "/prayer", label: "기도", icon: "/mascot/warm.png" },
+  { href: "/communities", label: "나눔", icon: "/mascot/together.png" },
+  { href: "/bible", label: "성경", icon: "/mascot/bible.png" },
 ] as const;
 
 export function BottomNav() {
-  const [left, right] = [TABS.slice(0, 2), TABS.slice(2)];
+  const pathname = usePathname();
 
   return (
     // 아래 여백이 위보다 두껍다. 화면 맨 아래 모서리는 엄지가 닿기 나쁜 자리라 탭 영역이
     // 거기서 끝나면 안 된다. env(safe-area-inset-bottom)은 쓰지 않는다 — viewport-fit=cover가
     // 없으면 그 값이 0이라 지금보다 나빠진다.
     <nav className="flex items-center justify-around border-t border-border bg-background px-2 pt-2 pb-6">
-      {left.map((tab) => (
-        <NavTab key={tab.href} {...tab} />
+      {TABS.map((tab) => (
+        <NavTab key={tab.href} {...tab} active={isActive(tab.href, pathname)} />
       ))}
-
-      {/* 공동체 나눔이 먼저 골라진 + 화면. 기도제목은 그 화면 위쪽에서 바꾼다(D-3610). */}
-      <Link
-        href={composeHref()}
-        aria-label="새로 작성하기"
-        className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-tone text-tone"
-      >
-        <Plus className="size-6" />
-      </Link>
-
-      {right.map((tab) => (
-        <NavTab key={tab.href} {...tab} />
-      ))}
-      <MyTab />
+      <MyTab active={pathname.startsWith("/mypage")} />
     </nav>
   );
 }
 
-function NavTab({ href, label, icon }: { href: string; label: string; icon: string }) {
+function isActive(href: string, pathname: string) {
+  if (href === "/prayer") return pathname === "/" || pathname.startsWith("/prayer");
+  if (href === "/communities") return pathname.startsWith("/communities") || pathname.startsWith("/sharings");
+  return pathname.startsWith(href);
+}
+
+function NavTab({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
   return (
-    <Link href={href} className="flex w-16 flex-col items-center gap-1">
-      <Image src={icon} alt="" width={32} height={32} className="size-8 object-contain" />
-      <span className="text-xs font-medium text-foreground">{label}</span>
+    <Link href={href} aria-current={active ? "page" : undefined} className="flex w-16 flex-col items-center gap-1">
+      <Image src={icon} alt="" width={32} height={32} className={`size-8 object-contain ${active ? "" : "grayscale opacity-50"}`} />
+      <span className={`text-xs font-medium ${active ? "text-foreground" : "text-foreground/50"}`}>{label}</span>
+      <span aria-hidden className={`h-1 w-4 rounded-full ${active ? "bg-tone" : "bg-transparent"}`} />
     </Link>
   );
 }
