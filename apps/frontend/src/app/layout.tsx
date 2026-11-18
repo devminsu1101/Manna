@@ -17,6 +17,19 @@ const pretendard = localFont({
   weight: "45 920",
 });
 
+const IOS_STARTUP_SIZES = [
+  [375, 667, 2],
+  [375, 812, 3],
+  [390, 844, 3],
+  [393, 852, 3],
+  [402, 874, 3],
+  [414, 896, 3],
+  [428, 926, 3],
+  [430, 932, 3],
+  [440, 956, 3],
+  [768, 1024, 2],
+] as const;
+
 export const metadata: Metadata = {
   // og:image(opengraph-image.tsx)는 절대 주소여야 카톡이 읽는다. Vercel이 운영 도메인을 넣어 준다.
   metadataBase: new URL(
@@ -26,6 +39,18 @@ export const metadata: Metadata = {
   ),
   title: "만나",
   description: "말씀과 기도로 함께하는 공동체",
+  appleWebApp: {
+    capable: true,
+    title: "만나",
+    statusBarStyle: "default",
+    startupImage: [
+      "/startup/ios-430x932-3x.png",
+      ...IOS_STARTUP_SIZES.map(([width, height, scale]) => ({
+        url: `/startup/ios-${width}x${height}-${scale}x.png`,
+        media: `(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${scale})`,
+      })),
+    ],
+  },
   // iOS Safari '홈 화면에 추가'가 /apple-touch-icon.png를 찾다 404를 낸다.
   // 이 링크를 주면 그걸 대신 쓴다 — 404도 없애고 홈 아이콘도 제대로 나온다.
   // 180px 전용 파일을 따로 둔다(iOS 홈 아이콘 규격). iOS는 투명을 검게 칠하므로 배경이 꽉 찬 그림이다.
