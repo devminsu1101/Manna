@@ -51,6 +51,9 @@ export const metadata: Metadata = {
       })),
     ],
   },
+  // Next 16의 appleWebApp.capable은 mobile-web-app-capable만 출력한다.
+  // iOS 홈 화면 앱용 태그는 별도로 명시한다.
+  other: { "apple-mobile-web-app-capable": "yes" },
   // iOS Safari '홈 화면에 추가'가 /apple-touch-icon.png를 찾다 404를 낸다.
   // 이 링크를 주면 그걸 대신 쓴다 — 404도 없애고 홈 아이콘도 제대로 나온다.
   // 180px 전용 파일을 따로 둔다(iOS 홈 아이콘 규격). iOS는 투명을 검게 칠하므로 배경이 꽉 찬 그림이다.

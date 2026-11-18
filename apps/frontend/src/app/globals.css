@@ -92,11 +92,6 @@
   --tone-surface: var(--manna-third-light);
 }
 
-/* 첫 실행 화면은 `/`의 정적 레이아웃에서 먼저 나온다. 기도실 셸이 오면 즉시 숨긴다. */
-:root:has([data-app-shell]) [data-launch-screen] {
-  display: none;
-}
-
 /* 중보기도실 집중 모드(D-3611). 기도회 · 새벽에 밝은 화면이 옆 사람에게 민폐가 되지 않게 화면 전체를
    어둡게 한다. `.dark` 토큰을 따로 만들지 않고 이 범위에서만 시맨틱 토큰을 바꿔 입힌다 —
    마커는 app/prayer/page.tsx의 `<AppShell focus>`가 심는다. --background는 lib/brand.ts의 FOCUS_COLOR(상태바)와 짝이다.
