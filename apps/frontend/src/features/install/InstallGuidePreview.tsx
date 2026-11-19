@@ -27,7 +27,7 @@ export function InstallGuidePreview() {
         </Button>)}
       </div>
       <InstallGuideSheet open={open} platform={selected.platform} canPrompt={selected.canPrompt} preview
-        onClose={() => setOpen(false)} onInstalled={() => setOpen(false)} onPrompt={() => {}} />
+        onClose={() => setOpen(false)} onSnooze={() => setOpen(false)} onInstalled={() => setOpen(false)} onPrompt={() => {}} />
     </main>
   );
 }

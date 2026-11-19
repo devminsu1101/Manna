@@ -19,10 +19,13 @@ type DeferredInstallPrompt = Event & {
 export function InstallGuide() {
   const pathname = usePathname();
   const promptEvent = useRef<DeferredInstallPrompt | null>(null);
+  const dismissedPath = useRef<string | null>(null);
   const [canPrompt, setCanPrompt] = useState(false);
   const [openPath, setOpenPath] = useState<string | null>(null);
   const open = openPath === pathname && isInstallGuideRoute(pathname);
   const platform: InstallPlatform = typeof navigator === "undefined" ? "other" : detectInstallPlatform();
+
+  useEffect(() => { dismissedPath.current = null; }, [pathname]);
 
   useEffect(() => {
     function beforeInstall(event: Event) {
@@ -45,7 +48,7 @@ export function InstallGuide() {
   }, []);
 
   const checkEligibility = useCallback(async () => {
-    if (!isInstallGuideRoute(pathname) || detectInstallPlatform() === "other" || !mayAutoOpen()) return;
+    if (dismissedPath.current === pathname || !isInstallGuideRoute(pathname) || detectInstallPlatform() === "other" || !mayAutoOpen()) return;
     if (pathname === "/" && !document.querySelector("[data-app-shell]")) return;
     try {
       const me = await fetch("/api/v1/me", { credentials: "include" });
@@ -53,7 +56,7 @@ export function InstallGuide() {
       const res = await fetch("/api/v1/communities", { credentials: "include" });
       if (!res.ok) return;
       const body: { communities?: { status: string }[] } = await res.json();
-      if (body.communities?.some((c) => c.status === "pending" || c.status === "active")
+      if (dismissedPath.current !== window.location.pathname && body.communities?.some((c) => c.status === "pending" || c.status === "active")
         && isInstallGuideRoute(window.location.pathname) && mayAutoOpen()) setOpenPath(window.location.pathname);
     } catch { /* 오프라인·서버 오류일 때는 다음 화면에서 다시 확인한다. */ }
   }, [pathname]);
@@ -77,8 +80,13 @@ export function InstallGuide() {
   }, []);
 
   function close() {
-    snoozeToday();
+    dismissedPath.current = pathname;
     setOpenPath(null);
+  }
+
+  function snooze() {
+    snoozeToday();
+    close();
   }
 
   async function promptInstall() {
@@ -91,9 +99,9 @@ export function InstallGuide() {
       const choice = await event.userChoice;
       if (choice.outcome === "accepted") markInstalled();
     } catch { /* 설치 요청이 소멸한 경우 수동 안내를 유지한다. */ }
-    close();
+    snooze();
   }
 
   return <InstallGuideSheet open={open} platform={platform} canPrompt={canPrompt && !isStandalone()}
-    onClose={close} onInstalled={() => { markInstalled(); setOpenPath(null); }} onPrompt={promptInstall} />;
+    onClose={close} onSnooze={snooze} onInstalled={() => { markInstalled(); setOpenPath(null); }} onPrompt={promptInstall} />;
 }

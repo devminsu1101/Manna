@@ -13,6 +13,7 @@ type Props = {
   platform: InstallPlatform;
   canPrompt: boolean;
   onClose: () => void;
+  onSnooze: () => void;
   onInstalled: () => void;
   onPrompt: () => void;
   preview?: boolean;
@@ -44,7 +45,7 @@ function instructions(platform: InstallPlatform, canPrompt: boolean): string[] {
   return ["휴대폰의 Safari 또는 인터넷 앱에서 이 페이지를 여세요.", "공유 또는 메뉴에서 ‘홈 화면에 추가’를 선택하세요."];
 }
 
-export function InstallGuideSheet({ open, platform, canPrompt, onClose, onInstalled, onPrompt, preview = false }: Props) {
+export function InstallGuideSheet({ open, platform, canPrompt, onClose, onSnooze, onInstalled, onPrompt, preview = false }: Props) {
   const [copied, setCopied] = useState(false);
   const kakao = platform === "ios-kakao" || platform === "android-kakao";
   const steps = instructions(platform, canPrompt);
@@ -102,7 +103,7 @@ export function InstallGuideSheet({ open, platform, canPrompt, onClose, onInstal
         {preview && showPrompt && <p className="mt-2 text-center text-xs text-foreground/50">미리보기에서는 설치 버튼이 동작하지 않습니다.</p>}
         <div className="mt-5 flex items-center justify-between gap-2 border-t border-border pt-4">
           <Button variant="ghost" onClick={onInstalled}>이미 설치했어요</Button>
-          <Button variant="outline" onClick={onClose}>나중에</Button>
+          <Button variant="outline" onClick={onSnooze}>오늘 안 보기</Button>
         </div>
       </SheetContent>
     </Sheet>
