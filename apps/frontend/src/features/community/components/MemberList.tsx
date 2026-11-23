@@ -6,7 +6,6 @@ import { CommunitySection, ROW_CLASS } from "./CommunitySection";
 import { InviteButton } from "./InviteButton";
 import { MemberActions } from "./MemberActions";
 import { PendingActions } from "./PendingActions";
-import { StartPartnersButton } from "./StartPartnersButton";
 
 /**
  * 멤버 목록 (D-1003). 시안의 공지사항 자리에 대신 들어온 구역이다.
@@ -22,14 +21,12 @@ export function MemberList({
   members,
   myRole,
   inviteCode,
-  partnersStarted,
 }: {
   communityId: number;
   members: CommunityMember[];
   myRole: MemberRole;
   /** 멤버 모두에게 온다 — 초대는 누구나, 승인은 리더만(D-3628). */
   inviteCode?: string;
-  partnersStarted: boolean;
 }) {
   // 리더가 맨 위, 나머지는 서버 순서(가입순) 그대로 — sort는 안정 정렬이다.
   const active = members
@@ -76,10 +73,6 @@ export function MemberList({
         ))}
       </ul>
 
-      {/* 리더가 멤버를 다 받은 뒤 한꺼번에 시작한다(D-3602). 혼자인 방은 짝을 지을 수 없다. */}
-      {myRole === "leader" && !partnersStarted && active.length >= 2 && (
-        <StartPartnersButton communityId={communityId} />
-      )}
     </CommunitySection>
   );
 }

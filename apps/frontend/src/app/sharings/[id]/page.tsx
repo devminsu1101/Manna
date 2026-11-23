@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -7,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { getSharing } from "@/features/sharing/api";
+import { SharingArticle } from "@/features/sharing/components/SharingArticle";
 import { DeleteSharingButton } from "@/features/sharing/components/DeleteSharingButton";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -23,34 +23,14 @@ export default async function SharingPage({ params }: PageProps) {
   const sharing = await getSharing(Number((await params).id));
   if (!sharing) notFound();
 
-  const { author } = sharing;
-
   return (
     <AppShell
       topBar={<MainTopBar icon="/mascot/together.png" title={TYPE_LABEL[sharing.type]} />}
       className="flex flex-col"
     >
-      <section className="rounded-2xl bg-surface-warm p-4">
-        <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3">
-          <Image
-            src={author.profileImageUrl ?? "/mascot/default.png"}
-            alt=""
-            width={40}
-            height={40}
-            className="size-10 rounded-full object-contain"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-bold text-foreground">{author.name}</span>
-            <span className="block text-xs text-foreground/50">
-              {sharing.createdAt.slice(0, 10)}
-            </span>
-          </span>
-        </div>
-
-        <p className="mt-2 whitespace-pre-line rounded-xl bg-white px-4 py-5 leading-relaxed text-foreground">
-          {sharing.body}
-        </p>
-      </section>
+      <div className="mx-4">
+        <SharingArticle sharing={sharing} profileHref={`/prayer?u=${sharing.author.userId}`} />
+      </div>
 
       {sharing.mine && (
         <div className="mt-4 grid grid-cols-2 gap-2">

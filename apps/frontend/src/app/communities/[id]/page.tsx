@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { getCommunity } from "@/features/community/api";
+import { CommunitySettingsButton } from "@/features/community/components/CommunitySettingsButton";
+import { StartPartnersButton } from "@/features/community/components/StartPartnersButton";
 import { CommunityLook } from "@/features/community/components/CommunityLook";
 import { CommunityTitle } from "@/features/community/components/CommunityTitle";
 import { LeaveOrDeleteButton } from "@/features/community/components/LeaveOrDeleteButton";
@@ -48,42 +50,57 @@ export default async function CommunityPage(props: PageProps) {
       topBar={
         <MainTopBar
           icon="/mascot/together.png"
-          // 리더에게는 이름 옆 연필(D-3626).
           title={
-            <CommunityTitle
-              communityId={community.id}
-              name={community.name}
-              leader={community.myRole === "leader"}
-            />
+            <div className="flex min-w-0 items-center gap-1">
+              <h1 className="truncate text-lg font-bold text-foreground">{community.name}</h1>
+              <CommunitySettingsButton
+                pendingCount={community.myRole === "leader"
+                  ? community.members.filter((m) => m.status === "pending").length : 0}
+                members={
+                  <MemberList
+                    communityId={community.id}
+                    members={community.members}
+                    myRole={community.myRole}
+                    inviteCode={community.inviteCode}
+                  />
+                }
+                settings={
+                  <>
+                    {community.myRole === "leader" && (
+                      <CommunityTitle communityId={community.id} name={community.name} leader />
+                    )}
+                    {community.myRole === "leader" && (
+                      <CommunityLook
+                        communityId={community.id}
+                        name={community.name}
+                        memberCount={community.members.filter((m) => m.status === "active").length}
+                        color={community.color}
+                        coverImageUrl={community.coverImageUrl}
+                      />
+                    )}
+                    <LeaveOrDeleteButton
+                      communityId={community.id}
+                      communityName={community.name}
+                      myUserId={community.myUserId}
+                      leader={community.myRole === "leader"}
+                    />
+                  </>
+                }
+              />
+            </div>
           }
         />
       }
       className="space-y-6"
     >
-      <PrayerPartnerCard partner={community.prayerPartner} />
+      <div className="space-y-2">
+        <PrayerPartnerCard partner={community.prayerPartner} />
+        {community.myRole === "leader" && !community.partnersStarted
+          && community.members.filter((m) => m.status === "active").length >= 2 && (
+          <StartPartnersButton communityId={community.id} />
+        )}
+      </div>
       <SharingShelf communityId={community.id} sharings={sharings} />
-      <MemberList
-        communityId={community.id}
-        members={community.members}
-        myRole={community.myRole}
-        inviteCode={community.inviteCode}
-        partnersStarted={community.partnersStarted}
-      />
-      {community.myRole === "leader" && (
-        <CommunityLook
-          communityId={community.id}
-          name={community.name}
-          memberCount={community.members.filter((m) => m.status === "active").length}
-          color={community.color}
-          coverImageUrl={community.coverImageUrl}
-        />
-      )}
-      <LeaveOrDeleteButton
-        communityId={community.id}
-        communityName={community.name}
-        myUserId={community.myUserId}
-        leader={community.myRole === "leader"}
-      />
     </AppShell>
   );
 }
