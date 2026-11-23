@@ -20,8 +20,8 @@ export function MyTab({ active = false }: { active?: boolean }) {
         <Image
           src={me.profileImageUrl}
           alt=""
-          width={32}
-          height={32}
+          width={40}
+          height={40}
           className={`size-8 rounded-full object-cover ${active ? "" : "grayscale opacity-50"}`}
         />
       ) : (
@@ -29,7 +29,7 @@ export function MyTab({ active = false }: { active?: boolean }) {
           <User className="size-5 text-foreground/60" />
         </span>
       )}
-      <span className={`text-xs font-medium ${active ? "text-foreground" : "text-foreground/50"}`}>마이</span>
+      <span className={`text-xs font-medium ${active ? "text-foreground" : "text-foreground/50"}`}>My</span>
       <span aria-hidden className={`h-1 w-4 rounded-full ${active ? "bg-tone" : "bg-transparent"}`} />
     </Link>
   );

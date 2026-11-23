@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 로컬 백엔드 기동. .env의 시크릿을 환경변수로 올린 뒤 bootRun.
-# 사전 조건: apps/에서 `docker compose up -d` (Postgres 5432).
+# 사전 조건: apps/에서 `docker compose up -d` (호스트 포트는 apps/.env의 POSTGRES_PORT, 기본 5432).
 set -euo pipefail
 cd "$(dirname "$0")"
 

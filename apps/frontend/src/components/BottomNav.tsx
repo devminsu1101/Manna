@@ -14,8 +14,8 @@ import { MyTab } from "@/features/auth/MyTab";
  * 그 transform은 클라이언트 래퍼(ReaderChrome)가 소유해야 하기 때문이다.
  */
 const TABS = [
-  { href: "/prayer", label: "기도", icon: "/mascot/warm.png" },
-  { href: "/communities", label: "나눔", icon: "/mascot/together.png" },
+  { href: "/prayer", label: "중보기도실", icon: "/mascot/warm.png" },
+  { href: "/communities", label: "공동체", icon: "/mascot/together.png" },
   { href: "/bible", label: "성경", icon: "/mascot/bible.png" },
 ] as const;
 
@@ -44,7 +44,7 @@ function isActive(href: string, pathname: string) {
 function NavTab({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className="flex w-16 flex-col items-center gap-1">
-      <Image src={icon} alt="" width={32} height={32} className={`size-8 object-contain ${active ? "" : "grayscale opacity-50"}`} />
+      <Image src={icon} alt="" width={40} height={40} className={`size-8 object-contain ${active ? "" : "grayscale opacity-50"}`} />
       <span className={`text-xs font-medium ${active ? "text-foreground" : "text-foreground/50"}`}>{label}</span>
       <span aria-hidden className={`h-1 w-4 rounded-full ${active ? "bg-tone" : "bg-transparent"}`} />
     </Link>
