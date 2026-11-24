@@ -46,7 +46,7 @@ node scripts/generate-vapid.mjs
 npm install
 ```
 
-프론트는 로컬에 `.env`가 필요 없다. `BACKEND_ORIGIN`이 없으면 `http://localhost:8080`을 쓴다.
+기본 포트를 쓰면 프론트에 `.env`가 필요 없다. `BACKEND_ORIGIN`이 없으면 `http://localhost:8080`을 쓴다.
 상단바에 개발 문서 아이콘(`/dev/docs`)을 띄우려면 `apps/frontend/.env.local`에
 `NEXT_PUBLIC_DEV_USER_IDS=1`(로컬 DB의 내 `users.id`)을 넣는다. 없어도 주소로는 열린다.
 
@@ -57,8 +57,26 @@ npm install
 - `.env`는 **LF로 저장**한다(VS Code 우하단 `CRLF` → `LF`). CRLF면 값 끝에 `\r`이 붙어 로그인이 깨진다.
 - `run-local.sh`는 **Git Bash**에서 돌린다. PowerShell에서 `./run-local.sh`는 새 창이 떴다 바로 꺼지고,
   `bash ./run-local.sh`는 WSL bash를 불러 `execvpe(/bin/bash) failed`로 죽는다.
-- 윈도우용 PostgreSQL이 설치돼 있으면 5432를 먼저 잡는다. `services.msc`에서 `postgresql-x64-…`를
-  중지하고 시작 유형을 "수동"으로.
+- Mendix나 Windows PostgreSQL과 함께 개발하면 아래 로컬 설정으로 포트를 분리한다.
+
+### 다른 프로젝트와 함께 실행할 때 — 로컬 포트 분리
+
+공통 기본값은 DB 5432, 백엔드 8080이다. 아래 값은 Git에서 제외된 각 `.env`에만 추가하고,
+기존 시크릿은 유지한다. 예시 포트가 다른 프로그램에서 사용 중인지 먼저 확인한다.
+
+| 파일 | 추가할 설정 |
+|---|---|
+| `apps/.env` | `POSTGRES_PORT=5433` |
+| `apps/backend/.env` | `PORT=8081`, `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/manna_db` (각각 별도 줄) |
+| `apps/frontend/.env` | `BACKEND_ORIGIN=http://localhost:8081` |
+
+`apps/`에서 `docker compose up -d --no-deps postgres`로 기존 데이터 볼륨을 유지하며 포트를 적용하고,
+백엔드는 `apps/backend/`, 프론트는 `apps/frontend/`를 작업 디렉터리로 실행한다.
+브라우저와 Google OAuth 콜백은 계속 `localhost:3000`을 사용한다. pgAdmin에서 Docker 내부 DB에
+연결할 때는 `postgres:5432`, PC의 DB 도구에서는 `localhost:5433`을 사용한다.
+
+이 `.env` 파일들을 배포 서버에 복사하지 않는다. 백엔드 Docker 이미지는 `.env`를 제외하며,
+배포에서는 플랫폼의 `SPRING_DATASOURCE_URL`, `PORT`, `BACKEND_ORIGIN` 설정을 사용한다.
 
 ## 2. 매일 — 켜는 순서
 
