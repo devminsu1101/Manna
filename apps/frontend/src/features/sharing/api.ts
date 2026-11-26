@@ -1,7 +1,7 @@
 import "server-only";
 
 import { backendFetch, backendGet } from "@/lib/backend";
-import type { FeedItem, Sharing } from "./types";
+import type { FeedItem, Sharing, SharingDiscussion } from "./types";
 
 /**
  * 나눔 데이터 접근 계층. 백엔드 Sharing API(docs/03_API_SPEC.md)를 부른다.
@@ -31,10 +31,16 @@ export async function getFeed(): Promise<FeedItem[]> {
 }
 
 /** 나눔 하나. 볼 수 없으면 null이고, 화면은 그걸 404로 옮긴다(존재를 알리지 않는다). */
-export async function getSharing(id: number): Promise<Sharing | null> {
+export async function getSharing(id: number, communityId?: number): Promise<Sharing | null> {
   if (!Number.isInteger(id)) return null;
-  const res = await backendGet(`/sharings/${id}`);
+  const res = await backendGet(`/sharings/${id}${communityId !== undefined ? `?communityId=${communityId}` : ""}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`나눔을 불러오지 못했습니다 (${res.status})`);
+  return res.json();
+}
+
+export async function getDiscussion(id: number, communityId: number): Promise<SharingDiscussion> {
+  const res = await backendGet(`/sharings/${id}/discussion?communityId=${communityId}`);
+  if (!res.ok) throw new Error(`댓글을 불러오지 못했습니다 (${res.status})`);
   return res.json();
 }

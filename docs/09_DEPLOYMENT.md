@@ -1,5 +1,13 @@
 # 배포 매뉴얼
 
+## 공동체 댓글·반응 배포 (2026-11-27)
+
+새 백엔드 배포 **전에** 운영 DB에 `apps/migrations/2026-11-27_sharing_discussions.sql`을 적용하고 `apps/migrations/2026-11-27_sharing_hearts.sql`을 이어 적용한다. 기존 캐릭터 반응이 있다면 사용자당 하트 하나로 전환한다. 로컬에는 적용 완료했으며 운영에는 아직 적용하지 않았다. 이 테이블은 JDBC로 접근하므로 Hibernate 스키마 검증만으로 누락을 감지하지 못한다.
+
+기존 DB 접속 절차로 `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -1 -f apps/migrations/2026-11-27_sharing_discussions.sql`을 실행하고 같은 방식으로 `2026-11-27_sharing_hearts.sql`, `2026-11-27_sharing_comment_edits.sql`까지 순서대로 적용한 후 백엔드 → 프론트 순서로 배포한다. 되돌릴 때는 앱을 이전 버전으로 복원하고 추가 테이블은 유지한다.
+
+배포 후 서로 다른 두 계정으로 댓글·삭제·하트 선택/취소, 작성자 알림 링크, iOS/Android 푸시와 모바일 키보드를 확인한다. 본인 댓글에는 알림이 없어야 한다. 과거 다중 공동체 연결 글도 다른 방의 대화를 노출하지 않아야 한다.
+
 > **다음 배포 계획(미구현):** 2026-11-18 기도 중심 개편에는 운영 DB 백업, 새 나눔/기도/패치노트 스키마, 데이터 이관과 옛 링크 대응, Private Blob 권한 경로가 필요하다. 실행·되돌리기 순서는 [`12_PRAYER_FIRST_REDESIGN.md`](12_PRAYER_FIRST_REDESIGN.md)에 기록했다. 아래 절차는 현재 배포 구성에 적용된다.
 
 > 로컬 개발은 `00_SETUP_GUIDE.md`. 이 문서는 **프로덕션이 어떻게 붙어 있고, 처음부터 다시

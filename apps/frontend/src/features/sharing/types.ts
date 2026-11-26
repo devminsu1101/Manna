@@ -29,4 +29,23 @@ export type Sharing = {
   mine: boolean;
   /** 이 글이 걸린 방(D-3507: 글 하나 = 방 하나). 상세의 "공동체로"가 간다. 방이 지워졌으면 null. */
   communityId: number | null;
+  commentCount: number;
+  reactionCount: number;
+  canInteract: boolean;
+  hearted: boolean;
 };
+
+export type SharingComment = {
+  edited: boolean;
+  id: number;
+  author: Sharing["author"];
+  body: string;
+  createdAt: string;
+  mine: boolean;
+};
+export type SharingReaction = { key: "heart"; count: number; mine: boolean };
+export type SharingDiscussion = { comments: SharingComment[]; hasMore: boolean; commentCount: number; reactions: SharingReaction[] };
+
+export function sharingHref(sharing: Pick<Sharing, "id" | "communityId">) {
+  return `/sharings/${sharing.id}${sharing.communityId ? `?communityId=${sharing.communityId}` : ""}`;
+}

@@ -4,6 +4,24 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# macOS의 Homebrew JDK는 java_home에 등록되지 않을 수 있다.
+# JAVA_HOME을 지정하지 않았다면 프로젝트가 요구하는 JDK 17을 찾아 사용한다.
+if [[ -z "${JAVA_HOME:-}" && "$(uname -s)" == "Darwin" ]]; then
+    java17_home="$(/usr/libexec/java_home -F -v 17 2>/dev/null || true)"
+    if [[ -z "$java17_home" ]]; then
+        for brew_prefix in /opt/homebrew /usr/local; do
+            candidate="$brew_prefix/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+            if [[ -x "$candidate/bin/java" && -x "$candidate/bin/javac" ]]; then
+                java17_home="$candidate"
+                break
+            fi
+        done
+    fi
+    if [[ -n "$java17_home" ]]; then
+        export JAVA_HOME="$java17_home"
+    fi
+fi
+
 [ -f .env ] || { echo "❌ .env가 없다. GOOGLE_CLIENT_ID/SECRET을 채운 .env를 만들어라."; exit 1; }
 set -a; source .env; set +a
 

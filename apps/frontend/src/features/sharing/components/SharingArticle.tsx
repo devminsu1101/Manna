@@ -1,7 +1,9 @@
+import { SharingActionsMenu } from "./SharingActionsMenu";
+import { SharingCounts } from "./SharingCounts";
 import Image from "next/image";
 import Link from "next/link";
 
-import type { Sharing } from "../types";
+import { sharingHref, type Sharing } from "../types";
 
 const PREVIEW_LENGTH = 100;
 
@@ -26,10 +28,11 @@ export function SharingArticle({ sharing, profileHref, preview = false }: {
 
   return (
     <article className="min-w-0 py-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
       <Link
         href={profileHref}
         aria-label={preview ? `${sharing.author.name}님의 나눔 보기` : `${sharing.author.name}님의 기도제목 보기`}
-        className="mb-3 flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-ring"
+        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-ring"
       >
         <Image
           src={sharing.author.profileImageUrl ?? "/mascot/default.png"}
@@ -45,14 +48,17 @@ export function SharingArticle({ sharing, profileHref, preview = false }: {
           </time>
         </div>
       </Link>
+      {sharing.mine && <SharingActionsMenu id={sharing.id} communityId={sharing.communityId} preview={preview} />}
+      </div>
       {preview ? (
         <Link
-          href={`/sharings/${sharing.id}`}
+          href={sharingHref(sharing)}
           className="block rounded-md focus-visible:outline-2 focus-visible:outline-ring"
         >
           {body}
         </Link>
       ) : body}
+      {preview && <SharingCounts key={`${sharing.reactionCount}:${sharing.hearted}`} sharing={sharing} />}
     </article>
   );
 }

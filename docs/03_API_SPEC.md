@@ -1,5 +1,22 @@
 # API 명세서
 
+## 공동체 댓글·반응 (2026-11-27)
+
+모든 경로는 `/api/v1` 아래이며 로그인 필수. `communityId` 쿼리 필수, 해당 글이 연결된 방의 현재 active 멤버만 접근한다. 미가입·가입 대기·탈퇴·다른 방·기도제목은 404. 쓰기는 CSRF 필수.
+
+| 메서드·경로 | 요청 / 응답 |
+|---|---|
+| `GET /sharings/{id}/discussion?communityId=…&before=…` | `comments`, `hasMore`, `commentCount`, `reactions`. 최근 50개를 ID 오름차순으로 반환. `before`는 이전 댓글 조회용 첫 댓글 ID |
+| `POST /sharings/{id}/comments?communityId=…` | `{body, requestId}`. 1~1,000자, UUID 필수. 201 댓글 객체. 같은 글·방·작성자·요청 ID 재시도는 기존 댓글을 반환 |
+| `PATCH /sharings/{id}/comments/{commentId}?communityId=…` | `{body}` 1~1,000자. 현재 active인 본인만 수정. 댓글 객체 반환. 실제 본문 변경 시 `edited=true`, 수정 알림 없음 |
+| `DELETE /sharings/{id}/comments/{commentId}?communityId=…` | 본인만 삭제, 204. 다른 사람 댓글 403, 이미 없으면 204 |
+| `PUT /sharings/{id}/reaction?communityId=…` | `{key: heart}`. 하트를 선택하고 반응 배열 반환. 같은 요청 재시도는 멱등 |
+| `DELETE /sharings/{id}/reaction?communityId=…` | 내 반응 취소 후 반응 배열 반환 |
+
+댓글 객체: `id`, `author {userId,name,profileImageUrl}`, `body`, `createdAt`(KST), `mine`, `edited`. 반응 객체: `key`, `count`, `mine`.
+나눔 목록·상세에 `commentCount`, `reactionCount`, `canInteract`, `hearted`(내 하트 여부)를 추가했다. 상세는 선택적인 `communityId`로 방을 지정하며, 지정 시 해당 방 active 권한을 검사한다. 옛 링크는 기존 방 선택 규칙을 유지한다. 탈퇴한 글 작성자는 방을 지정하지 않은 기존 상세에서 본문은 볼 수 있지만 대화 집계는 0, `canInteract=false`다.
+댓글 알림 `sharing_comment`는 본인을 제외한 현재 방 멤버인 글 작성자에게만 생성한다. 링크는 `/sharings/{id}?communityId=…#comments`. 반응 알림은 없다.
+
 ## 업데이트 소식 (2026-11-26)
 
 - `GET /updates`: 공개. 게시된 소식의 `id`, `title`, `publishedAt`을 게시일·ID 내림차순 배열로 반환.

@@ -1,5 +1,12 @@
 # ERD (데이터 모델)
 
+## 공동체 댓글·반응 (2026-11-27 추가)
+
+- `sharing_comments`: ID, 나눔·공동체·작성자, 1,000자 본문, 요청 UUID, 생성 시각. `(sharing_id, community_id, author_id, request_id)` 고유 제약으로 중복 댓글·알림을 방지한다.
+- `sharing_reactions`: `(sharing_id, community_id, user_id)` 기본 키와 `reaction_key`(heart), 생성 시각.
+- 두 테이블은 `sharing_communities(sharing_id, community_id)`를 복합 외래 키로 참조한다. 글·방 연결 삭제 시 해당 대화가 함께 삭제되고 사용자 삭제 시 본인 댓글·반응도 삭제된다. 기존 나눔 데이터는 변경하지 않는다.
+- 운영 적용 SQL: `apps/migrations/2026-11-27_sharing_discussions.sql`. 아래 예전 글 통합 모델은 현재 실행 기준이 아니다.
+
 ## 업데이트 소식 (2026-11-26 추가)
 
 `update_posts`: `id SERIAL PK`, `title VARCHAR(100)`, `body TEXT`(최대 10,000자), `photo_url TEXT NULL`, `published_at TIMESTAMPTZ NULL`, `created_at TIMESTAMPTZ`. 게시 시각이 NULL이면 관리자 임시저장, 값이 있으면 공개다. 기존 `sharings`와 별도이며 최초 게시 시 `notifications(type='update_published')`와 기존 `push_deliveries`에 기록한다. 배포 전 `apps/migrations/2026-11-26_update_posts.sql` 적용 필요.

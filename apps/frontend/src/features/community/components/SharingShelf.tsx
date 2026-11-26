@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { composeHref } from "@/features/compose/href";
 import { SharingArticle } from "@/features/sharing/components/SharingArticle";
-import type { Sharing } from "@/features/sharing/types";
+import { sharingHref, type Sharing } from "@/features/sharing/types";
 
 /** 제목 줄에만 배경을 두고, 본문은 화면 폭을 활용하는 블로그형 나눔 목록. */
 export function SharingShelf({
@@ -79,7 +79,7 @@ export function SharingShelf({
       ) : (
         <div className="mx-4 divide-y divide-border/60">
           {visible.map((sharing) => (
-            <SharingArticle key={sharing.id} sharing={sharing} profileHref={`/sharings/${sharing.id}`} preview />
+            <SharingArticle key={sharing.id} sharing={sharing} profileHref={sharingHref(sharing)} preview />
           ))}
         </div>
       )}

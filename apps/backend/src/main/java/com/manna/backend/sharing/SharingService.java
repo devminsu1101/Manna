@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SharingService {
 
     private final SharingRepository sharings;
+    private final SharingDiscussionService discussions;
     private final CommunityService communities;
     private final UserRepository users;
     private final NotificationService notifications;
@@ -37,7 +38,8 @@ public class SharingService {
             SharingRepository sharings,
             CommunityService communities,
             UserRepository users,
-            NotificationService notifications) {
+            NotificationService notifications, SharingDiscussionService discussions) {
+        this.discussions = discussions;
         this.sharings = sharings;
         this.communities = communities;
         this.users = users;
@@ -56,7 +58,7 @@ public class SharingService {
             Author author,
             OffsetDateTime createdAt,
             boolean mine,
-            Integer communityId) {}
+            Integer communityId, long commentCount, long reactionCount, boolean canInteract, boolean hearted) {}
 
     public record ListResponse(List<Item> sharings) {}
 
@@ -103,7 +105,9 @@ public class SharingService {
         List<Sharing> found = sharings.findByCommunity(communityId);
         // 작성자를 한 번에 올려 둔다 — 아래 getAuthor()가 줄마다 쿼리하지 않게.
         users.findAllById(found.stream().map(s -> s.getAuthor().getId()).distinct().toList());
-        return new ListResponse(found.stream().map(s -> toItem(s, userId, communityId)).toList());
+        var counts = discussions.counts(communityId, userId);
+        return new ListResponse(found.stream().map(s -> toItem(s, userId, communityId,
+            counts.getOrDefault(s.getId(), new SharingDiscussionService.Counts(0, 0, false)), true)).toList());
     }
 
     // ── GET /sharings/feed ───────────────────────────────────────────────
@@ -137,12 +141,17 @@ public class SharingService {
     // ── GET /sharings/{id} ───────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Item detail(Integer userId, Integer sharingId) {
+    public Item detail(Integer userId, Integer sharingId, Integer requestedCommunity) {
         Sharing s = find(sharingId);
         if (!isMine(s, userId) && !sharings.isVisibleTo(sharingId, userId)) {
             throw notFound();
         }
-        return toItem(s, userId, sharings.findCommunityOf(sharingId, userId));
+        Integer room = requestedCommunity != null ? requestedCommunity : sharings.findCommunityOf(sharingId, userId);
+        boolean active = discussions.canParticipate(userId, sharingId, room);
+        if (requestedCommunity != null && !active) throw notFound();
+        var counts = active ? discussions.counts(room, userId).getOrDefault(sharingId, new SharingDiscussionService.Counts(0, 0, false))
+            : new SharingDiscussionService.Counts(0, 0, false);
+        return toItem(s, userId, room, counts, active);
     }
 
     // ── PATCH /sharings/{id} ─────────────────────────────────────────────
@@ -189,7 +198,7 @@ public class SharingService {
         return ApiException.notFound("없는 나눔입니다.");
     }
 
-    private static Item toItem(Sharing s, Integer userId, Integer communityId) {
+    private static Item toItem(Sharing s, Integer userId, Integer communityId, SharingDiscussionService.Counts counts, boolean active) {
         User a = s.getAuthor();
         return new Item(
             s.getId(),
@@ -199,6 +208,6 @@ public class SharingService {
             // 응답 시각은 +09:00(D-3402) — 화면이 앞 10자를 날짜로 쓴다.
             s.getCreatedAt().atZoneSameInstant(PrayerService.KST).toOffsetDateTime(),
             isMine(s, userId),
-            communityId);
+            communityId, counts.comments(), counts.reactions(), active, counts.hearted());
     }
 }

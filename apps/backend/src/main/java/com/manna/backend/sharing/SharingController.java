@@ -71,8 +71,8 @@ public class SharingController {
     @GetMapping("/{id}")
     public SharingService.Item detail(
             @AuthenticationPrincipal OidcUser principal,
-            @PathVariable Integer id) {
-        return service.detail(currentUser.id(principal), id);
+            @PathVariable Integer id, @RequestParam(required = false) Integer communityId) {
+        return service.detail(currentUser.id(principal), id, communityId);
     }
 
     @PatchMapping("/{id}")                                      // 본문만(D-3504), 작성자만
