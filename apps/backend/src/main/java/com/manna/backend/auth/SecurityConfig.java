@@ -49,6 +49,8 @@ public class SecurityConfig {
                         // 성경은 Next 라우트 핸들러가 로컬 JSON으로 주므로 이 백엔드를 거치지 않는다.
                         .requestMatchers("/api/v1/csrf")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/updates", "/api/v1/updates/*")
+                        .permitAll()
                         // 초대 미리보기(방 이름만). 어디 들어가는지 모른 채 로그인을 요구하면 이탈한다(D-1005).
                         .requestMatchers(HttpMethod.GET, "/api/v1/invites/*")
                         .permitAll()

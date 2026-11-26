@@ -1,5 +1,18 @@
 # API 명세서
 
+## 업데이트 소식 (2026-11-26)
+
+- `GET /updates`: 공개. 게시된 소식의 `id`, `title`, `publishedAt`을 게시일·ID 내림차순 배열로 반환.
+- `GET /updates/{id}`: 공개. 제목·내용·사진·게시일 상세. 미게시·없는 ID는 404.
+- `GET /admin/updates`, `GET /admin/updates/{id}`: 관리자 전용 임시저장 포함 목록·상세.
+- `POST /admin/updates`: `{ title, body }` 임시저장, 201. 제목 1~100자·내용 1~10,000자, 공백만 입력 불가.
+- `PATCH /admin/updates/{id}`: 제목·내용 수정. 게시된 글은 즉시 반영하며 재알림 없음.
+- `PATCH /admin/updates/{id}/photo`: `{ photoUrl }`, 허용된 HTTPS Public Blob URL 또는 null로 사진 교체·제거.
+- `POST /admin/updates/{id}/publish`: 최초 게시 시 전체 기존 회원(작성자 포함)에게 `update_published` 앱 알림과 기존 구독 기기의 푸시 작업 생성. 링크는 `/mypage/updates/{id}`. 게시·알림·발송 작업은 한 트랜잭션이며 행 잠금으로 중복 게시의 재발송을 막는다. 기존 정책대로 읽은 알림의 미발송 푸시는 생략된다.
+- 관리자 쓰기는 로그인·관리자 권한·CSRF 필수. 일반 회원은 403, 비로그인은 401.
+- Next `POST /api/v1/update-photo`: multipart `id`, `photo`. CSRF·관리자 권한 확인 후 공개용 사진 한 장(JPG/PNG/WEBP, 최대 1MB)을 기존 Public Blob에 업로드하고 URL 저장. 임시저장 글 자체는 비공개지만 사진 URL은 공개다. 교체된 Blob은 보존하며 참조 없는 파일 정리는 후속 작업이다.
+- `apps/migrations/2026-11-26_update_posts.sql`을 백엔드 배포 **전에** 적용한다. 예시 글은 자동 게시하지 않는다. 알림은 관리자가 게시를 확인할 때만 생성한다.
+
 > **현재 구현 계약**이다. 2026-11-18 확정한 단일 나눔·글별 공개 범위·10,000자·활성 기도제목 한 건·설정/패치노트의 **미구현 목표**는 [`12_PRAYER_FIRST_REDESIGN.md`](12_PRAYER_FIRST_REDESIGN.md)를 따른다. 아래 2,000자 제한과 방별 댓글 초안은 현행 또는 종전 계획 기록이다.
 
 ## 다음 버전 API 계약 방향 (2026-11-18 확정, 미구현)

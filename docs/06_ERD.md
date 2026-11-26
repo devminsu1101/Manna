@@ -1,5 +1,9 @@
 # ERD (데이터 모델)
 
+## 업데이트 소식 (2026-11-26 추가)
+
+`update_posts`: `id SERIAL PK`, `title VARCHAR(100)`, `body TEXT`(최대 10,000자), `photo_url TEXT NULL`, `published_at TIMESTAMPTZ NULL`, `created_at TIMESTAMPTZ`. 게시 시각이 NULL이면 관리자 임시저장, 값이 있으면 공개다. 기존 `sharings`와 별도이며 최초 게시 시 `notifications(type='update_published')`와 기존 `push_deliveries`에 기록한다. 배포 전 `apps/migrations/2026-11-26_update_posts.sql` 적용 필요.
+
 > **아래 다이어그램과 표는 현재 운영 스키마**(`apps/init-db.sql`)를 설명한다. 2026-11-18 확정한 다음 모델은 [`12_PRAYER_FIRST_REDESIGN.md`](12_PRAYER_FIRST_REDESIGN.md)의 `sharing_posts`·`sharing_post_audiences`·`prayer_requests`·`patch_notes` 및 글 단위 댓글/반응을 따른다. 기존 `sharings`를 곧바로 바꾸거나 삭제하지 않는다.
 
 ## 다음 버전 데이터 관계 (계획, 미구현)

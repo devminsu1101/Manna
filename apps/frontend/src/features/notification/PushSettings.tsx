@@ -76,7 +76,7 @@ export function PushSettings() {
   const on = status === "on";
 
   return (
-    <section className="rounded-2xl bg-surface-warm p-4">
+    <div>
       <button
         type="button"
         role="switch"
@@ -84,13 +84,11 @@ export function PushSettings() {
         aria-label="이 기기에서 알림 받기"
         disabled={!canToggle || busy}
         onClick={on ? turnOff : turnOn}
-        className="flex w-full items-center justify-between gap-3 rounded-xl text-left disabled:cursor-default"
+        className="flex min-h-13 w-full items-center justify-between gap-3 rounded-sm py-3 text-left focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-default"
       >
         <span>
-          <span className="block font-bold text-foreground">이 기기에서 알림 받기</span>
-          <span className="mt-1 block text-sm text-foreground/60">
-            {busy ? "처리 중…" : on ? "이 기기에 알림을 보내고 있어요" : "기도 소식과 공동체 알림을 받을 수 있어요"}
-          </span>
+          <span className="block text-sm font-medium text-foreground">이 기기에서 알림 받기</span>
+          {(busy || status === "loading") && <span className="text-xs text-foreground/60">{busy ? "처리 중…" : "확인 중…"}</span>}
         </span>
         <span
           aria-hidden
@@ -106,6 +104,6 @@ export function PushSettings() {
       {status === "unsupported" && <p className="mt-3 text-sm text-foreground/70">이 브라우저에서는 휴대폰 알림을 사용할 수 없어요.</p>}
       {status === "denied" && <p className="mt-3 text-sm text-foreground/70">iPhone 설정 → 알림 → 만나에서 알림을 허용해 주세요.</p>}
       {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
-    </section>
+    </div>
   );
 }

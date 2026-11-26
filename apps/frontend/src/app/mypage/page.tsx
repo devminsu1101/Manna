@@ -1,23 +1,19 @@
-import { List, MessageSquareHeart, Plus, ShieldCheck } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { getMe } from "@/features/auth/api";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { ProfileHeader } from "@/features/auth/ProfileHeader";
-import { CommunitySection } from "@/features/community/components/CommunitySection";
-import { composeHref } from "@/features/compose/href";
 import { MainTopBar } from "@/features/home/MainTopBar";
-import { getMyPrayerRequests, getMyStats, getPraySummary } from "@/features/prayer/api";
-import { MyPrayerHistory } from "@/features/prayer/components/MyPrayerHistory";
+import { getMyStats, getPraySummary } from "@/features/prayer/api";
 import { PrayedForMe } from "@/features/prayer/components/PrayedForMe";
 import { PushSettings } from "@/features/notification/PushSettings";
 import { InstallGuideButton } from "@/features/install/InstallGuideButton";
-
-/** 이전 기도제목을 펼쳐 두는 수. 나머지는 제목 옆 목록 버튼으로 본다 — 공동체 나눔 자료실과 같다. */
-const PREVIEW_COUNT = 3;
+import { UpdatesLink } from "@/features/updates/UpdatesLink";
 
 export const metadata: Metadata = { title: "마이페이지 | 만나" };
 
@@ -28,7 +24,7 @@ const REVIEW_FORM_URL = "https://forms.gle/YfU2xP4xQodmVS7c6";
  *
  * 처음엔 로그아웃을 둘 곳으로 생겼다(사용자 결정, 2026-09-19). 지금은 위에서부터
  * 날 위한 기도(홈에서 옮김, 2026-10-24) · 프로필(사진 바꾸기 D-3618 · 이름 고치기 D-3608) ·
- * 숫자 두 개 · 이전 기도제목(앞 몇 개, 전부는 `/mypage/prayers`) · 이용후기(D-3623) · 로그아웃.
+ * 숫자 두 개 · 알림 받기 · 업데이트 소식 · 설치 안내 · 이용후기(D-3623) · 로그아웃.
  *
  * - 숫자는 기간이 서로 다르다 — 기도는 **이번 주**(일요일부터 KST), 나눔은 **기간 없이 전부**.
  *   `/me/stats`가 기간 하나씩 받으므로 두 번 부른다. 명단은 두지 않는다.
@@ -41,18 +37,17 @@ export default async function MyPage() {
   const me = await getMe();
 
   return (
-    <AppShell topBar={<MainTopBar title="마이페이지" />} className="flex flex-col space-y-6">
-      {me ? <SignedIn me={me} /> : <SignedOut />}
+    <AppShell topBar={<MainTopBar title="마이페이지" />} className="flex flex-col gap-6">
+      {me ? <SignedIn me={me} /> : <><SignedOut /><UpdatesLink /></>}
     </AppShell>
   );
 }
 
 async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getMe>>> }) {
-  const [summary, week, all, requests] = await Promise.all([
+  const [summary, week, all] = await Promise.all([
     getPraySummary(),
     getMyStats("week"),
     getMyStats("all"),
-    getMyPrayerRequests(),
   ]);
 
   return (
@@ -68,50 +63,27 @@ async function SignedIn({ me }: { me: NonNullable<Awaited<ReturnType<typeof getM
         <Stat surface="warm" label="내가 올린 나눔" value={all.sharings} unit="개" />
       </div>
 
-      <CommunitySection
-        icon="/mascot/tears.png"
-        title="이전 기도제목"
-        surface="love"
-        action={
-          <span className="flex shrink-0 items-center">
-            {/* 새로 쓰면 그게 맨 위 "지금"이 된다. 대문 자료실의 ＋와 같은 모양 — 기도제목이 골라진 + 화면으로. */}
-            <Button asChild variant="ghost" size="icon" aria-label="새 기도제목 쓰기">
-              <Link href={composeHref({ kind: "prayer" })}>
-                <Plus className="size-5" />
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="icon" aria-label="이전 기도제목 전체">
-              <Link href="/mypage/prayers">
-                <List className="size-5" />
-              </Link>
-            </Button>
-          </span>
-        }
-      >
-        <MyPrayerHistory requests={requests.slice(0, PREVIEW_COUNT)} />
-      </CommunitySection>
-
-      <PushSettings />
-
-      <InstallGuideButton />
-
-      {/* 이용후기는 구글폼으로 받는다(D-3623). 앱 안에 폼을 만들지 않는다 — 받는 쪽이 시트로 보기 편하다. */}
-      <div className="space-y-2">
-        {/* 읽기 전용 관리자(D-3625). DB에서 is_admin을 켠 사람에게만 보인다. */}
+      <section aria-label="설정 및 소식" className="flex flex-col gap-2">
+        <Separator className="mb-2 bg-border/60" />
+        <PushSettings />
+        <UpdatesLink />
+        <InstallGuideButton />
         {me.isAdmin && (
-          <Button asChild variant="outline" size="block">
+          <Button asChild variant="ghost" size="block" className="min-h-13 justify-between rounded-none px-0 text-sm font-medium">
             <Link href="/admin">
-              <ShieldCheck className="size-5" />
               관리자
+              <ChevronRight aria-hidden="true" className="size-5 shrink-0" />
             </Link>
           </Button>
         )}
-        <Button asChild variant="outline" size="block">
+        <Button asChild variant="ghost" size="block" className="min-h-13 justify-between rounded-none px-0 text-sm font-medium">
           <a href={REVIEW_FORM_URL} target="_blank" rel="noreferrer">
-            <MessageSquareHeart className="size-5" />
             Manna 이용후기 남기기
+            <ExternalLink aria-hidden="true" className="size-4 shrink-0" />
           </a>
         </Button>
+      </section>
+      <div>
         <LogoutButton />
       </div>
     </>

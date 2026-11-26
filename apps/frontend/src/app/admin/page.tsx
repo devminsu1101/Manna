@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
 import { listAllCommunities, listAllUsers } from "@/features/admin/api";
 import { TestNotificationForm } from "@/features/admin/TestNotificationForm";
 import { getMe } from "@/features/auth/api";
@@ -14,14 +15,14 @@ import { MainTopBar } from "@/features/home/MainTopBar";
 export const metadata: Metadata = { title: "관리자 | 만나" };
 
 /**
- * 읽기 전용 관리자(D-3625). 모든 공동체 · 모든 사람을 한 화면에. 방에 속하지 않아도 본다.
- * 쓰기(강퇴 · 삭제)는 없다 — 보기만 한다. 관리자가 아니면 404(`features/admin/api.ts`).
+ * 공동체·사람 조회와 업데이트 소식 관리 진입점. 관리자가 아니면 404(`features/admin/api.ts`).
  */
 export default async function AdminPage() {
   const [communities, users, me] = await Promise.all([listAllCommunities(), listAllUsers(), getMe()]);
 
   return (
     <AppShell topBar={<MainTopBar title="관리자" />} className="space-y-6">
+      <Button asChild variant="outline" size="block"><Link href="/admin/updates">업데이트 소식 관리</Link></Button>
       <CommunitySection icon="/mascot/together.png" title={`공동체 ${communities.length}`} surface="warm">
         {communities.map((c) => (
           <Link key={c.id} href={`/admin/communities/${c.id}`} className={ROW_CLASS}>

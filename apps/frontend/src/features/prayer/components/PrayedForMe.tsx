@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-const ROW = "flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3";
+const ROW = "flex items-center justify-between gap-3 rounded-xl bg-white p-4";
 
 /**
  * 마이페이지 맨 위 한 칸 — "날 위해 n명이 기도하고 있어요". 홈을 없애며 여기로 왔다(2026-10-24).
@@ -18,7 +18,7 @@ const ROW = "flex items-center justify-between gap-3 rounded-xl bg-white px-4 py
  */
 export function PrayedForMe({ yesterdayCount }: { yesterdayCount: number }) {
   return (
-    <section className="rounded-2xl bg-surface-love p-4">
+    <section className="rounded-xl bg-surface-love p-2">
       {yesterdayCount > 0 ? (
         <Link href="/prayer" className={ROW}>
           <span>
