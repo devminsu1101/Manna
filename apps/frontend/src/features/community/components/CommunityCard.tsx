@@ -17,7 +17,6 @@ export function CommunityCard({
   coverImageUrl,
   href,
   pinned = false,
-  unread = false,
   onPin,
   pinPending = false,
 }: {
@@ -27,7 +26,6 @@ export function CommunityCard({
   coverImageUrl: string | null;
   href?: string;
   pinned?: boolean;
-  unread?: boolean;
   onPin?: () => void;
   pinPending?: boolean;
 }) {
@@ -37,7 +35,6 @@ export function CommunityCard({
       <span className={`flex min-w-0 w-3/5 flex-col justify-between gap-2 p-4 ${look.card}`}>
         <span className="flex items-center gap-1.5">
           <span className="line-clamp-2 font-bold break-keep text-foreground">{name}</span>
-          {unread && <span className="size-2 shrink-0 rounded-full bg-red-500" role="img" aria-label="새 나눔" />}
         </span>
         <span className="flex min-h-5 items-center justify-between gap-2 text-sm text-foreground/60">
           <span className="inline-flex items-center gap-1.5 tabular-nums">
@@ -82,7 +79,7 @@ export function CommunityCard({
           aria-pressed={pinned}
           aria-label={`${name} ${pinned ? "고정 해제" : "상단 고정"}`}
           title={pinned ? "고정 해제" : "상단 고정"}
-          className={`absolute right-1 top-1 flex size-11 items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${pinned ? "text-[#ffcc00]" : "text-foreground/40 hover:text-foreground"}`}
+          className={`absolute right-1 top-1 flex size-11 items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${pinned ? "text-[#ffcc00]" : "text-white"}`}
         >
           <Bookmark className={`size-5 ${pinned ? "fill-current" : ""}`} aria-hidden="true" />
         </button>

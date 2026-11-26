@@ -70,7 +70,7 @@ export function CommunityList({ communities }: { communities: CommunitySummary[]
             name={community.name} memberCount={community.memberCount}
             color={community.color ?? "yellow"} coverImageUrl={community.coverImageUrl ?? null}
             href={`/communities/${community.id}`} pinned={community.pinned}
-            unread={!!community.unreadSharingAt} onPin={() => togglePin(community)} pinPending={loading || pending !== null}
+            onPin={() => togglePin(community)} pinPending={loading || pending !== null}
           />
         )}
       </li>)}
