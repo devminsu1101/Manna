@@ -11,7 +11,7 @@ export function CommunityList({ communities }: { communities: CommunitySummary[]
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 목록에 다시 들어왔을 때 서버의 읽음 상태를 확인한다. 열린 동안 자동 재정렬하지 않는다.
+  // 목록에 다시 들어왔을 때 최신 나눔 시각을 확인한다. 열린 동안 자동 재정렬하지 않는다.
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/v1/communities", { credentials: "include", cache: "no-store", signal: controller.signal })
@@ -47,13 +47,12 @@ export function CommunityList({ communities }: { communities: CommunitySummary[]
   }
 
   const sorted = [...items].sort((a, b) => {
-    const rank = (c: CommunitySummary) => c.pinned ? 0 : c.unreadSharingAt ? 1 : 2;
+    const rank = (c: CommunitySummary) => c.pinned ? 0 : 1;
     const difference = rank(a) - rank(b);
     if (difference) return difference;
-    if (!a.pinned && a.unreadSharingAt && b.unreadSharingAt) {
-      return Date.parse(b.unreadSharingAt) - Date.parse(a.unreadSharingAt);
-    }
-    return 0;
+    if (!a.latestSharingAt) return b.latestSharingAt ? 1 : 0;
+    if (!b.latestSharingAt) return -1;
+    return Date.parse(b.latestSharingAt) - Date.parse(a.latestSharingAt);
   });
 
   return <>

@@ -57,20 +57,12 @@ public class CommunityController {
     }
 
     public record PinRequest(@NotNull Boolean pinned) {}
-    public record ReadRequest(@NotNull java.time.OffsetDateTime through) {}
 
     @PatchMapping("/{id}/pin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void pin(@AuthenticationPrincipal OidcUser principal, @PathVariable Integer id,
             @Valid @RequestBody PinRequest req) {
         service.pin(currentUser.id(principal), id, req.pinned());
-    }
-
-    @PostMapping("/{id}/sharings/read")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void read(@AuthenticationPrincipal OidcUser principal, @PathVariable Integer id,
-            @Valid @RequestBody ReadRequest req) {
-        service.markSharingsRead(currentUser.id(principal), id, req.through());
     }
 
     @PatchMapping("/{id}")                                      // 이름 · 카드 색 · 커버 사진 (리더, D-3624 · D-3626)

@@ -71,7 +71,7 @@ public class CommunityService {
             @JsonInclude(JsonInclude.Include.NON_NULL) String role,
             @JsonInclude(JsonInclude.Include.NON_NULL) Long pendingCount,
             @JsonInclude(JsonInclude.Include.NON_NULL) Boolean pinned,
-            @JsonInclude(JsonInclude.Include.NON_NULL) java.time.OffsetDateTime unreadSharingAt) {}
+            @JsonInclude(JsonInclude.Include.NON_NULL) java.time.OffsetDateTime latestSharingAt) {}
 
     public record ListResponse(List<Summary> communities) {}
 
@@ -119,8 +119,8 @@ public class CommunityService {
     public ListResponse list(Integer userId) {
         List<CommunityMember> mine = members.findByUser_IdOrderByJoinedAtAsc(userId);
 
-        Map<Integer, java.time.OffsetDateTime> unread = new HashMap<>();
-        members.unreadSharings(userId).forEach(row -> unread.put(row.getCommunityId(), row.getLatestAt().atOffset(java.time.ZoneOffset.UTC)));
+        Map<Integer, java.time.OffsetDateTime> latest = new HashMap<>();
+        members.latestSharings(userId).forEach(row -> latest.put(row.getCommunityId(), row.getLatestAt().atOffset(java.time.ZoneOffset.UTC)));
 
         // communityId → (status → count)
         Map<Integer, Map<String, Long>> counts = new HashMap<>();
@@ -153,7 +153,7 @@ public class CommunityService {
                                 c.getCoverImageUrl(),
                                 active,
                                 null,
-                                null, m.isPinned(), unread.get(c.getId()));
+                                null, m.isPinned(), latest.get(c.getId()));
                         }
                         return new Summary(
                             c.getId(),
@@ -163,7 +163,7 @@ public class CommunityService {
                             c.getCoverImageUrl(),
                             active,
                             m.getRole(),
-                            byStatus.getOrDefault(CommunityMember.PENDING, 0L), m.isPinned(), unread.get(c.getId()));
+                            byStatus.getOrDefault(CommunityMember.PENDING, 0L), m.isPinned(), latest.get(c.getId()));
                     })
                 .toList();
         return new ListResponse(result);
@@ -172,15 +172,6 @@ public class CommunityService {
     @Transactional
     public void pin(Integer userId, Integer communityId, boolean pinned) {
         requireActiveMember(communityId, userId).setPinned(pinned);
-    }
-
-    @Transactional
-    public void markSharingsRead(Integer userId, Integer communityId, java.time.OffsetDateTime through) {
-        requireActiveMember(communityId, userId);
-        if (through.isAfter(java.time.OffsetDateTime.now())) {
-            throw ApiException.badRequest("읽은 시각은 현재보다 이후일 수 없어요.");
-        }
-        members.markSharingsRead(communityId, userId, through);
     }
 
     // ── GET /communities/{id} ────────────────────────────────────────────

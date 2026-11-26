@@ -29,7 +29,7 @@ type ListResponse = {
     coverImageUrl?: string | null;
     memberCount?: number;
     pinned?: boolean;
-    unreadSharingAt?: string | null;
+    latestSharingAt?: string | null;
   }[];
 };
 
@@ -63,7 +63,7 @@ export async function listMyCommunities(): Promise<CommunitySummary[]> {
     coverImageUrl: c.coverImageUrl,
     myStatus: c.status,
     pinned: c.pinned,
-    unreadSharingAt: c.unreadSharingAt,
+    latestSharingAt: c.latestSharingAt,
   }));
 }
 

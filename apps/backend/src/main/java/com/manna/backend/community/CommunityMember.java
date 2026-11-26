@@ -53,9 +53,6 @@ public class CommunityMember {
     @Column(nullable = false)
     private boolean pinned;
 
-    @Column(name = "sharings_read_at")
-    private OffsetDateTime sharingsReadAt;
-
     public boolean isPinned() { return pinned; }
     public void setPinned(boolean pinned) { this.pinned = pinned; }
 

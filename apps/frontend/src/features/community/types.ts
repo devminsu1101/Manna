@@ -28,7 +28,7 @@ export type CommunitySummary = {
    */
   myStatus: MemberStatus;
   pinned?: boolean;
-  unreadSharingAt?: string | null;
+  latestSharingAt?: string | null;
 };
 
 /** 대문의 멤버 목록 한 줄. */

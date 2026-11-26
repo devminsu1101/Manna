@@ -66,7 +66,7 @@ class CommunityApiTests {
     }
 
     @Test
-    void 고정과_새나눔은_사용자별이며_확인한_시각까지만_읽음처리한다() throws Exception {
+    void 고정은_사용자별이며_최신나눔은_본인글을_포함하고_방문해도_유지된다() throws Exception {
         user("pin-leader");
         User member = user("pin-member");
         user("pin-outsider");
@@ -79,7 +79,8 @@ class CommunityApiTests {
                 .content("{\"pinned\":true}"))
             .andExpect(status().isNoContent());
         mvc.perform(get("/api/v1/communities").with(as("pin-member")))
-            .andExpect(jsonPath("$.communities[0].pinned").value(true));
+            .andExpect(jsonPath("$.communities[0].pinned").value(true))
+            .andExpect(jsonPath("$.communities[0].latestSharingAt").doesNotExist());
         mvc.perform(get("/api/v1/communities").with(as("pin-leader")))
             .andExpect(jsonPath("$.communities[0].pinned").value(false));
         mvc.perform(MockMvcRequestBuilders.patch("/api/v1/communities/" + id + "/pin")
@@ -92,22 +93,15 @@ class CommunityApiTests {
                 .content("{\"type\":\"daily\",\"body\":\"새 소식\",\"communityIds\":[" + id + "]}"))
             .andExpect(status().isCreated());
         String body = mvc.perform(get("/api/v1/communities").with(as("pin-member")))
-            .andExpect(jsonPath("$.communities[0].unreadSharingAt").isString())
+            .andExpect(jsonPath("$.communities[0].latestSharingAt").isString())
             .andReturn().getResponse().getContentAsString();
-        String through = JsonPath.read(body, "$.communities[0].unreadSharingAt");
+        String latest = JsonPath.read(body, "$.communities[0].latestSharingAt");
         mvc.perform(get("/api/v1/communities").with(as("pin-leader")))
-            .andExpect(jsonPath("$.communities[0].unreadSharingAt").doesNotExist());
-        mvc.perform(post("/api/v1/communities/" + id + "/sharings/read")
-                .with(as("pin-member")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"through\":\"" + through + "\"}"))
-            .andExpect(status().isNoContent());
-        // 오래된 화면의 요청이 늦게 도착해도 읽음 시각이 뒤로 가지 않는다.
-        mvc.perform(post("/api/v1/communities/" + id + "/sharings/read")
-                .with(as("pin-member")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"through\":\"2000-01-01T00:00:00Z\"}"))
-            .andExpect(status().isNoContent());
+            .andExpect(jsonPath("$.communities[0].latestSharingAt").value(latest));
+        mvc.perform(get("/api/v1/communities/" + id).with(as("pin-member")))
+            .andExpect(status().isOk());
         mvc.perform(get("/api/v1/communities").with(as("pin-member")))
-            .andExpect(jsonPath("$.communities[0].unreadSharingAt").doesNotExist())
+            .andExpect(jsonPath("$.communities[0].latestSharingAt").value(latest))
             .andExpect(jsonPath("$.communities[0].pinned").value(true));
     }
 
@@ -144,6 +138,7 @@ class CommunityApiTests {
 
         mvc.perform(get("/api/v1/communities").with(as("waiting")))
             .andExpect(jsonPath("$.communities[0].status").value("pending"))
+            .andExpect(jsonPath("$.communities[0].latestSharingAt").doesNotExist())
             .andExpect(jsonPath("$.communities[0].memberCount").doesNotExist());
         mvc.perform(get("/api/v1/communities/" + id).with(as("waiting")))
             .andExpect(status().isNotFound());
