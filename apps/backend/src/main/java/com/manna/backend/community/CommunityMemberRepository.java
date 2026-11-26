@@ -26,6 +26,28 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
             + " where m.community.id in :communityIds group by m.community.id, m.status")
     List<Object[]> countByStatus(Collection<Integer> communityIds);
 
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update CommunityMember m set m.sharingsReadAt = :through where m.community.id = :communityId"
+        + " and m.user.id = :userId and (m.sharingsReadAt is null or m.sharingsReadAt < :through)")
+    void markSharingsRead(Integer communityId, Integer userId, java.time.OffsetDateTime through);
+
+    interface UnreadSharing {
+        Integer getCommunityId();
+        java.time.Instant getLatestAt();
+    }
+
+    @Query(nativeQuery = true, value = """
+        SELECT m.community_id AS communityId, max(s.created_at) AS latestAt
+        FROM community_members m
+        JOIN sharing_communities sc ON sc.community_id = m.community_id
+        JOIN sharings s ON s.id = sc.sharing_id
+        WHERE m.user_id = :userId AND m.status = 'active'
+          AND s.author_id <> :userId AND s.type <> 'prayer'
+          AND (m.sharings_read_at IS NULL OR s.created_at > m.sharings_read_at)
+        GROUP BY m.community_id
+        """)
+    List<UnreadSharing> unreadSharings(Integer userId);
+
     // ── 중보기도실이 쓰는 "볼 수 있는 사람" 규칙 ─────────────────────────
     // 나와 active로 같은 방에 있는 active 멤버(나 제외). 한쪽이라도 pending이면 서로 안 보인다.
 

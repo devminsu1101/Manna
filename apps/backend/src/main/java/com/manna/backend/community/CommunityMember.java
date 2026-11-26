@@ -50,6 +50,15 @@ public class CommunityMember {
     @Column(name = "joined_at", nullable = false, updatable = false)
     private OffsetDateTime joinedAt;
 
+    @Column(nullable = false)
+    private boolean pinned;
+
+    @Column(name = "sharings_read_at")
+    private OffsetDateTime sharingsReadAt;
+
+    public boolean isPinned() { return pinned; }
+    public void setPinned(boolean pinned) { this.pinned = pinned; }
+
     protected CommunityMember() {} // JPA
 
     public CommunityMember(Community community, User user, String role, String status) {

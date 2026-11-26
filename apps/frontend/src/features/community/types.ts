@@ -13,12 +13,7 @@ export type MemberStatus = "pending" | "active";
 /** 방 안에서의 역할. `communities.created_by`가 자동으로 leader — 위임·복수 리더는 MVP 제외. */
 export type MemberRole = "leader" | "member";
 
-/**
- * 목록 한 줄. **이름 + 인원 수만**이다 (D-1002).
- *
- * "새 나눔 3건" 같은 지표를 얹지 않는 이유는 데이터가 쌓이기 전엔 전부 0이기 때문.
- * 자리는 남겨 두되 지금은 세지 않는다.
- */
+/** 사용자별 고정 상태와 아직 확인하지 않은 나눔을 포함한 목록 카드. */
 export type CommunitySummary = {
   id: number;
   name: string;
@@ -32,6 +27,8 @@ export type CommunitySummary = {
    * 하나도 보여주지 않는 것이 승인의 존재 이유다 (D-1707).
    */
   myStatus: MemberStatus;
+  pinned?: boolean;
+  unreadSharingAt?: string | null;
 };
 
 /** 대문의 멤버 목록 한 줄. */

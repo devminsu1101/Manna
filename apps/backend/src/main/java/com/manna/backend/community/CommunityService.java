@@ -69,7 +69,9 @@ public class CommunityService {
             @JsonInclude(JsonInclude.Include.NON_NULL) String coverImageUrl,
             @JsonInclude(JsonInclude.Include.NON_NULL) Long memberCount,
             @JsonInclude(JsonInclude.Include.NON_NULL) String role,
-            @JsonInclude(JsonInclude.Include.NON_NULL) Long pendingCount) {}
+            @JsonInclude(JsonInclude.Include.NON_NULL) Long pendingCount,
+            @JsonInclude(JsonInclude.Include.NON_NULL) Boolean pinned,
+            @JsonInclude(JsonInclude.Include.NON_NULL) java.time.OffsetDateTime unreadSharingAt) {}
 
     public record ListResponse(List<Summary> communities) {}
 
@@ -117,6 +119,9 @@ public class CommunityService {
     public ListResponse list(Integer userId) {
         List<CommunityMember> mine = members.findByUser_IdOrderByJoinedAtAsc(userId);
 
+        Map<Integer, java.time.OffsetDateTime> unread = new HashMap<>();
+        members.unreadSharings(userId).forEach(row -> unread.put(row.getCommunityId(), row.getLatestAt().atOffset(java.time.ZoneOffset.UTC)));
+
         // communityId → (status → count)
         Map<Integer, Map<String, Long>> counts = new HashMap<>();
         if (!mine.isEmpty()) {
@@ -135,7 +140,7 @@ public class CommunityService {
                         // pending은 방 이름 말고는 아무것도 못 본다 — 인원 수도 방의 내용이다(D-1707).
                         if (!m.isActive()) {
                             return new Summary(
-                                c.getId(), c.getName(), m.getStatus(), null, null, null, null, null);
+                                c.getId(), c.getName(), m.getStatus(), null, null, null, null, null, null, null);
                         }
                         Map<String, Long> byStatus = counts.getOrDefault(c.getId(), Map.of());
                         long active = byStatus.getOrDefault(CommunityMember.ACTIVE, 0L);
@@ -148,7 +153,7 @@ public class CommunityService {
                                 c.getCoverImageUrl(),
                                 active,
                                 null,
-                                null);
+                                null, m.isPinned(), unread.get(c.getId()));
                         }
                         return new Summary(
                             c.getId(),
@@ -158,10 +163,24 @@ public class CommunityService {
                             c.getCoverImageUrl(),
                             active,
                             m.getRole(),
-                            byStatus.getOrDefault(CommunityMember.PENDING, 0L));
+                            byStatus.getOrDefault(CommunityMember.PENDING, 0L), m.isPinned(), unread.get(c.getId()));
                     })
                 .toList();
         return new ListResponse(result);
+    }
+
+    @Transactional
+    public void pin(Integer userId, Integer communityId, boolean pinned) {
+        requireActiveMember(communityId, userId).setPinned(pinned);
+    }
+
+    @Transactional
+    public void markSharingsRead(Integer userId, Integer communityId, java.time.OffsetDateTime through) {
+        requireActiveMember(communityId, userId);
+        if (through.isAfter(java.time.OffsetDateTime.now())) {
+            throw ApiException.badRequest("읽은 시각은 현재보다 이후일 수 없어요.");
+        }
+        members.markSharingsRead(communityId, userId, through);
     }
 
     // ── GET /communities/{id} ────────────────────────────────────────────

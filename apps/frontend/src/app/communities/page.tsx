@@ -6,8 +6,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { listMyCommunities } from "@/features/community/api";
-import { CommunityCard } from "@/features/community/components/CommunityCard";
-import type { CommunitySummary } from "@/features/community/types";
+import { CommunityList } from "@/features/community/components/CommunityList";
 import { MainTopBar } from "@/features/home/MainTopBar";
 
 export const metadata: Metadata = { title: "공동체 | 만나" };
@@ -33,13 +32,7 @@ export default async function CommunitiesPage() {
         <EmptyState />
       ) : (
         <>
-          <ul className="space-y-3">
-            {communities.map((community) => (
-              <li key={community.id}>
-                <CommunityRow community={community} />
-              </li>
-            ))}
-          </ul>
+          <CommunityList communities={communities} />
 
           {/* 생성 진입점이 목록에 있다는 것이 D-1701이 자동 진입을 반려한 근거 중 하나다.
               목록은 어차피 탭에서 한 번에 닿아야 한다. */}
@@ -52,38 +45,6 @@ export default async function CommunitiesPage() {
         </>
       )}
     </AppShell>
-  );
-}
-
-/**
- * 정보로 담는 것은 **이름과 인원 수뿐**이다 (D-1002). 대신 색 · 사진으로 방마다 다르게 보인다(D-3624).
- * "새 나눔 3건" 같은 지표는 데이터가 쌓이기 전엔 전부 0이라 지금 붙이면 거짓말이 된다.
- */
-function CommunityRow({ community }: { community: CommunitySummary }) {
-  const { name, memberCount, myStatus } = community;
-
-  // 승인 대기 중인 방은 **누를 수 없다.** 절반이라도 보여 주면 승인이 아무것도 막지
-  // 못한다(D-1707). 그래도 목록에는 남긴다 — 신청한 사실 자체는 본인이 알아야 한다.
-  if (myStatus === "pending") {
-    return (
-      <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-4">
-        {/* 인원 수는 없다 — 그것도 방의 내용이라 백엔드가 주지 않는다. */}
-        <span className="min-w-0 truncate font-bold text-foreground/50">{name}</span>
-        <span className="ml-3 shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-foreground/50">
-          승인 대기 중
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <CommunityCard
-      name={name}
-      memberCount={memberCount}
-      color={community.color ?? "yellow"}
-      coverImageUrl={community.coverImageUrl ?? null}
-      href={`/communities/${community.id}`}
-    />
   );
 }
 

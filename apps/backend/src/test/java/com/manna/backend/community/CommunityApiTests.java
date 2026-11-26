@@ -66,6 +66,52 @@ class CommunityApiTests {
     }
 
     @Test
+    void 고정과_새나눔은_사용자별이며_확인한_시각까지만_읽음처리한다() throws Exception {
+        user("pin-leader");
+        User member = user("pin-member");
+        user("pin-outsider");
+        int id = create("pin-leader", "고정 테스트");
+        members.save(new CommunityMember(communities.getReferenceById(id), member,
+            CommunityMember.MEMBER, CommunityMember.ACTIVE));
+
+        mvc.perform(MockMvcRequestBuilders.patch("/api/v1/communities/" + id + "/pin")
+                .with(as("pin-member")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"pinned\":true}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities").with(as("pin-member")))
+            .andExpect(jsonPath("$.communities[0].pinned").value(true));
+        mvc.perform(get("/api/v1/communities").with(as("pin-leader")))
+            .andExpect(jsonPath("$.communities[0].pinned").value(false));
+        mvc.perform(MockMvcRequestBuilders.patch("/api/v1/communities/" + id + "/pin")
+                .with(as("pin-outsider")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"pinned\":true}"))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/sharings").with(as("pin-leader")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"type\":\"daily\",\"body\":\"새 소식\",\"communityIds\":[" + id + "]}"))
+            .andExpect(status().isCreated());
+        String body = mvc.perform(get("/api/v1/communities").with(as("pin-member")))
+            .andExpect(jsonPath("$.communities[0].unreadSharingAt").isString())
+            .andReturn().getResponse().getContentAsString();
+        String through = JsonPath.read(body, "$.communities[0].unreadSharingAt");
+        mvc.perform(get("/api/v1/communities").with(as("pin-leader")))
+            .andExpect(jsonPath("$.communities[0].unreadSharingAt").doesNotExist());
+        mvc.perform(post("/api/v1/communities/" + id + "/sharings/read")
+                .with(as("pin-member")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"through\":\"" + through + "\"}"))
+            .andExpect(status().isNoContent());
+        // 오래된 화면의 요청이 늦게 도착해도 읽음 시각이 뒤로 가지 않는다.
+        mvc.perform(post("/api/v1/communities/" + id + "/sharings/read")
+                .with(as("pin-member")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"through\":\"2000-01-01T00:00:00Z\"}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/communities").with(as("pin-member")))
+            .andExpect(jsonPath("$.communities[0].unreadSharingAt").doesNotExist())
+            .andExpect(jsonPath("$.communities[0].pinned").value(true));
+    }
+
+    @Test
     void 생성자는_리더로_들어가고_목록과_대문에_리더_필드가_있다() throws Exception {
         user("leader");
         int id = create("leader", "만나 개발팀");

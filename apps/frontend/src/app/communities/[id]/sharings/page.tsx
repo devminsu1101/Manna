@@ -8,6 +8,7 @@ import { getCommunity } from "@/features/community/api";
 import { CommunitySection, EmptyRow } from "@/features/community/components/CommunitySection";
 import { MainTopBar } from "@/features/home/MainTopBar";
 import { listSharings } from "@/features/sharing/api";
+import { MarkSharingsRead } from "@/features/community/components/MarkSharingsRead";
 import { SharingRow } from "@/features/sharing/components/SharingRow";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -28,6 +29,7 @@ export default async function CommunitySharingsPage({ params }: PageProps) {
       topBar={<MainTopBar icon="/mascot/together.png" title={community.name} />}
       className="space-y-6"
     >
+      <MarkSharingsRead communityId={id} through={sharings[0]?.createdAt} />
       <CommunitySection icon="/mascot/hi.png" title="나눔 자료실" surface="warm">
         {sharings.length === 0 ? (
           <EmptyRow>아직 올라온 나눔이 없어요</EmptyRow>

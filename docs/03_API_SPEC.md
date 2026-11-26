@@ -856,3 +856,12 @@ SELECT count(*) FROM prayer_logs
 #### DELETE /sharings/{id} — 지우기
 
 `204`. 권한 규칙은 PATCH와 같다. 그 방의 글만 지운다(D-3507) — 다른 방에 올린 같은 내용의 글은 남는다.
+
+### 공동체 고정·새 나눔 (2026-11-26)
+
+- `GET /communities`: active 멤버에게 `pinned`와 `unreadSharingAt`(미확인 나눔 중 최신 시각, 없으면 생략)을 반환한다. pending에는 노출하지 않는다.
+- `PATCH /communities/{id}/pin`: `{ "pinned": true }`로 본인의 공동체를 고정한다. false로 해제. active 멤버만 가능하며 성공 204.
+- `POST /communities/{id}/sharings/read`: `{ "through": "2026-11-26T00:00:00Z" }`로 받은 목록의 최신 시각까지 확인한다. active 멤버만 가능하며 성공 204. 미래 시각은 400, 이전 시각 요청은 읽음 상태를 되돌리지 않는다.
+- 본인의 글과 기도제목은 새 나눔에서 제외한다. 나눔 목록이 실제로 열린 뒤 확인 처리하며 프리패치 GET은 읽음 상태를 변경하지 않는다.
+- 고정 → 미확인 나눔 → 나머지 순서. 고정·나머지는 가입 순서를 유지하고, 미확인 그룹은 최신 나눔 순으로 정렬한다. 사진 안 오른쪽 위에 배경 없는 북마크 고정 버튼, 이름 오른쪽에 빨간 점을 표시한다.
+- 기존 DB에는 `apps/migrations/2026-11-26_community_preferences.sql`을 백엔드 배포 전에 적용한다. 초기에는 확인 시각이 없는 기존 타인 나눔도 새 나눔으로 표시한다.

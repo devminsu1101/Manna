@@ -28,6 +28,8 @@ type ListResponse = {
     color?: CommunityColor; // pending에는 없다(아래 둘도)
     coverImageUrl?: string | null;
     memberCount?: number;
+    pinned?: boolean;
+    unreadSharingAt?: string | null;
   }[];
 };
 
@@ -60,6 +62,8 @@ export async function listMyCommunities(): Promise<CommunitySummary[]> {
     color: c.color,
     coverImageUrl: c.coverImageUrl,
     myStatus: c.status,
+    pinned: c.pinned,
+    unreadSharingAt: c.unreadSharingAt,
   }));
 }
 

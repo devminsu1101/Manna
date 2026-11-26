@@ -1,5 +1,7 @@
 "use client";
 
+import { MarkSharingsRead } from "./MarkSharingsRead";
+
 import { useState } from "react";
 import { DropdownMenu } from "radix-ui";
 import { ChevronDown, Plus } from "lucide-react";
@@ -26,6 +28,7 @@ export function SharingShelf({
 
   return (
     <section aria-label="나눔 자료실">
+      <MarkSharingsRead communityId={communityId} through={sharings.reduce<string | undefined>((latest, s) => !latest || Date.parse(s.createdAt) > Date.parse(latest) ? s.createdAt : latest, undefined)} />
       <div className="flex items-center gap-2 rounded-2xl bg-surface-warm px-4 py-2">
         <Image
           src="/mascot/hi.png"
