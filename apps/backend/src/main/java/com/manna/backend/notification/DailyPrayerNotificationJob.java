@@ -32,6 +32,9 @@ public class DailyPrayerNotificationJob {
     }
 
     public void runFor(LocalDate prayerDate) {
+        jdbc.update("DELETE FROM notifications WHERE type = 'prayed_for_you' AND read_at IS NULL "
+                + "AND created_at < ?",
+            prayerDate.plusDays(1).atStartOfDay(PrayerService.KST).toOffsetDateTime());
         var counts = jdbc.query("SELECT prayed_for_user_id, count(*) FROM prayer_logs WHERE prayed_on = ? "
                 + "GROUP BY prayed_for_user_id",
             (rs, rowNum) -> new long[] {rs.getLong(1), rs.getLong(2)}, Date.valueOf(prayerDate));

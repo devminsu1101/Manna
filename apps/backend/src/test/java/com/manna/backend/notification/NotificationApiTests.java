@@ -218,6 +218,36 @@ class NotificationApiTests {
     }
 
     @Test
+    void 자정에는_지난날_미확인_기도_소식만_새_기도가_없어도_삭제한다() throws Exception {
+        User me = user("me");
+        LocalDate today = LocalDate.now(PrayerService.KST);
+        var midnight = today.atStartOfDay(PrayerService.KST).toOffsetDateTime();
+        Notification expired = notifications.save(new Notification(
+            me.getId(), Notification.PRAYED_FOR_YOU, "미확인 기도", "/prayer", today.minusDays(2)));
+        Notification read = new Notification(
+            me.getId(), Notification.PRAYED_FOR_YOU, "읽은 기도", "/prayer", today.minusDays(3));
+        read.markRead();
+        notifications.save(read);
+        Notification other = notifications.save(new Notification(
+            me.getId(), Notification.JOIN_APPROVED, "가입 승인", "/"));
+        Notification current = notifications.saveAndFlush(new Notification(
+            me.getId(), Notification.PRAYED_FOR_YOU, "오늘 기도", "/prayer", today.minusDays(1)));
+        for (Notification n : java.util.List.of(expired, read, other)) {
+            jdbc.update("UPDATE notifications SET created_at = ? WHERE id = ?",
+                midnight.minusSeconds(1), n.getId());
+        }
+        jdbc.update("UPDATE notifications SET created_at = ? WHERE id = ?", midnight, current.getId());
+
+        dailyJob.runFor(today.minusDays(1));
+        dailyJob.runFor(today.minusDays(1));
+
+        org.junit.jupiter.api.Assertions.assertEquals(0L, jdbc.queryForObject(
+            "SELECT count(*) FROM notifications WHERE id = ?", Long.class, expired.getId()));
+        list("me").andExpect(jsonPath("$.notifications.length()").value(3));
+        unread("me").andExpect(jsonPath("$.count").value(2));
+    }
+
+    @Test
     void 미리_만든_기도_소식은_배치가_재사용하고_이미_읽었으면_푸시하지_않는다() throws Exception {
         User me = user("me");
         User other = user("other");

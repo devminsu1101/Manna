@@ -17,9 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * - **보내는 쪽이 부른다.** 가입 신청 · 승인 · 마니또 시작은 `CommunityService`, 새 나눔은 `SharingService`.
  *   이 서비스는 다른 서비스에 기대지 않는다 — 그래야 어디에 주입해도 순환이 생기지 않는다.
- * - **기도 소식만 읽을 때 만든다.** 스케줄러가 없어서다(기도마니또 주간 배정 `ensureThisWeek`와 같은 패턴).
+ * - **기도 소식은 자정 배치에서 만들고 조회할 때도 보완한다.**
  *   어제 날 위해 기도한 사람이 있고, 오늘(KST) 아직 안 만들었으면 하나. 0명이면 만들지 않는다(D-1705).
- * - 보관은 30일. 지난 것은 지우지 않고 목록 · 점에서만 뺀다.
+ * - 보관은 30일. 지난 것은 목록 · 점에서만 빼되, 미확인 기도 소식은 다음 날 자정 배치에서 삭제한다.
  */
 @Service
 public class NotificationService {
