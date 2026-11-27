@@ -16,7 +16,13 @@ export default async function UpdatePage({ params }: { params: Promise<{ id: str
         <time dateTime={post.publishedAt!} className="block text-sm text-foreground/60">
           {new Date(post.publishedAt!).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
         </time>
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{post.body}</p>
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
+          {post.body.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+            part.startsWith("**") && part.endsWith("**")
+              ? <strong key={index}>{part.slice(2, -2)}</strong>
+              : <span key={index}>{part}</span>,
+          )}
+        </div>
         {post.photoUrl && <Image src={post.photoUrl} alt={`${post.title} 첨부 사진`} width={1200} height={900} unoptimized className="h-auto w-full rounded-xl" />}
       </article>
       <Button asChild variant="ghost" size="block"><Link href="/mypage/updates">소식 목록으로</Link></Button>

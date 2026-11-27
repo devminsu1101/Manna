@@ -82,6 +82,7 @@ export function UpdateForm({ post }: { post?: UpdatePost }) {
           <label htmlFor="update-body" className="mb-2 block font-bold">내용</label>
           <textarea id="update-body" value={body} onChange={(e) => setBody(e.target.value)} required maxLength={10000}
             rows={12} className="w-full rounded-xl border border-border bg-white p-3 leading-relaxed focus-visible:outline-ring" />
+          <p className="text-xs text-foreground/60">강조할 부분은 **이렇게 감싸서** 입력하면 굵게 표시돼요.</p>
           <p className="text-right text-xs text-foreground/60">{body.length.toLocaleString()} / 10,000자</p>
         </div>
         <div className="space-y-2">
